@@ -6,40 +6,52 @@ class Route
 {
     private static array $routes = [];
 
-    public static function get(string $path, string $action)
+    public static function get(string $path, array $action, array $middlewares = [])
     {
         self::$routes[] = [
             'path' => $path,
             'action' => $action,
-            'method' => 'GET'
+            'method' => 'GET',
+            'middlewares' => $middlewares
         ];
     }
 
-    public static function post(string $path, string $action)
+    public static function post(string $path, array $action, array $middlewares = [])
     {
         self::$routes[] = [
             'path' => $path,
             'action' => $action,
-            'method' => 'POST'
+            'method' => 'POST',
+            'middlewares' => $middlewares
         ];
     }
 
-    public static function put(string $path, string $action)
+    public static function put(string $path, array $action, array $middlewares = [])
     {
         self::$routes[] = [
             'path' => $path,
             'action' => $action,
-            'method' => 'PUT'
+            'method' => 'PUT',
+            'middlewares' => $middlewares
         ];
     }
 
-    public static function delete(string $path, string $action)
+    public static function delete(string $path, array $action, array $middlewares = [])
     {
         self::$routes[] = [
             'path' => $path,
             'action' => $action,
-            'method' => 'DELETE'
+            'method' => 'DELETE',
+            'middlewares' => $middlewares
         ];
+    }
+
+    public static function group(array $options, callable $callback)
+    {
+        $middlewares = $options['middlewares'] ?? [];
+        $prefix = $options['prefix'] ?? '';
+
+        $callback($prefix, $middlewares);
     }
 
     public static function routes()
