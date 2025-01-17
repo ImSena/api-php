@@ -27,4 +27,23 @@ class AdminController
             'message' => $adminService
         ], 200);
     }
+
+    public function login(Request $request, Response $response){
+        $body = $request::body();
+
+        $adminService = AdminService::login($body);
+
+        if(isset($adminService['error'])){
+            return $response::json([
+                'success' => false,
+                "message" => $adminService['error']
+            ], 400);
+        }
+
+        $response::json([
+            'success' => true,
+            'message' => $adminService['message'],
+            'token' => $adminService['token']
+        ], 200);
+    }
 }

@@ -20,8 +20,8 @@ class AdminService
                 "password" => $data['password'] ?? ''
             ]);
 
-            $fields['email'] = Validator::validateEmail($fields['email']);
 
+            $fields['email'] = Validator::validateEmail($fields['email']);
             $fields['password'] = password_hash($fields['password'], PASSWORD_DEFAULT);
 
             $admin = Admin::create($fields);
@@ -31,6 +31,21 @@ class AdminService
             }
 
             return "Administrador cadastrado com sucesso";
+        }catch (PDOException $e) {
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        }
+        catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function login(array $data)
+    {
+        try{
+            $fields = Validator::validate([
+                "email" => $data['email'] ?? '',
+                'password' => $data['password'] ?? ''
+            ]);
         }catch (PDOException $e) {
             return ['error' => DatabaseErrorHelpers::error($e)];
         }
