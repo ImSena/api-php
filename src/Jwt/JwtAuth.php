@@ -2,7 +2,9 @@
 
 namespace App\Jwt;
 
+use Exception;
 use Firebase\JWT\JWT as JWT;
+use Firebase\JWT\Key;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\SignatureInvalidException;
 use Firebase\JWT\BeforeValidException;
@@ -13,7 +15,7 @@ class JwtAuth
 {
     private static $secretKey = SECRET_KEY;
 
-    public static function renderToken(string $name, $id, int $expTimeHours = 168):string
+    public static function renderToken(string $name, $id, string $rule, int $expTimeHours = 168):string
     {
         $issuedAt = time();
         $expirationTime = $issuedAt + ($expTimeHours * 3600);
@@ -22,11 +24,31 @@ class JwtAuth
             'iat' => $issuedAt,    
             'exp' => $expirationTime,  
             'id_user' => $id,  
-            'name' => $name 
+            'name' => $name,
+            'rule' => $rule
         ];
 
         $jwt = JWT::encode($payload, self::$secretKey, 'HS256');
 
         return $jwt;
+    }
+
+    public static function verifyToken(string $token)
+    {
+        try{
+
+            $decoded = JWT::decode($token, new Key(self::$secretKey, 'HS256'));
+
+            return (object) $decoded;
+
+        }catch(ExpiredException $e){
+            return ['erro'=> 'Token expirado. '. $e->getMessage()];
+        }catch(SignatureInvalidException $e){
+            return ['erro' => 'Assinatura inválida. '. $e->getMessage()];
+        }catch(BeforeValidException $e){
+            return ['erro' => "Token ainda não válido. ".$e->getMessage()];
+        }catch(Exception $e){
+            return ['erro' => $e->getMessage()];
+        }
     }
 }

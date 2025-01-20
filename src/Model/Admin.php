@@ -3,9 +3,7 @@
 namespace App\Model;
 
 use App\Model\Database;
-use Exception;
 use Pdo;
-use PDOException;
 
 class Admin extends Database
 {
@@ -21,9 +19,21 @@ class Admin extends Database
         $stmt->bindParam(":email", $data['email'], PDO::PARAM_STR);
         $stmt->bindParam(":password", $data['password'], PDO::PARAM_STR);
 
-
         $stmt->execute();
 
         return $pdo->lastInsertId() > 0 ? true : false;
+    }
+
+    public static function login(array $data){
+        $pdo = self::getConnection();
+        $sql = "SELECT * FROM ADMIN WHERE email = :email";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":email", $data['email'], PDO::PARAM_STR);
+
+        $stmt->execute();
+
+        return $stmt->fetch();
     }
 }

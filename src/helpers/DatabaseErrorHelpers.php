@@ -12,7 +12,8 @@ class DatabaseErrorHelpers
         '23505' => "Usuário já cadastrado!",
         '1049' => "Banco de dados desconhecido.",
         '42S02' => "Tabela inexistente.",
-        '42S22' => "Coluna inexistente."
+        '42S22' => "Coluna inexistente.",
+        '23000' => "Usuário já cadastrado!"
     ];
 
     public static function error(PDOException $e)

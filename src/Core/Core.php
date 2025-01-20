@@ -39,10 +39,7 @@ class Core
                     $middlewareClass = new $middleware();
 
                     if(!$middlewareClass->handle(new Request, new Response)){
-                        Response::json([
-                            'success' => false,
-                            'message' => 'Acesso Negado.'
-                        ], 401);
+                        exit;
                     }
                 }
 
