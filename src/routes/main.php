@@ -8,13 +8,16 @@ use App\Controllers\ProductController;
 use App\Controllers\UserController;
 
 
+Route::get('/', [UserController::class, 'teste']);
+
 Route::group([
     'prefix' => 'admin',
     'middlewares' => [AuthAdmin::class]
 ], function($prefix, $middlewares){
-    Route::get("/$prefix", [AdminController::class, 'register']);
     Route::post("/$prefix/register", [AdminController::class, 'register']);
     Route::post("/$prefix/login", [AdminController::class, 'login']);
+    Route::post("/$prefix/forget-password", [AdminController::class, 'forgetAccess']);
+    Route::put("/$prefix/reset-password", [AdminController::class, 'resetPassword']);
     Route::get("/$prefix/{id}", [AdminController::class, 'register']);
 });
 
@@ -35,6 +38,7 @@ Route::group([
     Route::post("/$prefix/register", [UserController::class, 'register']);
     Route::post("/$prefix/login", [UserController::class, 'login']);
 });
+
 
 
 

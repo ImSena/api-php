@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http;
-
 class Request
 {
     public static function method()

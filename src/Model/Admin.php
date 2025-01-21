@@ -24,7 +24,7 @@ class Admin extends Database
         return $pdo->lastInsertId() > 0 ? true : false;
     }
 
-    public static function login(array $data){
+    public static function select(array $data){
         $pdo = self::getConnection();
         $sql = "SELECT * FROM ADMIN WHERE email = :email";
 
@@ -35,5 +35,19 @@ class Admin extends Database
         $stmt->execute();
 
         return $stmt->fetch();
+    }
+
+    public static function updateAccess($data, $id)
+    {
+        $pdo = self::getConnection();
+        $sql = "UPDATE ADMIN SET password = :password WHERE id_admin = :id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":password", $data['password'], PDO::PARAM_STR);
+        $stmt->bindParam(":id", $id);
+
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
     }
 }

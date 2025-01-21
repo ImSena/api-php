@@ -15,15 +15,17 @@ class JwtAuth
 {
     private static $secretKey = SECRET_KEY;
 
-    public static function renderToken(string $name, $id, string $rule, int $expTimeHours = 168):string
+    public static function renderToken(string $name, $id, string $rule, string $expTime = '1 day'): string
     {
+        $expTimeInSeconds = self::parseExpiration($expTime);
+
         $issuedAt = time();
-        $expirationTime = $issuedAt + ($expTimeHours * 3600);
+        $expirationTime = $issuedAt + $expTimeInSeconds;
 
         $payload = [
-            'iat' => $issuedAt,    
-            'exp' => $expirationTime,  
-            'id_user' => $id,  
+            'iat' => $issuedAt,
+            'exp' => $expirationTime,
+            'id_user' => $id,
             'name' => $name,
             'rule' => $rule
         ];
@@ -35,20 +37,48 @@ class JwtAuth
 
     public static function verifyToken(string $token)
     {
-        try{
+        try {
 
             $decoded = JWT::decode($token, new Key(self::$secretKey, 'HS256'));
 
             return (object) $decoded;
-
-        }catch(ExpiredException $e){
-            return ['erro'=> 'Token expirado. '. $e->getMessage()];
-        }catch(SignatureInvalidException $e){
-            return ['erro' => 'Assinatura inválida. '. $e->getMessage()];
-        }catch(BeforeValidException $e){
-            return ['erro' => "Token ainda não válido. ".$e->getMessage()];
-        }catch(Exception $e){
+        } catch (ExpiredException $e) {
+            return ['erro' => 'Token expirado. ' . $e->getMessage()];
+        } catch (SignatureInvalidException $e) {
+            return ['erro' => 'Assinatura inválida. ' . $e->getMessage()];
+        } catch (BeforeValidException $e) {
+            return ['erro' => "Token ainda não válido. " . $e->getMessage()];
+        } catch (Exception $e) {
             return ['erro' => $e->getMessage()];
+        }
+    }
+
+    private static function parseExpiration(string $expTime): int
+    {
+        preg_match('/(\d+)\s*(\w+)/', $expTime, $matches);
+
+        if (empty($matches)) {
+            return 0;
+        }
+
+        $value = (int) $matches[1];
+        $unit = strtolower($matches[2]);
+
+        switch($unit){
+            case 'second':
+            case 'seconds':
+                return $value;
+            case 'minute':
+            case 'minutes':
+                return $value * 60;
+            case 'hour':
+            case 'hours': 
+                return $value * 3600;
+            case 'day':
+            case 'days':
+                return $value * 86400;
+            default: 
+                return 0;
         }
     }
 }
