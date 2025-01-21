@@ -1,0 +1,111 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Entity class="oracle.dbtools.crest.model.design.logical.Entity" directorySegmentName="seg_0" id="274E3C94-5CAD-70CA-0718-C16FDEB43CA4" name="PAYMENT">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:34:03 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<adequatelyNormalized>NO</adequatelyNormalized>
+<expectedVolumes>0</expectedVolumes>
+<fwdEngineeringStrategyName>Single Table</fwdEngineeringStrategyName>
+<growthPercent>0</growthPercent>
+<growthType>Year</growthType>
+<maxVolumes>9999999</maxVolumes>
+<minVolumes>0</minVolumes>
+<normalForm>Third</normalForm>
+<attributes itemClass="oracle.dbtools.crest.model.design.logical.Attribute">
+<Attribute name="id_payment" id="BD3701A0-BCFD-0BF4-1CE0-87A47B341EB5">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:34:08 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="id_order" id="A8170F20-59F7-2C8F-5FF7-C67B454955D4">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:36:49 UTC</createdTime>
+<generatorID>9615752F-9E8B-E5DD-0A69-25ED120F82CE</generatorID>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<referedAttribute>CAC2A790-8FD7-C862-E787-B33350084EF3</referedAttribute>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="payment_method" id="D63A0130-0358-954F-D296-B512B3C4B992">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:34:27 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>20</dataTypeSize>
+<ownDataTypeParameters>20,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="amout" id="FB1D2FAE-BB15-FFA9-F0DB-301458EF783A">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:34:41 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT026</logicalDatatype>
+<dataTypePrecision>10</dataTypePrecision>
+<dataTypeScale>2</dataTypeScale>
+<ownDataTypeParameters>,10,2</ownDataTypeParameters>
+</Attribute>
+<Attribute name="status" id="16B8B241-46DE-B33F-D533-6DBFA3F94C54">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:35:09 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>20</dataTypeSize>
+<ownDataTypeParameters>20,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="payment_date" id="F5AB6938-EA74-D286-81B5-6506F3BBACE2">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:35:28 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT046</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+</attributes>
+<identifiers itemClass="oracle.dbtools.crest.model.design.logical.CandidateKey">
+<identifier id="D227C60D-81EA-B103-6D05-DF151E59EC8B" name="PAYMENT PK">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:34:25 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<pk>true</pk>
+<usedAttributes>
+<attributeRef>BD3701A0-BCFD-0BF4-1CE0-87A47B341EB5</attributeRef>
+</usedAttributes>
+</identifier>
+</identifiers>
+</Entity>

@@ -1,0 +1,123 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Entity class="oracle.dbtools.crest.model.design.logical.Entity" directorySegmentName="seg_0" id="7DAB165D-CCF1-0975-4EEE-786AEF8D7EB1" name="STOCK_MOVEMENT">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:41:05 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<adequatelyNormalized>NO</adequatelyNormalized>
+<expectedVolumes>0</expectedVolumes>
+<fwdEngineeringStrategyName>Single Table</fwdEngineeringStrategyName>
+<growthPercent>0</growthPercent>
+<growthType>Year</growthType>
+<maxVolumes>9999999</maxVolumes>
+<minVolumes>0</minVolumes>
+<normalForm>Third</normalForm>
+<attributes itemClass="oracle.dbtools.crest.model.design.logical.Attribute">
+<Attribute name="id_stock_movement" id="79B099FE-857D-F633-02AA-2AA2F29AB29F">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:41:14 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="id_product" id="4C9A18E2-1945-BCDB-9239-81B926691B63">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:44:23 UTC</createdTime>
+<generatorID>4C3E38B9-C86D-AB7E-EF46-B7DEB7B560A1</generatorID>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<referedAttribute>46F69A22-6FF7-70C3-4247-9FFFC68A4B3C</referedAttribute>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="id_admin" id="9672AC89-E131-A1AF-35DB-87F2069F3ADB">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:44:34 UTC</createdTime>
+<generatorID>FC025B14-43C8-9EBF-7222-223BDCB09804</generatorID>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<referedAttribute>A87A56CF-B0D1-6ABF-358A-CD511187E1F2</referedAttribute>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="movement_type" id="B8E08D07-A454-BA35-04DB-693DA7CE853A">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:41:36 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>20</dataTypeSize>
+<ownDataTypeParameters>20,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="quantity" id="0FB09B17-36D1-6120-3247-A0FEE500D069">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:41:54 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="reason" id="0F3C90B4-8DD4-6168-2803-F0055A994D28">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:42:07 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<nullsAllowed>true</nullsAllowed>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT040</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="created_at" id="271E9497-B2E6-E979-B7F5-389531711AA6">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:42:33 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT046</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+</attributes>
+<identifiers itemClass="oracle.dbtools.crest.model.design.logical.CandidateKey">
+<identifier id="63A0EA94-F6C6-C5E0-1D9D-1BB0CB984365" name="STOCK_MOVEMENT PK">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 20:41:34 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<pk>true</pk>
+<usedAttributes>
+<attributeRef>79B099FE-857D-F633-02AA-2AA2F29AB29F</attributeRef>
+</usedAttributes>
+</identifier>
+</identifiers>
+</Entity>

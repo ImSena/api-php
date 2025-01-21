@@ -1,0 +1,86 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Entity class="oracle.dbtools.crest.model.design.logical.Entity" directorySegmentName="seg_0" id="C31F6FC4-ABBB-5AD2-1051-0CB6FE5CFC82" name="LEGAL_PERSON">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 18:27:58 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<adequatelyNormalized>NO</adequatelyNormalized>
+<expectedVolumes>0</expectedVolumes>
+<fwdEngineeringStrategyName>Single Table</fwdEngineeringStrategyName>
+<growthPercent>0</growthPercent>
+<growthType>Year</growthType>
+<maxVolumes>9999999</maxVolumes>
+<minVolumes>0</minVolumes>
+<normalForm>Third</normalForm>
+<attributes itemClass="oracle.dbtools.crest.model.design.logical.Attribute">
+<Attribute name="id_person" id="D1B8B5CE-BA54-B0AF-CB7E-FD0D4609F80C">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 18:31:09 UTC</createdTime>
+<generatorID>B251F30B-1684-C30B-951E-9A37AB852BEA</generatorID>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<referedAttribute>06FBCC5C-DF13-2094-9342-00E4799A3D4B</referedAttribute>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT011</logicalDatatype>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="cnpj" id="825CBA76-43D3-179D-CD17-071208374500">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 18:28:15 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>14</dataTypeSize>
+<ownDataTypeParameters>14,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="corporate_name" id="B58B410F-B75B-525D-BC9B-D19AFD4C484A">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 18:29:11 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>100</dataTypeSize>
+<ownDataTypeParameters>100,,</ownDataTypeParameters>
+</Attribute>
+<Attribute name="trade_name" id="3B90B1DB-ED67-470A-D2E3-7303DC1468EA">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 18:29:54 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<useDomainConstraints>false</useDomainConstraints>
+<use>1</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<dataTypeSize>100</dataTypeSize>
+<ownDataTypeParameters>100,,</ownDataTypeParameters>
+</Attribute>
+</attributes>
+<identifiers itemClass="oracle.dbtools.crest.model.design.logical.CandidateKey">
+<identifier id="896C718F-CC2B-B2FB-9ECD-A2DE5F40215B" name="LEGAL_PERSON PK">
+<createdBy>Suporte-4</createdBy>
+<createdTime>2025-01-21 18:31:21 UTC</createdTime>
+<ownerDesignName>db-eccomerce</ownerDesignName>
+<engineerTo>
+<item key="AC5BA010-A87C-0C32-24C1-76B22A9523C4" value="true"/>
+</engineerTo>
+<pk>true</pk>
+<usedAttributes>
+<attributeRef>D1B8B5CE-BA54-B0AF-CB7E-FD0D4609F80C</attributeRef>
+</usedAttributes>
+</identifier>
+</identifiers>
+</Entity>
