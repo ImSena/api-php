@@ -29,7 +29,10 @@ class SendEmail
         $mail->addAddress($info_user['email']);
         $mail->WordWrap = 50;
         $mail->isHTML(true);
-        $mail->Subject = "Recuperação de acesso - Escala Web";
+
+        $subject = $content_subject == 'forget' ? "Recuperação de acesso - Escala Web" : "Ative sua conta - Escala Web";
+
+        $mail->Subject = $subject;
         
         $mail->Body = self::getBody($info_user, $content_subject);
 
@@ -55,16 +58,26 @@ class SendEmail
             ];
         }
 
+        if($subject == 'active'){
+            $link = "http://localhost:5173/active-account?token=".$info_user['token'];
+
+            return [
+                "title" => "Ative sua Conta - Escala Web",
+                "message" => "
+                    <h2>Ative sua conta</h2>
+                    <p>Olá, ".$info_user['name']."!</p>
+                    <p><a href='$link' style='color: #007bff;'>Clique aqui para ativar sua conta </a></p>
+                "
+            ];
+        }
+
         return $subject;
     }
 
-    // Método principal para obter o corpo do e-mail
     public static function getBody(array $informacoes, $subject = "forget")
 {
-    // Verificar se o retorno de getInformation() é um array válido
     $informacoes = self::getInformation($subject, $informacoes);
 
-    // Verifique se o retorno de getInformation não é uma string
     if (is_string($informacoes)) {
         throw new Exception("Erro na criação do corpo do e-mail. O retorno de getInformation não é válido.");
     }

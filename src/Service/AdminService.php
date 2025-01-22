@@ -13,17 +13,22 @@ use PDOException;
 
 class AdminService
 {
-    public static function create(array $data)
+    public static function create(array $data, bool $isSuper)
     {
         try {
             $fields = Validator::validate([
                 "name" => $data['name'] ?? '',
                 "email" => $data['email'] ?? '',
-                "password" => $data['password'] ?? ''
+                "password" => $data['password'] ?? '',
+                "permission" => $data['permission'] ?? ''
             ]);
 
             $fields['email'] = Validator::validateEmail($fields['email']);
             $fields['password'] = password_hash($fields['password'], PASSWORD_DEFAULT);
+
+            if($isSuper){
+                $fields['permission'] = "SUPER";
+            }
 
             $admin = Admin::create($fields);
 

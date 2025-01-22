@@ -10,7 +10,7 @@ class Product extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "INSERT INTO PRODUCT (name, value, qtd) VALUES (:name, :value, :qtd)";
+        $sql = "INSERT INTO PRODUCTS (name, value, qtd) VALUES (:name, :value, :qtd)";
 
         $stmt = $pdo->prepare($sql);
 

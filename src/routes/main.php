@@ -14,7 +14,8 @@ Route::group([
     'prefix' => 'admin',
     'middlewares' => [AuthAdmin::class]
 ], function($prefix, $middlewares){
-    Route::post("/$prefix/register", [AdminController::class, 'register']);
+    Route::post("/$prefix/register", [AdminController::class, 'registerSuper']);
+    // Route::post("/$prefix/register", [AdminController::class, "register"], $middlewares);
     Route::post("/$prefix/login", [AdminController::class, 'login']);
     Route::post("/$prefix/forget-password", [AdminController::class, 'forgetAccess']);
     Route::put("/$prefix/reset-password", [AdminController::class, 'resetPassword']);

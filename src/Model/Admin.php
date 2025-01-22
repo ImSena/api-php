@@ -12,12 +12,13 @@ class Admin extends Database
     {
 
         $pdo = self::getConnection();
-        $sql = "INSERT INTO ADMIN (name, email, password) VALUES (:name, :email, :password)";
+        $sql = "INSERT INTO ADMINS (name, email, password, permission) VALUES (:name, :email, :password, :permission)";
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
         $stmt->bindParam(":email", $data['email'], PDO::PARAM_STR);
         $stmt->bindParam(":password", $data['password'], PDO::PARAM_STR);
+        $stmt->bindParam(":permission", $data['permission'], PDO::PARAM_STR);
 
         $stmt->execute();
 
@@ -26,7 +27,7 @@ class Admin extends Database
 
     public static function select(array $data){
         $pdo = self::getConnection();
-        $sql = "SELECT * FROM ADMIN WHERE email = :email";
+        $sql = "SELECT * FROM ADMINS WHERE email = :email";
 
         $stmt = $pdo->prepare($sql);
 
@@ -40,7 +41,7 @@ class Admin extends Database
     public static function updateAccess($data, $id)
     {
         $pdo = self::getConnection();
-        $sql = "UPDATE ADMIN SET password = :password WHERE id_admin = :id";
+        $sql = "UPDATE ADMINS SET password = :password WHERE id_admin = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":password", $data['password'], PDO::PARAM_STR);
