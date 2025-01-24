@@ -6,6 +6,7 @@ use App\Helpers\DatabaseErrorHelpers;
 use App\Jwt\JwtAuth;
 use App\Model\Admin;
 use App\Model\Token;
+use App\Model\Token_admin;
 use App\Utils\SendEmail;
 use App\Utils\Validator;
 use Exception;
@@ -91,6 +92,7 @@ class AdminService
             ]);
     
             $fields['email'] = Validator::validateEmail($fields['email']);
+            $fields['type'] = "FORGET";
     
             $admin = Admin::select($fields);
 
@@ -98,6 +100,8 @@ class AdminService
                 throw new Exception("Usuário não encontrado.");
             }
         
+            $fields['id_admin'] = $admin['id_admin'];
+
             $token = JwtAuth::renderToken($admin['name'], $admin['id_admin'], 'admin', '15 minutes');
 
             $info_user = [
@@ -106,7 +110,9 @@ class AdminService
                 'token' => $token
             ];
 
-            $token = Token::create($token);
+            $fields['token'] = $token;
+
+            $token = Token_admin::create($fields);
 
             if(!$token){
                 throw new Exception("Não foi possível gerar o link. Tente novamente mais tarde");
