@@ -6,18 +6,18 @@ use App\Model\Database;
 use Exception;
 use Pdo;
 
-class Token_admin extends Database
+class Token_user extends Database
 {
     public static function create(array $data)
     {
 
         $pdo = self::getConnection();
 
-        $sql = "INSERT INTO TOKENS_ADMINS (id_admin, type, token) VALUES (:id_admin, :type, :token)";
+        $sql = "INSERT INTO TOKENS_USERS (id_user, type, token) VALUES (:id_user, :type, :token)";
 
         $stmt = $pdo->prepare($sql);
 
-        $stmt->bindParam(":id_admin", $data['id_admin'], PDO::PARAM_STR);
+        $stmt->bindParam(":id_user", $data['id_user'], PDO::PARAM_STR);
         $stmt->bindParam(":type", $data['type'], PDO::PARAM_STR);
         $stmt->bindParam(":token", $data['token'], PDO::PARAM_STR);
 
@@ -30,7 +30,7 @@ class Token_admin extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "SELECT status FROM TOKENS_ADMINS WHERE token = :token";
+        $sql = "SELECT status FROM TOKENS_USERS WHERE token = :token";
 
         $stmt = $pdo->prepare($sql);
 
@@ -41,16 +41,15 @@ class Token_admin extends Database
         return $stmt->fetch();
     }
 
-    public static function inactiveAll(string $id_admin, string $type)
+    public static function inactiveAll(string $id_user)
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE TOKENS_ADMINS SET status = 'INACTIVE' WHERE id_admin = :id_admin AND type = :type";
+        $sql = "UPDATE TOKENS_USERS SET status = 'INACTIVE' WHERE id_user = :id_user";
 
         $stmt = $pdo->prepare($sql);
 
-        $stmt->bindParam(":id_admin", $id_admin, PDO::PARAM_INT);
-        $stmt->bindParam(":type", $type, PDO::PARAM_STR);
+        $stmt->bindParam(":id_user", $id_user, PDO::PARAM_INT);
 
         $stmt->execute();
 
@@ -61,7 +60,7 @@ class Token_admin extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE TOKENS_ADMINS SET status = 'INACTIVE' WHERE token = :token";
+        $sql = "UPDATE TOKENS_USERS SET status = 'INACTIVE' WHERE token = :token";
 
         $stmt = $pdo->prepare($sql);
 

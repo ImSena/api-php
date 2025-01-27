@@ -45,7 +45,22 @@ class Admin extends Database
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":password", $data['password'], PDO::PARAM_STR);
-        $stmt->bindParam(":id", $id);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public static function activeAdmin($status, $id)
+    {
+        $pdo = self::getConnection();
+
+        $sql = "UPDATE ADMINS SET status = :status WHERE id_admin = :id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":status", $status, PDO::PARAM_STR);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
 
         $stmt->execute();
 

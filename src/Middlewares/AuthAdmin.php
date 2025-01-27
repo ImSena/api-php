@@ -22,15 +22,15 @@ class AuthAdmin
 
         $decoded = JwtAuth::verifyToken($token);
 
-        if(is_array($decoded) && isset($decoded['erro'])){
+        if(is_array($decoded) && isset($decoded['decoded']['error'])){
             $response::json([
                 'success' => false,
-                'message' => $decoded['erro']
+                'message' => $decoded['error']
             ], 401);
             return false;
         }
 
-        if(!isset($decode->rule) && $decoded->rule !== 'admin'){
+        if(!isset($decoded['decoded']['rule']) && $decoded['decoded']['rule'] !== 'admin'){
             $response::json([
                 'success' => false,
                 'message' => "Acesso negado."

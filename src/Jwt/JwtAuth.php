@@ -15,7 +15,7 @@ class JwtAuth
 {
     private static $secretKey = SECRET_KEY;
 
-    public static function renderToken(string $name, $id, string $rule, string $expTime = '1 day'): string
+    public static function renderToken(string $name, $id, string $rule, string $status ,string $expTime = '1 day'): string
     {
         $expTimeInSeconds = self::parseExpiration($expTime);
 
@@ -27,7 +27,8 @@ class JwtAuth
             'exp' => $expirationTime,
             'id_user' => $id,
             'name' => $name,
-            'rule' => $rule
+            'rule' => $rule,
+            'status' => $status
         ];
 
         $jwt = JWT::encode($payload, self::$secretKey, 'HS256');
@@ -41,15 +42,15 @@ class JwtAuth
 
             $decoded = JWT::decode($token, new Key(self::$secretKey, 'HS256'));
 
-            return (object) $decoded;
+            return ['decoded' => (array) $decoded];
         } catch (ExpiredException $e) {
-            return ['erro' => 'Token expirado. ' . $e->getMessage()];
+            return ['error' => 'Token expirado. '];
         } catch (SignatureInvalidException $e) {
-            return ['erro' => 'Assinatura inválida. ' . $e->getMessage()];
+            return ['error' => 'Assinatura inválida. '];
         } catch (BeforeValidException $e) {
-            return ['erro' => "Token ainda não válido. " . $e->getMessage()];
+            return ['error' => "Token ainda não válido. "];
         } catch (Exception $e) {
-            return ['erro' => $e->getMessage()];
+            return ['error' => $e->getMessage()];
         }
     }
 

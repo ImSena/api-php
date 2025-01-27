@@ -5,13 +5,12 @@ namespace App\Service;
 use App\Helpers\DatabaseErrorHelpers;
 use App\Jwt\JwtAuth;
 use App\Model\Admin;
-use App\Model\Token;
-use App\Model\Token_admin;
+use App\Model\Token_user;
 use App\Utils\Validator;
 use Exception;
 use PDOException;
 
-class ForgetPassword
+class AccountUserService
 {
     public static function resetPassword(array $data)
     {
@@ -26,23 +25,20 @@ class ForgetPassword
 
             $token = JwtAuth::verifyToken($fields['token']);
 
-            if (is_array($token) && isset($token['error'])) {
+            if (is_array($token) || isset($token['error'])) {
                 throw new Exception($token['error']);
             }
 
-            if ($token->rule === 'admin') {
-                $tokenModel = Token_admin::select($data['token']);
+            $tokenModel = Token_user::select($data['token']);
 
-                if (isset($tokenModel['status']) && $tokenModel['status'] == 'INACTIVE') {
-                    throw new Exception("Não foi possível atualizar a senha, pois o link está expirado!");
-                }
-                $admin = Admin::updateAccess($fields, $token->id_user);
-                if (!$admin) {
-                    throw new Exception("Não foi possível atualizar a senha. Tente novamente mais tarde");
-                }
-                $tokenModel = Token::inactive($data['token']);
-            } else if ($token->rule === 'user') {
+            if (isset($tokenModel['status']) && $tokenModel['status'] == 'INACTIVE') {
+                throw new Exception("Não foi possível atualizar a senha, pois o link está expirado!");
             }
+            $user = Admin::updateAccess($fields, $token->id_user);
+            if (!$user) {
+                throw new Exception("Não foi possível atualizar a senha. Tente novamente mais tarde");
+            }
+            $tokenModel = Token_user::inactiveToken($data['token']);
 
             return "Senha alterada com sucesso!";
         } catch (PDOException $e) {

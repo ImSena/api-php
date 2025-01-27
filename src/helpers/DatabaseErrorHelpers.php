@@ -13,7 +13,7 @@ class DatabaseErrorHelpers
         '1049' => "Banco de dados desconhecido.",
         '42S02' => "Tabela inexistente.",
         '42S22' => "Coluna inexistente.",
-        '23000' => "Usuário já cadastrado!"
+        '23000' => "Foi encontrado um valor duplicado!"
     ];
 
     public static function error(PDOException $e)
