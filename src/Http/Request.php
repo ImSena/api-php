@@ -8,16 +8,23 @@ class Request
         return $_SERVER['REQUEST_METHOD'];
     }
 
+    private static function isMultipart():bool
+    {
+        return strpos($_SERVER['CONTENT_TYPE'] ?? '', 'multipart/form-data') !== false;
+    }
     public static function body():array
     {
-        $json = json_decode(file_get_contents('php://input'), true) ?? [];
+        $method = self::method();
 
-        $data = match(self::method()){
-            'GET' => $_GET,
-            'POST', 'PUT', 'DELETE' => $json,
-        };
-        
-        return $data;
+        if($method != 'GET'){
+            if(self::isMultipart()){
+                return $_POST;
+            }else{
+                $json = json_decode(file_get_contents('php://input'), true) ?? [];
+                return $json;
+            }
+        }         
+        return $method === 'GET' ? $_GET : [];
     }
     public static function header()
     {
@@ -42,4 +49,34 @@ class Request
         }
     }
 
+    public static function files():array
+    {
+
+        $files = [];
+
+
+        foreach($_FILES as $key => $file){
+            if(!is_array($file['name'])){
+                $files[$key] = [
+                    'name' => $file['name'],
+                    'type' => $file['type'],
+                    'tmp_name' => $file['tmp_name'],
+                    'error' => $file['error'],
+                    'size' => $file['size']
+                ];
+            }else{
+                foreach($file['name'] as $index => $name){
+                    $files[$key][$index] = [
+                        'name' => $name,
+                        'type' => $file['type'][$index],
+                        'tmp_name' => $file['tmp_name'][$index],
+                        'error' => $file['error'][$index],
+                        'size' => $file['size'][$index]
+                    ];
+                }
+            }
+        }
+
+       return $files;
+    }
 }

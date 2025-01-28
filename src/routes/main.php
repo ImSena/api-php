@@ -4,6 +4,7 @@ use App\Http\Route;
 use App\Middlewares\AuthAdmin;
 use App\Middlewares\AuthUser;
 use App\Controllers\Admin\AdminController;
+use App\Controllers\CategoriesController;
 use App\Controllers\ProductController;
 use App\Controllers\UserController;
 
@@ -28,6 +29,15 @@ Route::group([
 
     //GET DEVEM ESTAR NO FINAL
     Route::get("/$prefix/{id}", [AdminController::class, 'register']);
+});
+
+Route::group([
+    "prefix" => "categories",
+    'middlewares'=> [AuthAdmin::class]
+],function($prefix, $middlewares){
+    Route::post("/$prefix/create", [CategoriesController::class, 'createCategories'], $middlewares);
+    Route::delete("/$prefix/delete", [CategoriesController::class, 'deleteCategory'], $middlewares);
+    Route::get("/$prefix/getParents", [CategoriesController::class, "getAllParent"], $middlewares);
 });
 
 Route::group([

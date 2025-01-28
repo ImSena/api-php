@@ -12,31 +12,40 @@ class AuthAdmin
     {
         $token = $request::getToken();
 
-        if(!$token){
+        if (!$token) {
             $response::json([
                 'success' => false,
-                'message' => 'Token não encontrado ou inválido.'
+                'message' => 'Acesso negado.'
             ], 401);
             return false;
         }
 
         $decoded = JwtAuth::verifyToken($token);
 
-        if(is_array($decoded) && isset($decoded['decoded']['error'])){
+        if (isset($decoded['error'])) {
             $response::json([
                 'success' => false,
                 'message' => $decoded['error']
             ], 401);
             return false;
         }
-
-        if(!isset($decoded['decoded']['rule']) && $decoded['decoded']['rule'] !== 'admin'){
+        if (isset($decoded['decoded']['rule']) && $decoded['decoded']['rule'] !== 'admin') {
             $response::json([
                 'success' => false,
-                'message' => "Acesso negado."
+                'message' => 'Acesso negado.'
             ], 403);
             return false;
         }
+
+        if (!isset($decoded['decoded']['status']) || !$decoded['decoded']['status']) {
+            $response::json([
+                'success' => false,
+                'message' => 'Admin precisa estar ativo!'
+            ], 401);
+
+            return false;
+        }
+
 
         return true;
     }

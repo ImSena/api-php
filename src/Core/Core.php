@@ -46,7 +46,7 @@ class Core
                 if(isset($route['middlewares']) && !empty($route['middlewares'])){
                     foreach($route['middlewares'] as $middleware);
                     $middlewareClass = new $middleware();
-
+                    
                     if(!$middlewareClass->handle(new Request, new Response)){
                         exit;
                     }

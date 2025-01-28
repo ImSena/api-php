@@ -126,8 +126,8 @@ class AdminService
             }
 
             $info_user = [
-                'name' => $data['name'],
-                'email' => $data['email'],
+                'name' => $admin['name'],
+                'email' => $admin['email'],
                 'token' => $token
             ];
             $sendMail = SendEmail::sendMail($info_user, 'active');

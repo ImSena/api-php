@@ -65,13 +65,13 @@ class AccountAdminService
             $tokenModel = Token_admin::select($data['token']);
 
             if (isset($tokenModel['status']) && $tokenModel['status'] == 'INACTIVE') {
-                throw new Exception("Não foi possível atualizar a senha, pois o link está expirado!");
+                throw new Exception("Não foi possível ativar a conta, pois o link está expirado!");
             }
 
             $admin = Admin::activeAdmin('ACTIVE', $token['decoded']['id_user']);
 
             if (!$admin) {
-                throw new Exception("Não foi possível atualizar a senha. Tente novamente mais tarde");
+                throw new Exception("Não foi possível atualizar a conta. Tente novamente mais tarde");
             }
 
             $tokenModel = Token_admin::inactiveToken($data['token']);

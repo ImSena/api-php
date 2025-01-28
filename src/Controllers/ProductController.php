@@ -11,12 +11,13 @@ class ProductController
     public function create(Request $request, Response $response)
     {
         $body = $request::body();
+        $files = $request::files();
 
-        $productService = ProductService::create($body);
+        $productService = ProductService::create($body, $files);
 
         if(isset($productService['error'])){
             return $response::json([
-                'success'=> true,
+                'success'=> false,
                 'message' => $productService['error'],
             ], 400);
         }
