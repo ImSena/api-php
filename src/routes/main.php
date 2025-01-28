@@ -46,7 +46,7 @@ Route::group([
 ], function($prefix, $middlewares){
     Route::get(strval($prefix), [ProductController::class, 'getAll']);
     Route::post("/$prefix/create", [ProductController::class, 'create'], $middlewares);
-    Route::delete("/$prefix/{id}", [ProductController::class, 'delete'] , $middlewares);
+    Route::delete("/$prefix", [ProductController::class, 'delete'] , $middlewares);
     Route::get("/$prefix/{id}", [ProductController::class, 'getProduct']);
 });
 

@@ -8,9 +8,8 @@ require_once ROOT_PATH . '/config.php';
 
 class UserController
 {
-    public static function teste()
+    public function teste()
     {
-
         // Caminhos
         
         $inputPath = PHOTO . 'teste.png';

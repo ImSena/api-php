@@ -13,40 +13,39 @@ class Product extends Database
 
         $pdo->beginTransaction();
 
-        try{
+        try {
             $sql = "INSERT INTO PRODUCTS (name, description, price, qtd_stock, sku) VALUES (:name, :description, :price, :qtd_stock, :sku)";
-    
+
             $stmt = $pdo->prepare($sql);
-    
+
             $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
             $stmt->bindParam(":description", $data['description'], PDO::PARAM_STR);
             $stmt->bindParam(":price", $data['price'], PDO::PARAM_STR);
             $stmt->bindParam(":qtd_stock", $data['qtd_stock'], PDO::PARAM_INT);
             $stmt->bindParam(":sku", $data['sku'], PDO::PARAM_STR);
-    
+
             $stmt->execute();
 
             $productId = $pdo->lastInsertId();
 
-            if(empty($productId)){
+            if (empty($productId)) {
                 throw new Exception("Erro ao criar produto.");
             }
 
             $categorySuccess = self::relationCategory($pdo, $productId, $data['category']);
 
-            if(!$categorySuccess){
+            if (!$categorySuccess) {
                 throw new Exception("Erro ao associar produto à categoria");
             }
 
             $pdo->commit();
 
             return $productId;
-
-        }catch(Exception $e){
+        } catch (Exception $e) {
             $pdo->rollBack();
             return ['error' => $e->getMessage()];
         }
-    } 
+    }
 
     private static function relationCategory($pdo, $productId, $categoryId)
     {
@@ -63,7 +62,7 @@ class Product extends Database
         return !empty($pdo->lastInsertId());
     }
 
-    public static function deleteProduct(array $data):bool
+    public static function deleteProduct(array $data): bool
     {
         $pdo = self::getConnection();
 
@@ -76,5 +75,10 @@ class Product extends Database
         $stmt->execute();
 
         return $stmt->rowCount() > 0;
+    }
+
+    public static function getDatabaseConnection()
+    {
+        return self::getConnection();
     }
 }

@@ -8,7 +8,7 @@ use App\Service\CategoryService;
 
 class CategoriesController
 {
-    public static function createCategories(Request $request, Response $response)
+    public function createCategories(Request $request, Response $response)
     {
         $body = $request::body();
 
@@ -28,7 +28,7 @@ class CategoriesController
         ],200);
     }
 
-    public static function getAllParent(Request $request, Response $response)
+    public function getAllParent(Request $request, Response $response)
     {
 
         $category = CategoryService::getAllParent();
@@ -47,7 +47,7 @@ class CategoriesController
         ]);
     }
 
-    public static function deleteCategory(Request $request, Response $response)
+    public function deleteCategory(Request $request, Response $response)
     {
         $body = $request::body();
 

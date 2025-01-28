@@ -86,15 +86,23 @@ class ProductService
                 "id_product" => $data['id_product']
             ]);
 
-            $product = Product::deleteProduct($data);
+            $pdo = Product::getDatabaseConnection();
+            $pdo->beginTransaction();
+
+            $product = Product::deleteProduct($fields);
 
             if(!$product){
                 throw new Exception("Não foi possível deletar o produto!");
             }
 
-            
+            $fileDeleted = FileProductService::deleteServer($fields['id_product']);
 
-
+            if(!$fileDeleted){
+                $pdo->rollBack();
+                throw new Exception("Não foi possível deletar o produto");
+            }
+            $pdo->commit();
+            return "Produto foi deletado com sucesso!";
         } catch (PDOException $e) {
             return ['error' => DatabaseErrorHelpers::error($e)];
         } catch (Exception $e) {

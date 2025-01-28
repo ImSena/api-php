@@ -68,7 +68,6 @@ class AdminService
             $firstAccess = $admin['status'] == 'INACTIVE' ? true : false;
 
             if ($firstAccess) {
-                self::activeAccountLink($admin);
                 return[
                     'message' => self::activeAccountLink($admin),
                     'firstAccess' => true,

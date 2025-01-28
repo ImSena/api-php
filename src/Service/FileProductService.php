@@ -54,9 +54,26 @@ class FileProductService
         $directory = './uploads/products/'.$id;
 
         if(is_dir($directory)){
+            self::deleteContents($directory);
             return rmdir($directory);
         }
 
         return false;
+    }
+
+    private static function deleteContents(string $directory)
+    {
+        $files = array_diff(scandir($directory), ['.', '..']);
+
+        foreach($files as $file){
+            $filePath = $directory . DIRECTORY_SEPARATOR . $file;
+
+            if(is_dir($filePath)){
+                self::deleteContents($filePath);
+                rmdir($filePath);
+            }else{
+                unlink($filePath);
+            }
+        }
     }
 }
