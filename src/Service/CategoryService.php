@@ -14,10 +14,21 @@ class CategoryService
         try{
             $fields = Validator::validate([
                 "name" => $data['name'] ?? '',
-                "description"=> $data['description'] ?? ''
             ]);
 
-            if(isset($data['parent_category'])) $fields['parent_category'] = $data['parent_category'];
+            if(isset($data['description'])) $fields['description'] = $data['description'];
+
+            if (isset($data['parent_category'])) {
+                if ($data['parent_category'] === null || $data['parent_category'] === '' || empty($data['parent_category'])) {
+                    $fields['parent_category'] = null;
+                } elseif (is_numeric($data['parent_category'])) {
+                    $fields['parent_category'] = (int) $data['parent_category'];
+                } else {
+                    throw new Exception("Digite um valor válido para categoria principal");
+                }
+            } else {
+                $fields['parent_category'] = null;
+            }
 
             $category = Category::create($data);
 
@@ -37,6 +48,53 @@ class CategoryService
     {
         try{
             $category = Category::getAllParent();
+
+            return $category;
+        }catch(PDOException $e){
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        }catch(Exception $e){
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function getAllCategories(): array
+    {
+        try{
+            $category = Category::getAllCategories();
+
+            return $category;
+        }catch(PDOException $e){
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        }catch(Exception $e){
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function update(array $data)
+    {
+        try{
+            
+            $fields = Validator::validate([
+                "id_category" => $data['id_category'] ?? '',
+                "name" => $data['name'] ?? '',
+                "description" => $data['description'] ?? '',
+            ]);
+
+            if(isset($data['description'])) $fields['description'] = $data['description'];
+
+            if (isset($data['parent_category'])) {
+                if ($data['parent_category'] === null || $data['parent_category'] === '' || empty($data['parent_category'])) {
+                    $fields['parent_category'] = null;
+                } elseif (is_numeric($data['parent_category'])) {
+                    $fields['parent_category'] = (int) $data['parent_category'];
+                } else {
+                    throw new Exception("Digite um valor válido para categoria principal");
+                }
+            } else {
+                $fields['parent_category'] = null;
+            }
+
+            $category = Category::update($fields);
 
             return $category;
         }catch(PDOException $e){

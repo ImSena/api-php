@@ -66,7 +66,7 @@ class Product extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "DELETE FROM PRODUCTS WHERE id_product = :id_product";
+        $sql = "UPDATE PRODUCTS SET status = 0 WHERE id_product = :id_product";
 
         $stmt = $pdo->prepare($sql);
 

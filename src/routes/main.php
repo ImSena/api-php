@@ -26,9 +26,6 @@ Route::group([
     //ativar conta
     Route::post("/$prefix/send-active-account",[AdminController::class, 'sendActiveAdmin']);
     Route::put("/$prefix/active-account", [AdminController::class, 'activeAccount']);
-
-    //GET DEVEM ESTAR NO FINAL
-    Route::get("/$prefix/{id}", [AdminController::class, 'register']);
 });
 
 Route::group([
@@ -37,7 +34,9 @@ Route::group([
 ],function($prefix, $middlewares){
     Route::post("/$prefix/create", [CategoriesController::class, 'createCategories'], $middlewares);
     Route::delete("/$prefix/delete", [CategoriesController::class, 'deleteCategory'], $middlewares);
-    Route::get("/$prefix/getParents", [CategoriesController::class, "getAllParent"], $middlewares);
+    Route::put("/$prefix/update-category", [CategoriesController::class, "updateCategory"], $middlewares);
+    Route::get("/$prefix/get-parents", [CategoriesController::class, "getAllParent"]);
+    Route::get("/$prefix/get-categories", [CategoriesController::class, "getCategories"]);
 });
 
 Route::group([

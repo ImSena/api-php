@@ -1,0 +1,880 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API do Projeto",
+    "description": "Documentação das rotas da API do projeto",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://192.168.15.19/api-php"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "paths": {
+    "/admin/register": {
+      "post": {
+        "summary": "Registrar Super Admin",
+        "operationId": "registerSuper",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "description": "Parâmetros para cadastro do Super Admin para registro",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Nome do Super Admin",
+                    "example": "Pedro Machado"
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "Email do Super Admin",
+                    "example": "pedro@exemplo.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Senha do Super Admin",
+                    "example": "senhaSegura123"
+                  },
+                  "permission": {
+                    "type": "string",
+                    "description": "Permissão do usuário (deve ser 'SUPER')",
+                    "example": "SUPER"
+                  }
+                },
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "permission"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Admin registrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Super Admin registrado com sucesso!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro na validação ou na solicitação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Erro ao registrar o Super Admin. Verifique os dados fornecidos."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/login": {
+      "post": {
+        "summary": "Login de Admin",
+        "operationId": "login",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "description": "Parâmetros para realizar login",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "Email para login",
+                    "example": "teste@escalaweb.com.br"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Senha do Super Admin",
+                    "example": "123"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Login realizado com sucesso!"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "Token de autenticação do Admin",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMjM0NTY3ODkwLCJleHBpcnkiOiJjYXNlX2FzX2V4cGVyaWVuY2UifQ.xm2WhtJxd6fOmlJ-2gHaFO9jjF"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de autenticação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Campos de email ou senha inválidos."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/forget-password": {
+      "post": {
+        "summary": "Esquecer Senha do Admin",
+        "operationId": "forgetAccess",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "description": "E-mail para recuperação de senha",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "E-mail do usuário para recuperação",
+                    "example": "teste@escalaweb.com.br"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "E-mail de recuperação enviado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Foi enviado um link de recuperação para o email."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro na recuperação de senha",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Usuário não encontrado."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/reset-password": {
+      "put": {
+        "summary": "Redefinir Senha do Admin",
+        "operationId": "resetPassword",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "description": "Dados para redefinir a senha do usuário",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "Token de autenticação recebido via e-mail",
+                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Nova senha do usuário",
+                    "example": "novaSenha123"
+                  }
+                },
+                "required": [
+                  "token",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Senha redefinida com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Senha redefinida com sucesso!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro na redefinição da senha",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token inválido ou expirado."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/send-active-account": {
+      "post": {
+        "summary": "Enviar Ativação de Conta",
+        "operationId": "sendActiveAdmin",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "description": "Reenviar e-mail de ativação de conta",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "Email para ativação de conta",
+                    "example": "teste@escalaweb.com.br"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "E-mail de ativação de conta enviado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Foi enviado um link de recuperação para o email."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Não foi possível reenviar email de ativação de conta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Usuário não encontrado."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/active-account": {
+      "put": {
+        "summary": "Ativar Conta do Admin",
+        "operationId": "activeAccount",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "description": "Dados para Ativação da Conta",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "Token de autenticação recebido via e-mail",
+                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conta Ativada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Sua conta foi ativada com sucesso."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro na recuperação de senha",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Não foi possível ativar a conta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/create": {
+      "post": {
+        "summary": "Criar Categoria",
+        "operationId": "createCategories",
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Dados para cadastrar categoria. Se 'parent_category' for null, será uma categoria principal.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Nome da Categoria",
+                    "example": "Geladeiras"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Descrição da Categoria",
+                    "example": "Eletrodomésticos para resfriamento"
+                  },
+                  "parent_category": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "ID da categoria pai. Se for null, será uma categoria principal.",
+                    "example": null
+                  }
+                },
+                "required": [
+                  "name",
+                  "description"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Categoria cadastrada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Categoria cadastrada com sucesso"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro ao cadastrar categoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Não foi possível cadastrar a categoria. Verifique os dados enviados."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado. Token de autenticação inválido ou ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token inválido ou não fornecido."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/get-parents": {
+      "get": {
+        "summary": "Obter Categorias principais",
+        "operationId": "getAllParent",
+        "tags": [
+          "Categories"
+        ],
+        "responses": {
+          "200": {
+            "description": "Categorias principais obtidas"
+          }
+        }
+      }
+    },
+    "/categories/get-categories": {
+      "get": {
+        "summary": "Obter Todas as Categorias",
+        "operationId": "getCategories",
+        "tags": [
+          "Categories"
+        ],
+        "responses": {
+          "200": {
+            "description": "Categorias obtidas com sucesso"
+          }
+        }
+      }
+    },
+    "/categories/update-category": {
+      "put": {
+        "summary": "Atualizar categoria",
+        "operationId": "updatedCategory",
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],"requestBody": {
+          "description": "Dados para atualizar categoria",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id_category": {
+                    "type": "id_category",
+                    "description": "Id da categoria ",
+                    "example": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Nome da Categoria",
+                    "example": "Geladeiras"
+                  },
+                  "description":{
+                    "type": "string",
+                    "description": "Descrição da Categoria",
+                    "example": "Eletrodomésticos para resfriamento"
+                  },
+                  "parent_category": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "ID da categoria pai. Se for null, será uma categoria principal.",
+                    "example": null
+                  }
+                },
+                "required": [
+                  "id_category",
+                  "name",
+                  "description"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Foi atualizado com sucesso"
+          },
+          "400":{
+            "description": "Não foi possível atualizar"
+          },
+          "401": {
+            "description": "Não autorizado. Token de autenticação inválido ou ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token inválido ou não fornecido."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/delete": {
+      "delete": {
+        "summary": "Deletar Categoria",
+        "operationId": "deleteCategory",
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Dados para excluir categoria",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id_category": {
+                    "type": "integer",
+                    "description": "Token de autenticação recebido via e-mail",
+                    "example": 1
+                  }
+                },
+                "required": [
+                  "id_category"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Categoria foi deletada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Categoria deletada com sucesso"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro ao deletar categoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Erro ao deletar categoria"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "summary": "Obter Todos os Produtos",
+        "operationId": "getAllProducts",
+        "tags": [
+          "Products"
+        ],
+        "responses": {
+          "200": {
+            "description": "Produtos obtidos com sucesso"
+          }
+        }
+      }
+    },
+    "/products/create": {
+      "post": {
+        "summary": "Criar Produto",
+        "operationId": "createProduct",
+        "tags": [
+          "Products"
+        ],
+        "responses": {
+          "200": {
+            "description": "Produto criado com sucesso"
+          }
+        }
+      }
+    },
+    "/products/{id}": {
+      "get": {
+        "summary": "Obter Produto Específico",
+        "operationId": "getProduct",
+        "tags": [
+          "Products"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do produto",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Produto obtido com sucesso"
+          }
+        }
+      }
+    },
+    "/products/delete": {
+      "delete": {
+        "summary": "Deletar Produto",
+        "operationId": "deleteProduct",
+        "tags": [
+          "Products"
+        ],
+        "responses": {
+          "200": {
+            "description": "Produto deletado com sucesso"
+          }
+        }
+      }
+    },
+    "/user/register": {
+      "post": {
+        "summary": "Registrar Usuário",
+        "operationId": "registerUser",
+        "tags": [
+          "User"
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuário registrado com sucesso"
+          }
+        }
+      }
+    },
+    "/user/login": {
+      "post": {
+        "summary": "Login de Usuário",
+        "operationId": "loginUser",
+        "tags": [
+          "User"
+        ],
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso"
+          }
+        }
+      }
+    }
+  }
+}

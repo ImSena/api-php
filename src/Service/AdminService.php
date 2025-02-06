@@ -9,6 +9,7 @@ use App\Model\Token;
 use App\Model\Token_admin;
 use App\Utils\SendEmail;
 use App\Utils\Validator;
+use DateTime;
 use Exception;
 use PDOException;
 
@@ -68,12 +69,12 @@ class AdminService
             $firstAccess = $admin['status'] == 'INACTIVE' ? true : false;
 
             if ($firstAccess) {
-                return[
-                    'message' => self::activeAccountLink($admin),
+                return [
+                    'message' => self::activeAccountLink($admin, true),
                     'firstAccess' => true,
                 ];
             } else {
-                $token = JwtAuth::renderToken($admin['name'], $admin['id_admin'], 'admin', $admin['status'], '2 hours');
+                $token = JwtAuth::renderToken($admin['name'], $admin['id_admin'], 'admin', $admin['status'], '7 days');
 
                 return [
                     'message' => 'Login efetuado com sucesso!',
@@ -90,7 +91,7 @@ class AdminService
         }
     }
 
-    public static function activeAccountLink(array $data)
+    public static function activeAccountLink(array $data, bool $sendEmail = false)
     {
         try {
 
@@ -100,12 +101,28 @@ class AdminService
 
             $admin = Admin::select($fields);
 
-            if(!$admin){
+            if (!$admin) {
                 throw new Exception("Usuário não encontrado!");
             }
 
-            if($admin['status'] == "ACTIVE"){
+            if ($admin['status'] == "ACTIVE") {
                 throw new Exception("Usuário já está ativo");
+            }
+
+            if ($sendEmail) {
+                $tokenStatus = Token_admin::selectLastToken($admin);
+
+                if ($tokenStatus) {
+                    $dateCreated = new DateTime($tokenStatus['created_at']);
+                    $dateNow = new DateTime('now');
+                    $diff = $dateCreated->diff($dateNow);
+
+                    if ($diff->i >= 30 || $diff->h > 0 || $diff->days > 0) {
+                        return "Por favor, valide sua conta para que possa usá-la";
+                    } else {
+                        return "Foi enviado um link de ativação para o seu email!";
+                    }
+                }
             }
 
             $token = JwtAuth::renderToken($admin['name'], $admin['id_admin'], $admin['permission'], $admin['status'], '30 minutes');

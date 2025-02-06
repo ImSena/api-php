@@ -41,6 +41,19 @@ class Token_admin extends Database
         return $stmt->fetch();
     }
 
+    public static function selectLastToken(array $data)
+    {
+        $pdo = self::getConnection();
+        $sql = "SELECT created_at FROM TOKENS_ADMINS WHERE id_admin = :id_admin AND status = 'ACTIVE'";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":id_admin", $data['id_admin'], PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
     public static function inactiveAll(string $id_admin, string $type)
     {
         $pdo = self::getConnection();

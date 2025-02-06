@@ -34,13 +34,46 @@ class Category extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "SELECT id_category, name FROM CATEGORIES WHERE parent_category_id IS NULL";
+        $sql = "SELECT id_category, name, description FROM CATEGORIES WHERE parent_category_id IS NULL";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->execute();
 
         return $stmt->fetchAll();
+    }
+
+    public static function getAllCategories()
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT id_category, name, parent_category_id, description FROM CATEGORIES WHERE parent_category_id IS NOT NULL";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+
+    public static function update(array $data){
+        $pdo = self::getConnection();
+
+        $sql = "UPDATE CATEGORIES SET parent_category_id = :parent_category_id, name = :name, description = :description WHERE id_category = :id";
+
+        $stmt = $pdo->prepare($sql);
+
+        $parentCategory = (!empty($data['parent_category']) && is_numeric($data['parent_category'])) ? (int) $data['parent_category'] : null;
+
+        $stmt->bindParam(":id", $data['id_category'], PDO::PARAM_INT);
+        $stmt->bindValue(":parent_category_id", $parentCategory, is_null($parentCategory) ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
+        $stmt->bindParam(":description", $data['description'], PDO::PARAM_STR);
+
+        $stmt->execute();
+
+        return $stmt->rowCount();
     }
 
     public static function delete(array $data)
