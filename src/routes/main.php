@@ -7,9 +7,10 @@ use App\Controllers\Admin\AdminController;
 use App\Controllers\CategoriesController;
 use App\Controllers\ProductController;
 use App\Controllers\UserController;
+use App\Controllers\HomeController;
 
 
-Route::get('/', [UserController::class, 'teste']);
+Route::get('/', [HomeController::class, 'index']);
 
 Route::group([
     'prefix' => 'admin',
@@ -26,6 +27,19 @@ Route::group([
     //ativar conta
     Route::post("/$prefix/send-active-account",[AdminController::class, 'sendActiveAdmin']);
     Route::put("/$prefix/active-account", [AdminController::class, 'activeAccount']);
+});
+
+Route::group([
+    'prefix' => 'user',
+    'middlewares' => [AuthUser::class]
+], function($prefix, $middlewares){
+    Route::post("/$prefix/register", [UserController::class, 'register']);
+    Route::post("/$prefix/login", [UserController::class, 'login']);
+    Route::post("/$prefix/forget-password", [UserController::class, 'forgetAccess']);
+    Route::put("/$prefix/reset-password", [UserController::class, 'resetPassword']);
+
+    Route::post("/$prefix/send-active-account", [UserController::class, 'sendActiveUser']);
+    Route::put("/$prefix/active-account", [UserController::class, 'activeAccount']);
 });
 
 Route::group([
@@ -47,14 +61,6 @@ Route::group([
     Route::post("/$prefix/create", [ProductController::class, 'create'], $middlewares);
     Route::delete("/$prefix", [ProductController::class, 'delete'] , $middlewares);
     Route::get("/$prefix/{id}", [ProductController::class, 'getProduct']);
-});
-
-Route::group([
-    'prefix' => 'user',
-    'middlewares' => [AuthUser::class]
-], function($prefix, $middlewares){
-    Route::post("/$prefix/register", [UserController::class, 'register']);
-    Route::post("/$prefix/login", [UserController::class, 'login']);
 });
 
 

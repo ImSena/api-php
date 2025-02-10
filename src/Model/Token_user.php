@@ -40,22 +40,34 @@ class Token_user extends Database
 
         return $stmt->fetch();
     }
+    public static function selectLastToken(array $data)
+    {
+        $pdo = self::getConnection();
+        $sql = "SELECT created_at FROM TOKENS_USERS WHERE id_user = :id_user AND status = 'ACTIVE'";
 
-    public static function inactiveAll(string $id_user)
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":id_user", $data['id_user'], PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
+    public static function inactiveAll(string $id_user, string $type)
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE TOKENS_USERS SET status = 'INACTIVE' WHERE id_user = :id_user";
+        $sql = "UPDATE TOKENS_USERS SET status = 'INACTIVE' WHERE id_user = :id_user AND type = :type";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(":id_user", $id_user, PDO::PARAM_INT);
+        $stmt->bindParam(":type", $type, PDO::PARAM_STR);
 
         $stmt->execute();
 
         return $stmt->rowCount() > 0;
     }
-
     public static function inactiveToken(string $token)
     {
         $pdo = self::getConnection();

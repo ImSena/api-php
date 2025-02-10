@@ -852,12 +852,170 @@
       "post": {
         "summary": "Registrar Usuário",
         "operationId": "registerUser",
-        "tags": [
-          "User"
-        ],
+        "tags": ["User"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "email", "password", "type", "person", "address", "phone"],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "Escala Web"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "suporte3@escalaweb.com.br"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "123456"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["NATURAL", "LEGAL"],
+                    "example": "NATURAL"
+                  },
+                  "person": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "required": ["cpf", "dt_birth", "gender"],
+                        "properties": {
+                          "cpf": {
+                            "type": "string",
+                            "example": "84338578009"
+                          },
+                          "dt_birth": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2000-02-01"
+                          },
+                          "gender": {
+                            "type": "string",
+                            "enum": ["H", "M", "O", "N/D"],
+                            "example": "H"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": ["cnpj", "corporate_name", "trade_name", "state_registration"],
+                        "properties": {
+                          "cnpj": {
+                            "type": "string",
+                            "example": "12345678000195"
+                          },
+                          "corporate_name": {
+                            "type": "string",
+                            "example": "Empresa XYZ Ltda"
+                          },
+                          "trade_name": {
+                            "type": "string",
+                            "example": "XYZ Comércio"
+                          },
+                          "state_registration": {
+                            "type": "string",
+                            "example": "123456789"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "address": {
+                    "type": "object",
+                    "required": ["public_area", "number", "district", "city", "state", "zip_code"],
+                    "properties": {
+                      "public_area": {
+                        "type": "string",
+                        "example": "Rua Beijamin Constant"
+                      },
+                      "number": {
+                        "type": "string",
+                        "example": "796"
+                      },
+                      "district": {
+                        "type": "string",
+                        "example": "Centro"
+                      },
+                      "city": {
+                        "type": "string",
+                        "example": "Suzano"
+                      },
+                      "state": {
+                        "type": "string",
+                        "example": "SP"
+                      },
+                      "zip_code": {
+                        "type": "string",
+                        "example": "06598745"
+                      }
+                    }
+                  },
+                  "phone": {
+                    "type": "object",
+                    "required": ["type", "number"],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["WHATSAPP", "CELLPHONE", "BUSINESS", "PHONE"],
+                        "example": "WHATSAPP"
+                      },
+                      "number": {
+                        "type": "string",
+                        "example": "11987456321"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Usuário registrado com sucesso"
+            "description": "Conta criada com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Conta criada com sucesso."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro na validação ou na solicitação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Erro ao registrar a conta. Verifique os dados fornecidos."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

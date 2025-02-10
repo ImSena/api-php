@@ -184,7 +184,8 @@ class AdminService
             $info_user = [
                 'name' => $admin['name'],
                 'email' => $admin['email'],
-                'token' => $token
+                'token' => $token,
+                'type' => 'FORGET'
             ];
 
             $fields['token'] = $token;
