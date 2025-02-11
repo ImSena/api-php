@@ -121,7 +121,7 @@ class User extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function login(array $data)
+    public static function select(array $data)
     {
         $pdo = self::getConnection();
 

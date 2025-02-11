@@ -28,12 +28,11 @@ class UserService{
 
             $person = $data['person'];
             if($fields['type'] == "LEGAL"){
-
                 $fields['person'] = Validator::validateLegalPerson([
                     "cnpj" => $person['cnpj'] ?? '',
                     "corporate_name" => $person['corporate_name'] ?? '',
                     "trade_name" => $person['trade_name'] ?? '',
-                    "state_registration" => $person['state_registration'] ?? ''
+                    "state_registration" => $person['state_registration'] ?? 'ISENTO'
                 ]);
             }else{
                 $fields['person'] = Validator::validateNaturalPerson([
@@ -60,6 +59,8 @@ class UserService{
                 "number" => $phone['number'] ?? ''
             ]);
 
+            self::isUserExists($fields);
+
             $user = User::create($fields);
 
             if(!$user){
@@ -71,6 +72,42 @@ class UserService{
             return ['error' => DatabaseErrorHelpers::error($e)];
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
+        }
+    }
+
+    private static function isUserExists(array $user){
+        try{
+
+            $fields = [];
+
+            $fields['login'] = $user['email'];
+
+            $userModel = User::select($fields);
+
+            if($userModel){
+                throw new Exception("Usuário já cadastrado! Realize seu login");
+            }
+
+            switch($user['type']){
+                case 'LEGAL':
+                    $fields['login'] = $user['person']['cnpj'];
+                break;
+                case 'NATURAL':
+                    $fields['login'] = $user['person']['cpf'];
+                break;
+                default:
+                    throw new Exception("Não foi possível criar a conta, pois verificação de conta falhou. Tente novamente mais tarde");
+            }
+
+            $userModel = User::select($fields);
+
+            if($userModel){
+                throw new Exception("Usuário já cadastrado! Realize seu login");
+            }
+        }catch(PDOException $e){
+            throw new Exception($e->getMessage());
+        }catch(Exception $e){
+            throw new Exception($e->getMessage());
         }
     }
 
@@ -93,11 +130,11 @@ class UserService{
                     $fields['login'] = Validator::validateCPF($fields['login']);
                 break;
                 case "CNPJ":
-                    $fields['login'] = Validator::validateCNPJ($fields['cnpj']);
+                    $fields['login'] = Validator::validateCNPJ($fields['login']);
                 break;
             }
 
-            $user = User::login($fields);
+            $user = User::select($fields);
 
             if(!$user)
             {
@@ -113,7 +150,7 @@ class UserService{
 
             if($firstAccess){
                 return [
-                    "message" => true, //self::activeAccountLink($user, true),
+                    "message" => self::activeAccountLink($fields, true),
                     "firstAccess" => true
                 ];
             }else{
@@ -121,6 +158,7 @@ class UserService{
                 return [
                     "message" => "login efetuado com sucesso!",
                     "status" => $user['status'],
+                    "name" => $user['username'],
                     "token" => $token,
                 ];
             }
@@ -139,10 +177,9 @@ class UserService{
 
             $fields = Validator::validate([
                 "login" => $data['login'] ?? '',
-                "type" => $data['type'] ?? '',
             ]);
 
-            $user = User::login($fields);
+            $user = User::select($fields);
 
             if (!$user) {
                 throw new Exception("Usuário não encontrado!");
@@ -168,7 +205,7 @@ class UserService{
                 }
             }
 
-            $token = JwtAuth::renderToken($user['name'], $user['id_user'], 'USER', $user['status'], '30 minutes');
+            $token = JwtAuth::renderToken($user['username'], $user['id_user'], 'USER', $user['status'], '30 minutes');
 
             $fields = [
                 'id_user' => $user['id_user'],
@@ -185,7 +222,7 @@ class UserService{
             }
 
             $info_user = [
-                'name' => $user['name'],
+                'name' => $user['username'],
                 'email' => $user['email'],
                 'token' => $token
             ];
@@ -208,13 +245,13 @@ class UserService{
 
         try {
             $fields = Validator::validate([
-                "email" => $data['email'] ?? ''
+                "login" => $data['login'] ?? ''
             ]);
 
-            $fields['email'] = Validator::validateEmail($fields['email']);
+            $fields['email'] = Validator::validateEmail($fields['login']);
             $fields['type'] = "FORGET";
 
-            $user = User::login($fields);
+            $user = User::select($fields);
 
             if (!$user) {
                 throw new Exception("Usuário não encontrado.");
@@ -222,10 +259,10 @@ class UserService{
 
             $fields['id_user'] = $user['id_user'];
 
-            $token = JwtAuth::renderToken($user['name'], $user['id_user'], 'USER', $user['status'], '15 minutes');
+            $token = JwtAuth::renderToken($user['username'], $user['id_user'], 'USER', $user['status'], '15 minutes');
 
             $info_user = [
-                'name' => $user['name'],
+                'name' => $user['username'],
                 'email' => $user['email'],
                 'token' => $token,
                 'type' => 'FORGET',

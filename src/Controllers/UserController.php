@@ -9,7 +9,6 @@ use App\Service\UserService;
 
 define('ROOT_PATH', realpath(__DIR__ .'/../..'));
 
-// No UserController.php:
 require_once ROOT_PATH . '/config.php';
 
 class UserController
@@ -58,6 +57,7 @@ class UserController
             "success" => true,
             "message" => $userService['message'],
             "status" => $userService['status'],
+            "name" => $userService['name'],
             "token" => $userService['token']
         ], 200);
     }

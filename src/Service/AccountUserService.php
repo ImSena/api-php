@@ -15,7 +15,6 @@ class AccountUserService
     public static function resetPassword(array $data)
     {
         try {
-
             $fields = Validator::validate([
                 "token" => $data['token'] ?? '',
                 "password" => $data['password'] ?? ''
@@ -25,8 +24,9 @@ class AccountUserService
 
             $token = JwtAuth::verifyToken($fields['token']);
 
-            if (is_array($token) || isset($token['error'])) {
-                throw new Exception($token['error']);
+            if (is_array($token) && isset($token['decoded']['error'])) {
+                Token_user::inactiveToken($data['token']);
+                throw new Exception($token['decoded']['error']);
             }
 
             $tokenModel = Token_user::select($data['token']);
@@ -34,8 +34,8 @@ class AccountUserService
             if (isset($tokenModel['status']) && $tokenModel['status'] == 'INACTIVE') {
                 throw new Exception("Não foi possível atualizar a senha, pois o link está expirado!");
             }
-            $user = User::updateAccess($fields, $token->id_user);
-            if (!$user) {
+            $admin = User::updateAccess($fields, $token['decoded']['id_user']);
+            if (!$admin) {
                 throw new Exception("Não foi possível atualizar a senha. Tente novamente mais tarde");
             }
             $tokenModel = Token_user::inactiveToken($data['token']);
