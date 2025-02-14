@@ -8,10 +8,11 @@ use App\Controllers\CategoriesController;
 use App\Controllers\ProductController;
 use App\Controllers\UserController;
 use App\Controllers\HomeController;
-
+use App\Controllers\MediaController;
 
 Route::get('/', [HomeController::class, 'index']);
 
+//admin
 Route::group([
     'prefix' => 'admin',
     'middlewares' => [AuthAdmin::class]
@@ -29,6 +30,7 @@ Route::group([
     Route::put("/$prefix/active-account", [AdminController::class, 'activeAccount']);
 });
 
+//user
 Route::group([
     'prefix' => 'user',
     'middlewares' => [AuthUser::class]
@@ -42,6 +44,7 @@ Route::group([
     Route::put("/$prefix/active-account", [UserController::class, 'activeAccount']);
 });
 
+//categories
 Route::group([
     "prefix" => "categories",
     'middlewares'=> [AuthAdmin::class]
@@ -53,6 +56,17 @@ Route::group([
     Route::get("/$prefix/get-categories", [CategoriesController::class, "getCategories"]);
 });
 
+//media
+
+Route::group([
+    "prefix" => "media",
+    "middlewares" => [AuthAdmin::class]
+], function($prefix, $middlewares){
+    Route::post("/$prefix/create-folder", [MediaController::class, "createFolder"], $middlewares);
+    // Route::get("/$prefix/get-folder/{id}", [MediaController::class], $middlewares);
+});
+
+//products
 Route::group([
     'prefix' => 'products',
     'middlewares' => [AuthAdmin::class]

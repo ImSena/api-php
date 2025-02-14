@@ -916,12 +916,12 @@
                           "gender": {
                             "type": "string",
                             "enum": [
-                              "H",
                               "M",
+                              "F",
                               "O",
-                              "N/D"
+                              "N/E"
                             ],
-                            "example": "H"
+                            "example": "M"
                           }
                         }
                       },
