@@ -46,6 +46,7 @@ class UserService{
             $fields['address'] = Validator::validateAddress([
                 "public_area" => $address['public_area'] ?? '',
                 "number" => $address['number'] ?? '',
+                "complement" => $address['complement'] ?? '',
                 "district" => $address['district'] ?? '',
                 "city" => $address['city'] ?? '',
                 "state" => $address['state'] ?? '',

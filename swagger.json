@@ -973,6 +973,10 @@
                         "type": "string",
                         "example": "796"
                       },
+                      "complement": {
+                        "type": "string",
+                        "example": "Casa"
+                      },
                       "district": {
                         "type": "string",
                         "example": "Centro"

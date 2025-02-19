@@ -86,13 +86,14 @@ class User extends Database
     {
         $pdo = $pdo ?? self::getConnection();
 
-        $sql = "INSERT INTO ADDRESSES (id_user, public_area, number, district, city, state, zip_code) VALUES (:id_user, :public_area, :number, :district, :city, :state, :zip_code)";
+        $sql = "INSERT INTO ADDRESSES (id_user, public_area, number, complement, district, city, state, zip_code) VALUES (:id_user, :public_area, :number, :complement,:district, :city, :state, :zip_code)";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(":id_user", $user_id, PDO::PARAM_INT);
         $stmt->bindParam(":public_area", $data['public_area'], PDO::PARAM_STR);
         $stmt->bindParam(":number", $data['number'], PDO::PARAM_STR);
+        $stmt->bindParam(":complement", $data['complement'], PDO::PARAM_STR);
         $stmt->bindParam(":district", $data['district'], PDO::PARAM_STR);
         $stmt->bindParam(":city", $data['district'], PDO::PARAM_STR);
         $stmt->bindParam(":state", $data['state'], PDO::PARAM_STR);
