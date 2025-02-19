@@ -13,40 +13,34 @@ class AuthAdmin
         $token = $request::getToken();
 
         if (!$token) {
-            $response::json([
-                'success' => false,
-                'message' => 'Acesso negado.'
-            ], 401);
-            return false;
+            return $this->denyAccess($response, 'Acesso negado.', 401);
         }
 
         $decoded = JwtAuth::verifyToken($token);
 
         if (isset($decoded['error'])) {
-            $response::json([
-                'success' => false,
-                'message' => $decoded['error']
-            ], 401);
-            return false;
-        }
-        if (isset($decoded['decoded']['rule']) && $decoded['decoded']['rule'] !== 'admin') {
-            $response::json([
-                'success' => false,
-                'message' => 'Acesso negado.'
-            ], 403);
-            return false;
+            return $this->denyAccess($response, $decoded['error'], 401);
         }
 
-        if (!isset($decoded['decoded']['status']) || !$decoded['decoded']['status']) {
-            $response::json([
-                'success' => false,
-                'message' => 'Admin precisa estar ativo!'
-            ], 401);
+        $data = $decoded['decoded'] ?? [];
 
-            return false;
+        if (($data['rule'] ?? '') !== 'admin') {
+            return $this->denyAccess($response, 'Acesso negado.', 403);
         }
 
+        if (empty($data['status']) || $data['status'] !== 'ACTIVE') {
+            return $this->denyAccess($response, 'Admin precisa estar ativo!', 401);
+        }
 
         return true;
+    }
+
+    private function denyAccess(Response $response, string $message, int $statusCode)
+    {
+        $response::json([
+            'success' => false,
+            'message' => $message
+        ], $statusCode);
+        return false;
     }
 }

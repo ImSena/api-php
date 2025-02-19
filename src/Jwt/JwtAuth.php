@@ -3,7 +3,7 @@
 namespace App\Jwt;
 
 use Exception;
-use Firebase\JWT\JWT as JWT;
+use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\SignatureInvalidException;
@@ -15,10 +15,9 @@ class JwtAuth
 {
     private static $secretKey = SECRET_KEY;
 
-    public static function renderToken(string $name, $id, string $rule, string $status ,string $expTime = '1 day'): string
+    public static function renderToken(string $name, $id, string $rule, string $status, string $expTime = '1 day'): string
     {
         $expTimeInSeconds = self::parseExpiration($expTime);
-
         $issuedAt = time();
         $expirationTime = $issuedAt + $expTimeInSeconds;
 
@@ -31,55 +30,38 @@ class JwtAuth
             'status' => $status
         ];
 
-        $jwt = JWT::encode($payload, self::$secretKey, 'HS256');
-
-        return $jwt;
+        return JWT::encode($payload, trim(self::$secretKey), 'HS256');
     }
 
     public static function verifyToken(string $token)
     {
         try {
-
-            $decoded = JWT::decode($token, new Key(self::$secretKey, 'HS256'));
-
-            return ['decoded' => (array) $decoded];
+            return ['decoded' => (array) JWT::decode($token, new Key(self::$secretKey, 'HS256'))];
         } catch (ExpiredException $e) {
-            return ['error' => 'Token expirado. '];
+            return ['error' => 'Token expirado.'];
         } catch (SignatureInvalidException $e) {
-            return ['error' => 'Assinatura inválida. '];
+            return ['error' => 'Assinatura inválida.'];
         } catch (BeforeValidException $e) {
-            return ['error' => "Token ainda não válido. "];
+            return ['error' => 'Token ainda não válido.'];
         } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
+            return ['error' => 'Erro ao processar token: ' . $e->getMessage()];
         }
     }
 
     private static function parseExpiration(string $expTime): int
     {
-        preg_match('/(\d+)\s*(\w+)/', $expTime, $matches);
+        if (preg_match('/(\d+)\s*(\w+)/', $expTime, $matches)) {
+            $value = (int) $matches[1];
+            $unit = strtolower($matches[2]);
 
-        if (empty($matches)) {
-            return 0;
+            return match ($unit) {
+                'second', 'seconds' => $value,
+                'minute', 'minutes' => $value * 60,
+                'hour', 'hours' => $value * 3600,
+                'day', 'days' => $value * 86400,
+                default => 0,
+            };
         }
-
-        $value = (int) $matches[1];
-        $unit = strtolower($matches[2]);
-
-        switch($unit){
-            case 'second':
-            case 'seconds':
-                return $value;
-            case 'minute':
-            case 'minutes':
-                return $value * 60;
-            case 'hour':
-            case 'hours': 
-                return $value * 3600;
-            case 'day':
-            case 'days':
-                return $value * 86400;
-            default: 
-                return 0;
-        }
+        return 0;
     }
 }

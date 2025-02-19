@@ -12,7 +12,7 @@ class Validator
         $errors = [];
 
         foreach ($fields as $field => $value) {
-            if (empty(trim($value))) {
+            if (is_string($value) && trim($value) === "") {
                 $errors[] = $field;
             }
         }
