@@ -49,7 +49,8 @@ class UserController
             return $response::json([
                 "success" => true,
                 "message" => $userService['message'],
-                "firstAccess" => true
+                "firstAccess" => true,
+                "type" => "USER",
             ], 200);
         }
 
@@ -58,7 +59,8 @@ class UserController
             "message" => $userService['message'],
             "status" => $userService['status'],
             "name" => $userService['name'],
-            "token" => $userService['token']
+            "token" => $userService['token'],
+            "rule" => "USER"
         ], 200);
     }
 
@@ -77,7 +79,8 @@ class UserController
 
         $response::json([
             'success' => true,
-            'message' => $userService
+            'message' => $userService,
+            "type" => "USER"
         ], 200);
     }
 
@@ -96,7 +99,8 @@ class UserController
 
         $response::json([
             'success' => true,
-            'message' => $accountService
+            'message' => $accountService,
+            "type" => "USER"
         ], 200);
     }
 
@@ -115,7 +119,8 @@ class UserController
 
         $response::json([
             'sucess' => true,
-            'message' => $userService
+            'message' => $userService,
+            "type" => "USER"
         ], 200);
     }
 
@@ -134,7 +139,8 @@ class UserController
 
         $response::json([
             'success' => true,
-            'message' => $userAccount
+            'message' => $userAccount,
+            "type" => "USER"
         ], 200);
     }
 }

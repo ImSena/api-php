@@ -46,12 +46,15 @@ class UserService{
             $fields['address'] = Validator::validateAddress([
                 "public_area" => $address['public_area'] ?? '',
                 "number" => $address['number'] ?? '',
-                "complement" => $address['complement'] ?? '',
                 "district" => $address['district'] ?? '',
                 "city" => $address['city'] ?? '',
                 "state" => $address['state'] ?? '',
                 "zip_code" => $address['zip_code'] ?? ''
             ]);
+
+            if(isset($data['address']['complement'])){
+                $fields["complement"] = $address['complement'];
+            }
 
             $phone = $data['phone'];
 

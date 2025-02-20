@@ -140,8 +140,9 @@ class MediaController{
     public function uploadFile(Request $request, Response $response)
     {
         $body = $request::body();
+        $files = $request::files();
 
-        $MediaService = MediaService::uploadFile($body);
+        $MediaService = MediaService::uploadFile($body, $files);
 
         if(isset($MediaService['error'])){
             return $response::json([

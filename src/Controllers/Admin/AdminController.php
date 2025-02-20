@@ -66,6 +66,7 @@ class AdminController
                 'success' => true,
                 'message' => $adminService['message'],
                 'firstAccess' => true,
+                "type" => "ADMIN"
             ], 200);
         }
 
@@ -88,13 +89,14 @@ class AdminController
         if(isset($adminService['error'])){
             return $response::json([
                 'success' => false,
-                'message' => $adminService['error']
+                'message' => $adminService['error'],
             ], 400);
         }
 
         $response::json([
             'success' => true,
-            'message' => $adminService
+            'message' => $adminService,
+            "type" => "ADMIN"
         ], 200);
     }
 
@@ -113,7 +115,8 @@ class AdminController
 
         $response::json([
             'success' => true,
-            'message' => $accountService
+            'message' => $accountService,
+            "type" => "ADMIN"
         ], 200);
     }
 
@@ -132,7 +135,8 @@ class AdminController
 
         $response::json([
             'sucess' => true,
-            'message' => $adminService
+            'message' => $adminService,
+            "type" => "ADMIN"
         ], 200);
     }
 
@@ -151,7 +155,8 @@ class AdminController
 
         $response::json([
             'success' => true,
-            'message' => $adminAccount
+            'message' => $adminAccount,
+            "type" => "ADMIN"
         ], 200);
     }
 }

@@ -50,15 +50,28 @@ class Media extends Database
         $pdo = self::getConnection();
 
         $sql = "
-            SELECT f.id_folder AS id, f.folder_name AS name, 'folder' AS type, NULL AS file_type, NULL AS file_path
+           SELECT 
+                f.id_folder AS id, 
+                f.folder_name AS name, 
+                'folder' AS type, 
+                NULL AS file_type
             FROM FOLDERS f
-            WHERE " . ($data['parent_id'] === 'UPLOADS' ? "f.parent_id IS NULL" : "f.parent_id = :parent_id") . " 
-            AND f.is_trash = :is_trash
+            WHERE 
+                (:parent_id = 'UPLOADS' AND f.parent_id IS NULL) 
+                OR (f.parent_id = :parent_id AND f.is_trash = :is_trash)
+
             UNION ALL
-            SELECT m.id_media AS id, m.file_name AS name, 'file' AS type, m.file_type, m.file_path
+
+            SELECT 
+                m.id_media AS id, 
+                m.file_name AS name, 
+                'file' AS type, 
+                m.file_type
             FROM MEDIA m
-            WHERE " . ($data['parent_id'] === 'UPLOADS' ? "m.id_folder IN (SELECT id_folder FROM FOLDERS WHERE parent_id IS NULL)" : "m.id_folder = :parent_id") . " 
-            AND m.is_trash = :is_trash
+            WHERE 
+                (:parent_id = 'UPLOADS' AND m.id_folder IN (SELECT id_folder FROM FOLDERS WHERE parent_id IS NULL)) 
+                OR (m.id_folder = :parent_id AND m.is_trash = :is_trash);
+
         ";
 
         $stmt = $pdo->prepare($sql);
@@ -208,21 +221,26 @@ class Media extends Database
     }
 
     //Files
-    public static function createFiles(array $data): bool
+    public static function createFiles(int $id_folder, array $files, PDO $pdo): bool
     {
-        $pdo = self::getConnection();
-
-        $sql = "INSERT INTO MEDIA (file_name, id_folder) VALUES (:file_name, :id_folder)";
-
+        $sql = "INSERT INTO MEDIA (file_name, alias, file_type, file_size, id_folder) 
+                VALUES (:file_name, :alias, :file_type, :file_size, :id_folder)";
         $stmt = $pdo->prepare($sql);
+        
+        foreach ($files as $file) {
+            $stmt->bindValue(":file_name", $file['name_date'], PDO::PARAM_STR);
+            $stmt->bindValue(":alias", $file['unique_name'], PDO::PARAM_STR);
+            $stmt->bindValue(":file_type", $file['type'], PDO::PARAM_STR);
+            $stmt->bindValue(":file_size", $file['size'], PDO::PARAM_INT);
+            $stmt->bindValue(":id_folder", $id_folder, PDO::PARAM_INT);
 
-        $stmt->bindParam(":file_name", $data['file_name'], PDO::PARAM_STR);
-        $stmt->bindParam(":id_folder", $data['id_folder'], PDO::PARAM_INT);
-
-        $stmt->execute();
+            $stmt->execute();
+        }
 
         return $stmt->rowCount() > 0;
     }
+
+
 
     public static function editFile(array $data): bool
     {

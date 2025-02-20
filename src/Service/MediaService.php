@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Media;
 use App\Utils\Validator;
+use App\Utils\ValidatorFiles;
 use Exception;
 use PDOException;
 use RecursiveDirectoryIterator;
@@ -82,11 +83,11 @@ class MediaService
 
             $fields['id_folder'] = intval($fields['id_folder']);
 
-            if($fields['id_folder'] == 1 || $fields['id_folder'] < 1){
+            if ($fields['id_folder'] == 1 || $fields['id_folder'] < 1) {
                 throw new Exception("Não foi possível editar o nome da pasta.");
             }
             $newPath = PATH . Media::getPathToFolder($fields['id_folder']) . '/' . $fields['folder_name'];
-            
+
             $oldPath = PATH . Media::getPathToFolder($fields['id_folder'], false);
 
             $Folder = Media::editFolder($fields, $pdo);
@@ -124,7 +125,7 @@ class MediaService
 
             $fields = array_map('intval', $fields);
 
-            if($fields['id_folder'] == 1 || $fields['id_folder'] < 1){
+            if ($fields['id_folder'] == 1 || $fields['id_folder'] < 1) {
                 throw new Exception("Não foi possível mover a pasta.");
             }
 
@@ -143,18 +144,7 @@ class MediaService
                 }
             }
 
-            $files = scandir($oldPath);
-            foreach ($files as $file) {
-                if ($file != '.' && $file != '..') {
-                    if (!rename($oldPath . '/' . $file, $newPath . '/' . $file)) {
-                        throw new Exception("Erro ao mover o arquivo: " . $file);
-                    }
-                }
-            }
-
-            // if (!rmdir($oldPath)) {
-            //     throw new Exception("Erro ao remover a pasta antiga no servidor.");
-            // }
+            self::moveAll($oldPath, $newPath);
 
             $pdo->commit();
             return "Pasta movida com sucesso!";
@@ -164,6 +154,29 @@ class MediaService
         } catch (Exception $e) {
             $pdo->rollBack();
             return ['error' => $e->getMessage()];
+        }
+    }
+
+    private static function moveAll(string $source, string $destination): void
+    {
+        $files = scandir($source);
+        foreach ($files as $file) {
+            if ($file != '.' && $file != '..') {
+                $srcPath = $source . '/' . $file;
+                $destPath = $destination . '/' . $file;
+
+                if (is_dir($srcPath)) {
+                    if (!is_dir($destPath)) {
+                        mkdir($destPath, 0777, true);
+                    }
+                    self::moveAll($srcPath, $destPath);
+                } else {
+                    // Mover arquivos normais
+                    if (!rename($srcPath, $destPath)) {
+                        throw new Exception("Erro ao mover o arquivo: " . $file);
+                    }
+                }
+            }
         }
     }
     public static function moveFolderToTrash(array $data): array | string
@@ -176,7 +189,7 @@ class MediaService
 
             $fields['id_folder'] = intval($fields['id_folder']);
 
-            if($fields['id_folder'] == 1 || $fields['id_folder'] < 1){
+            if ($fields['id_folder'] == 1 || $fields['id_folder'] < 1) {
                 throw new Exception("Não foi possível mover a pasta para a lixeira.");
             }
 
@@ -203,7 +216,7 @@ class MediaService
 
             $fields['id_folder'] = intval($fields['id_folder']);
 
-            if($fields['id_folder'] == 1 || $fields['id_folder'] < 1){
+            if ($fields['id_folder'] == 1 || $fields['id_folder'] < 1) {
                 throw new Exception("Não foi possível restaurar a pasta.");
             }
 
@@ -233,19 +246,19 @@ class MediaService
 
             $fields['id_folder'] = intval($fields['id_folder']);
 
-            if($fields['id_folder'] == 1 || $fields['id_folder'] < 1){
+            if ($fields['id_folder'] == 1 || $fields['id_folder'] < 1) {
                 throw new Exception("Não foi possível deletar a pasta.");
             }
 
             $Folder = Media::deleteFolder($fields, $pdo);
-            
+
             if (!$Folder) {
                 throw new Exception("Não foi possível deletar a pasta.");
             }
-            
+
             $folderPath = PATH . Media::getPathToFolder($fields['id_folder'], false);
 
-            if($folderPath == "/uploads"){
+            if ($folderPath == "/uploads") {
                 throw new Exception("Não foi possível deletar a pastaaa.");
             }
 
@@ -278,30 +291,60 @@ class MediaService
     }
 
     // Files
-    public static function uploadFile(array $data): array | string
+    public static function uploadFile(array $data, array $files): array | string
     {
         $pdo = Media::getConnectionDatabase();
         try {
+            $pdo->beginTransaction();
+
             $fields = Validator::validate([
-                "file_name" => strtolower($data['file_name']) ?? '',
-                "parent_id" => $data['parent_id'] ?? '',
-                "file" => $data['file'] ?? '',
+                "id_folder" => $data['id_folder'] ?? '',
             ]);
 
-            $File = Media::createFiles($fields);
+            $files = ValidatorFiles::validate(["files" => $files ?? '']);
+
+            $files['files'] = self::reformatFilesArray($files['files']);
+
+            $path_folder = PATH . Media::getPathToFolder($fields['id_folder'], false);
+
+            if (!is_dir($path_folder)) {
+                throw new Exception("Pasta não existe no servidor.");
+            }
+
+            $existingFiles = [];
+
+            foreach ($files['files'] as &$file) {
+                usleep(1);
+                $file['unique_name'] = self::generateUniqueFilename($path_folder, $file['name'], $existingFiles);
+                $file['name_date'] = round(microtime(true) * 1000) . rand(1000, 9999);
+                $existingFiles[] = $file['unique_name'];
+            }
+
+            $File = Media::createFiles($fields['id_folder'], $files['files'], $pdo);
 
             if (!$File) {
                 throw new Exception("Não foi possível criar o arquivo no banco de dados.");
             }
 
-            $path = PATH . Media::getFullFolderPath($data['parent_id']) . '/' . $data['file_name'];
+            
+            foreach ($files['files'] as $key => $filez) {
+                if (!file_exists($filez['tmp_name'])) {
+                    throw new Exception("O arquivo temporário não existe: " . $filez['tmp_name']);
+                }
 
-            if (!is_dir($path) && !mkdir($path, 0777, true)) {
-                throw new Exception("Erro ao criar o arquivo no servidor.");
+                $extension = pathinfo($filez['name'], PATHINFO_EXTENSION);
+                $targetPath = $path_folder . DIRECTORY_SEPARATOR . $filez['name_date'] . '.' . $extension;
+
+                if (!move_uploaded_file($filez['tmp_name'], $targetPath)) {
+                    throw new Exception("Erro ao mover o arquivo para o servidor: " . $filez['tmp_name']);
+                }
+
+                if (!file_exists($targetPath)) {
+                    throw new Exception("O arquivo não foi carregado corretamente.");
+                }
             }
 
             $pdo->commit();
-
             return "Arquivo criado com sucesso!";
         } catch (PDOException $e) {
             $pdo->rollBack();
@@ -311,7 +354,46 @@ class MediaService
             return ['error' => $e->getMessage()];
         }
     }
+    private static function generateUniqueFilename(string $directory, string $filename, array $existingFiles): string
+    {
+        $fileInfo = pathinfo($filename);
+        $baseName = preg_replace("/[^a-zA-Z0-9-_]/", "", $fileInfo['filename']); // Remove caracteres inválidos
+        $extension = isset($fileInfo['extension']) ? '.' . $fileInfo['extension'] : '';
 
+        $newFilename = $baseName . $extension;
+
+        if (!file_exists($directory . DIRECTORY_SEPARATOR . $newFilename) && !in_array($newFilename, $existingFiles)) {
+            return $newFilename;
+        }
+
+        $counter = 1;
+        while (file_exists($directory . DIRECTORY_SEPARATOR . $newFilename) || in_array($newFilename, $existingFiles)) {
+            $newFilename = $baseName . "_" . $counter . $extension;
+            $counter++;
+        }
+
+        return $newFilename;
+    }
+    private static function reformatFilesArray(array $files): array
+    {
+        $reformatted = [];
+        foreach ($files as $file) {
+            if (is_array($file['name'])) {
+                foreach ($file['name'] as $index => $name) {
+                    $reformatted[] = [
+                        'name' => $name,
+                        'type' => $file['type'][$index],
+                        'tmp_name' => $file['tmp_name'][$index],
+                        'error' => $file['error'][$index],
+                        'size' => $file['size'][$index]
+                    ];
+                }
+            } else {
+                $reformatted[] = $file;
+            }
+        }
+        return $reformatted;
+    }
     public static function moveFile(array $data): array | string
     {
         try {

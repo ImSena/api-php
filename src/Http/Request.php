@@ -49,24 +49,22 @@ class Request
         }
     }
 
-    public static function files():array
+    public static function files(): array
     {
-
         $files = [];
-
-
-        foreach($_FILES as $key => $file){
-            if(!is_array($file['name'])){
-                $files[$key] = [
+    
+        foreach ($_FILES as $key => $file) {
+            if (!is_array($file['name'])) {
+                $files[] = [
                     'name' => $file['name'],
                     'type' => $file['type'],
                     'tmp_name' => $file['tmp_name'],
                     'error' => $file['error'],
                     'size' => $file['size']
                 ];
-            }else{
-                foreach($file['name'] as $index => $name){
-                    $files[$key][$index] = [
+            } else {
+                foreach ($file['name'] as $index => $name) {
+                    $files[] = [
                         'name' => $name,
                         'type' => $file['type'][$index],
                         'tmp_name' => $file['tmp_name'][$index],
@@ -76,7 +74,8 @@ class Request
                 }
             }
         }
-
-       return $files;
+    
+        return $files;
     }
+    
 }
