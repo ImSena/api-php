@@ -96,7 +96,6 @@ class Media extends Database
 
         return $results;
     }
-
     public static function editFolder(array $data, PDO $pdo): bool
     {
         $sql = "UPDATE FOLDERS SET folder_name = :folder_name WHERE id_folder = :id_folder";
@@ -110,7 +109,6 @@ class Media extends Database
 
         return $stmt->rowCount() > 0;
     }
-
     public static function moveFolder(array $data, $pdo): bool
     {
         $sql = "UPDATE FOLDERS SET parent_id = :parent_id WHERE id_folder = :id_folder";
@@ -124,7 +122,6 @@ class Media extends Database
 
         return $stmt->rowCount() > 0;
     }
-
     private static function setFolderTrashStatus(int $id_folder, bool $is_trash): bool
     {
         $pdo = self::getConnection();
@@ -137,12 +134,10 @@ class Media extends Database
 
         return $stmt->rowCount() > 0;
     }
-
     public static function moveFolderToTrash(array $data): bool
     {
         return self::setFolderTrashStatus($data['id_folder'], true);
     }
-
     public static function restoreFolder(array $data): bool
     {
         return self::setFolderTrashStatus($data['id_folder'], false);
@@ -240,28 +235,72 @@ class Media extends Database
         return $stmt->rowCount() > 0;
     }
 
-
-
     public static function editFile(array $data): bool
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE MEDIA SET file_name = :file_name WHERE id_media = :id_media";
+        $sql = "UPDATE MEDIA SET alias = :file_name WHERE id_media = :id_media";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(":file_name", $data['file_name'], PDO::PARAM_STR);
-        $stmt->bindParam(":id_media", $data['id_media'], PDO::PARAM_INT);
+        $stmt->bindParam(":id_media", $data['id_file'], PDO::PARAM_INT);
 
         $stmt->execute();
 
         return $stmt->rowCount() > 0;
     }
 
-    public static function moveFile(array $data): bool
+    public static function getExtensionAndName(int $id_file)
     {
         $pdo = self::getConnection();
 
+        $sql = "SELECT file_type, alias FROM media WHERE id_media = :id_media";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":id_media", $id_file, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->fetch();    
+
+    }
+
+    public static function fileExists(string $alias): bool
+    {
+        $pdo = self::getConnection();
+
+    
+        $sql = "SELECT COUNT(*) FROM MEDIA WHERE alias = :alias";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":alias", $alias, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetchColumn() > 0;
+    }
+
+    public static function getPathToFile(array $data): string
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT m.file_name, f.parent_id, f.id_folder, m.file_type FROM MEDIA m
+                JOIN FOLDERS f ON m.id_folder = f.id_folder
+                WHERE m.id_media = :id_media";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id_media", $data['id_media'], PDO::PARAM_INT);
+        $stmt->execute();
+
+        $result = $stmt->fetch();
+
+        $folderPath = self::getPathToFolder($result['id_folder'], false);
+        $filePath = $folderPath . '/' . $result['file_name'];
+
+        return $filePath;
+    }
+    public static function moveFile(array $data, PDO $pdo): bool
+    {
         $sql = "UPDATE MEDIA SET id_folder = :id_folder WHERE id_media = :id_media";
 
         $stmt = $pdo->prepare($sql);
@@ -273,42 +312,34 @@ class Media extends Database
 
         return $stmt->rowCount() > 0;
     }
-
-    public static function moveFileToTrash(array $data): bool
+    private static function setStatusTrashFile(int $id_media, bool $is_trash)
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE MEDIA SET is_trash = TRUE WHERE id_media = :id_media";
+        $sql = "UPDATE MEDIA SET is_trash = :is_trash WHERE id_media = :id_media";
 
         $stmt = $pdo->prepare($sql);
 
-        $stmt->bindParam(":id_media", $data['id_media'], PDO::PARAM_INT);
+        $stmt->bindParam(":is_trash",$is_trash, PDO::PARAM_BOOL);
+        $stmt->bindParam(":id_media", $id_media, PDO::PARAM_INT);
 
         $stmt->execute();
 
         return $stmt->rowCount() > 0;
+    }
+    public static function moveFileToTrash(array $data): bool
+    {
+        return self::setStatusTrashFile($data['id_media'], true);
     }
 
     public static function restoreFile(array $data): bool
     {
-        $pdo = self::getConnection();
-
-        $sql = "UPDATE MEDIA SET is_trash = FALSE WHERE id_media = :id_media";
-
-        $stmt = $pdo->prepare($sql);
-
-        $stmt->bindParam(":id_media", $data['id_media'], PDO::PARAM_INT);
-
-        $stmt->execute();
-
-        return $stmt->rowCount() > 0;
+        return self::setStatusTrashFile($data['id_media'], false);
     }
 
-    public static function deleteFile(array $data): bool
+    public static function deleteFile(array $data, PDO $pdo): bool
     {
-        $pdo = self::getConnection();
-
-        $sql = "DELETE FROM MEDIA WHERE id_media = :id_media";
+        $sql = "DELETE FROM MEDIA WHERE id_media = :id_media AND is_trash = TRUE";
 
         $stmt = $pdo->prepare($sql);
 

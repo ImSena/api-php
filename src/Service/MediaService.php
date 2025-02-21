@@ -156,7 +156,6 @@ class MediaService
             return ['error' => $e->getMessage()];
         }
     }
-
     private static function moveAll(string $source, string $destination): void
     {
         $files = scandir($source);
@@ -289,7 +288,6 @@ class MediaService
             return ['error' => $e->getMessage()];
         }
     }
-
     // Files
     public static function uploadFile(array $data, array $files): array | string
     {
@@ -326,7 +324,7 @@ class MediaService
                 throw new Exception("Não foi possível criar o arquivo no banco de dados.");
             }
 
-            
+
             foreach ($files['files'] as $key => $filez) {
                 if (!file_exists($filez['tmp_name'])) {
                     throw new Exception("O arquivo temporário não existe: " . $filez['tmp_name']);
@@ -394,21 +392,120 @@ class MediaService
         }
         return $reformatted;
     }
-    public static function moveFile(array $data): array | string
+    public static function editFile(array $data): array | string
     {
         try {
-
             $fields = Validator::validate([
                 "id_file" => $data['id_file'] ?? '',
-                "parent_id" => $data['parent_id'] ?? '',
+                "file_name" => $data['file_name'] ?? '',
             ]);
 
-            $File = Media::moveFile($fields);
+            $info_file = Media::getExtensionAndName($fields['id_file']);
+
+            if (!$info_file) {
+                throw new Exception("Não foi possível editar o arquivo");
+            }
+
+            $extension = self::getExtension($info_file['file_type']);
+            $baseName = pathinfo($fields['file_name'], PATHINFO_FILENAME);
+            $newName = $baseName;
+
+            if (preg_match('/\((\d+)\)$/', $baseName, $matches)) {
+                $baseName = preg_replace('/\(\d+\)$/', '', $baseName);
+                $counter = (int) $matches[1];
+            } else {
+                $counter = 1;
+            }
+
+            while (Media::fileExists($newName . '.' . $extension)) {
+                $newName = $baseName . "(" . $counter . ")";
+                $counter++;
+            }
+
+            $fields['file_name'] = $newName . '.' . $extension;
+
+            $File = Media::editFile($fields);
+
+            if (!$File) {
+                throw new Exception("Não foi possível editar o arquivo.");
+            }
+
+            return "Arquivo editado com sucesso!";
+        } catch (PDOException $e) {
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+    private static function getExtension($file_type):string
+    {
+        $allowedTypes = [
+            'image/jpg' => 'jpg',
+            'image/jpeg' => 'jpeg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+            'image/svg+xml' => 'svg',
+            'video/mp4' => 'mp4',
+            'video/quicktime' => 'mov',
+            'video/x-msvideo' => 'avi',
+            'video/x-matroska' => 'mkv',
+            'video/webm' => 'webm',
+            'application/pdf' => 'pdf',
+            'application/msword' => 'doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+            'application/vnd.ms-excel' => 'xls',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+            'text/csv' => 'csv',
+            'application/vnd.ms-powerpoint' => 'ppt',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
+            'audio/mpeg' => 'mp3',
+            'audio/wav' => 'wav',
+            'audio/ogg' => 'ogg',
+            'audio/aac' => 'aac',
+        ];
+
+        if(!isset($allowedTypes[$file_type])){
+            throw new Exception("Extensão inválida: '{$file_type}'. Não foi possível atualizar o nome do arquivo.");
+        }
+
+        return $allowedTypes[$file_type];
+
+    }
+    public static function moveFile(array $data): array | string
+    {
+        
+        $pdo = Media::getConnectionDatabase();
+        try {
+
+            $pdo->beginTransaction();
+
+            $fields = Validator::validate([
+                "id_folder" => $data['id_folder'] ?? '',
+                "id_media" => $data['id_media'] ?? '',
+            ]);
+            
+            $info_file = Media::getExtensionAndName($fields['id_media']);
+
+            if (!$info_file) {
+                throw new Exception("Não foi possível excluir o arquivo");
+            }
+
+            $File = Media::moveFile($fields, $pdo);
 
             if (!$File) {
                 throw new Exception("Não foi possível mover o arquivo.");
             }
-
+            
+            $extension = self::getExtension($info_file['file_type']);
+            $filePath = PATH . Media::getPathToFile($fields).".".$extension;
+            $newPath = PATH . Media::getPathToFolder($fields['id_folder'], false) . '/' . basename($filePath) ;
+            
+            if (!rename($filePath, $newPath)) {
+                throw new Exception("Erro ao mover o arquivo no servidor.");
+            }
+            
+            $pdo->commit();
             return "Arquivo movido com sucesso!";
         } catch (PDOException $e) {
             return ['error' => DatabaseErrorHelpers::error($e)];
@@ -416,13 +513,12 @@ class MediaService
             return ['error' => $e->getMessage()];
         }
     }
-
     public static function moveFileToTrash(array $data): array | string
     {
         try {
 
             $fields = Validator::validate([
-                "id_file" => $data['id_file'] ?? '',
+                "id_media" => $data['id_media'] ?? '',
             ]);
 
             $File = Media::moveFileToTrash($fields);
@@ -438,13 +534,12 @@ class MediaService
             return ['error' => $e->getMessage()];
         }
     }
-
     public static function restoreFile(array $data): array | string
     {
         try {
 
             $fields = Validator::validate([
-                "id_file" => $data['id_file'] ?? '',
+                "id_media" => $data['id_media'] ?? '',
             ]);
 
             $File = Media::restoreFile($fields);
@@ -460,48 +555,49 @@ class MediaService
             return ['error' => $e->getMessage()];
         }
     }
-
     public static function deleteFile(array $data): array | string
     {
+        $pdo = Media::getConnectionDatabase();
+
         try {
+            $pdo->beginTransaction();
 
             $fields = Validator::validate([
-                "id_file" => $data['id_file'] ?? '',
+                "id_media" => $data['id_media'] ?? '',
             ]);
 
-            $File = Media::deleteFile($fields);
+            $info_file = Media::getExtensionAndName($fields['id_media']);
+
+            if (!$info_file) {
+                throw new Exception("Não foi possível excluir o arquivo");
+            }
+
+            $extension = self::getExtension($info_file['file_type']);
+
+            $File = Media::deleteFile($fields, $pdo);
 
             if (!$File) {
                 throw new Exception("Não foi possível deletar o arquivo.");
             }
 
+            $filePath = PATH . Media::getPathToFile($data).".".$extension;
+
+            if (!file_exists($filePath)) {
+                throw new Exception("O arquivo não existe: " . $filePath);
+            }
+           
+            if (!unlink($filePath)) {
+                throw new Exception("Erro ao deletar o arquivo no servidor.");
+            }
+            
+            $pdo->commit();
+
             return "Arquivo deletado com sucesso!";
         } catch (PDOException $e) {
+            $pdo->rollBack();
             return ['error' => DatabaseErrorHelpers::error($e)];
         } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
-    }
-
-    public static function editFile(array $data): array | string
-    {
-        try {
-
-            $fields = Validator::validate([
-                "id_file" => $data['id_file'] ?? '',
-                "file_name" => $data['file_name'] ?? '',
-            ]);
-
-            $File = Media::editFile($fields);
-
-            if (!$File) {
-                throw new Exception("Não foi possível editar o arquivo.");
-            }
-
-            return "Arquivo editado com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
+            $pdo->rollBack();
             return ['error' => $e->getMessage()];
         }
     }
