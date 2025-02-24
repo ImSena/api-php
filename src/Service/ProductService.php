@@ -11,5 +11,25 @@ use PDOException;
 
 class ProductService
 {
+    public static function create(array $data)
+    {
+        try {
+            $fields = Validator::validate([
+                "id_category" => $data['id_category'] ?? '',
+                "products" => $data['products'] ?? '',
+            ]);
 
+            $Product = Product::create($fields);
+
+            if (!$Product) {
+                throw new Exception("Não foi possível cadastrar o produto");
+            }
+
+            return "Produto cadastrado com sucesso";
+        } catch (PDOException $e) {
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Model;
 
 use Exception;
 use PDO;
+use PDOException;
 
 class Product extends Database
 {
@@ -14,15 +15,16 @@ class Product extends Database
         $pdo->beginTransaction();
 
         try {
-            $sql = "INSERT INTO PRODUCTS (name, description, price, qtd_stock, sku) VALUES (:name, :description, :price, :qtd_stock, :sku)";
+
+            $products = $data['products'];
+
+            $sql = "INSERT INTO PRODUCTS (name, description, id_branch) VALUES (:name, :description, :id_branch)";
 
             $stmt = $pdo->prepare($sql);
 
-            $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
-            $stmt->bindParam(":description", $data['description'], PDO::PARAM_STR);
-            $stmt->bindParam(":price", $data['price'], PDO::PARAM_STR);
-            $stmt->bindParam(":qtd_stock", $data['qtd_stock'], PDO::PARAM_INT);
-            $stmt->bindParam(":sku", $data['sku'], PDO::PARAM_STR);
+            $stmt->bindParam(":name", $products['name'], PDO::PARAM_STR);
+            $stmt->bindParam(":description", $products['description'], PDO::PARAM_STR);
+            $stmt->bindParam(":id_branch", $products['id_branch'], PDO::PARAM_INT);
 
             $stmt->execute();
 
@@ -32,10 +34,25 @@ class Product extends Database
                 throw new Exception("Erro ao criar produto.");
             }
 
-            $categorySuccess = self::relationCategory($pdo, $productId, $data['category']);
+            $productVariant = self::createVariant($products['variant'], $productId, $pdo);
 
-            if (!$categorySuccess) {
-                throw new Exception("Erro ao associar produto à categoria");
+            if (!$productVariant) {
+                throw new Exception("Erro ao criar variação");
+            }
+
+            foreach ($products['variant'] as $index => $variant) {
+                $productVariantId = $productVariant[$index];
+                $productPictures = self::createProductPictures($variant['pictures'], $productVariantId, $variant['value_variant'], $pdo);
+
+                if (!$productPictures) {
+                    throw new Exception("Não foi possível cadastrar imagem do produto");
+                }
+            }
+
+            $categoryProduct = self::relationCategory($pdo, $productId, $data['id_category']);
+
+            if(!$categoryProduct){
+                throw new Exception("Não foi possível relacionar categoria");
             }
 
             $pdo->commit();
@@ -44,6 +61,67 @@ class Product extends Database
         } catch (Exception $e) {
             $pdo->rollBack();
             return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function createVariant(array $variants, int $productId, PDO $pdo)
+    {
+        $sql = "INSERT INTO PRODUCT_VARIANT (id_product, sku, price, stock, is_default, discount) 
+            VALUES (:id_product, :sku, :price, :stock, :is_default, :discount)";
+
+        $stmt = $pdo->prepare($sql);
+        $productVariants = [];
+
+        foreach ($variants as $variant) {
+            $stmt->execute([
+                ':id_product' => $productId,
+                ':sku' => $variant['sku'],
+                ':price' => $variant['price'],
+                ':stock' => $variant['stock'],
+                ':is_default' => $variant['is_default'],
+                ':discount' => $variant['discount']
+            ]);
+            $productVariantId = $pdo->lastInsertId();
+            $productVariants[] = $productVariantId;
+            self::createRelationVariant($productVariantId, $variant['value_variant'], $pdo);
+        }
+
+        return $productVariants;
+    }
+
+    public static function createRelationVariant(int $productVariantId, int $value_variant, PDO $pdo)
+    {
+        $sql = "INSERT INTO PRODUCT_VARIANTS_ATTRIBUTES (id_variant_attribute_value, id_product_variant) VALUES
+        (:id_variant_attribute_value, :id_product_variant)";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":id_variant_attribute_value", $productVariantId, PDO::PARAM_INT);
+        $stmt->bindParam(":id_product_variant", $value_variant, PDO::PARAM_INT);
+
+        $stmt->execute();
+    }
+
+    public static function createProductPictures(array $pictures, $id_product_variant, $id_variant_attribute_value, PDO $pdo)
+    {
+        try {
+            $sql = "INSERT INTO PRODUCT_PICTURES (id_product_variant, id_variant_attribute_value, id_media, position, is_main) 
+            VALUES (:id_product_variant, :id_variant_attribute_value, :id_media, :position, :is_main)";
+
+            $stmt = $pdo->prepare($sql);
+
+            foreach ($pictures as $picture) {
+                $stmt->execute([
+                    ':id_product_variant' => $id_product_variant,
+                    ':id_variant_attribute_value' => $id_variant_attribute_value,
+                    ':id_media' => $picture['id_media'],
+                    ':position' => $picture['position'],
+                    ':is_main' => $picture['is_main']
+                ]);
+            }
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            return false;
         }
     }
 
