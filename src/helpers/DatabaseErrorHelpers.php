@@ -12,7 +12,7 @@ class DatabaseErrorHelpers
         '23505' => "Usuário já cadastrado!",
         '1049' => "Banco de dados desconhecido.",
         '42S02' => "Tabela inexistente.",
-        // '23000' => "Foi encontrado um valor duplicado ou erro de constraint",
+        '23000' => "Foi encontrado um valor duplicado ou erro de constraint",
     ];
 
     public static function error(PDOException $e)

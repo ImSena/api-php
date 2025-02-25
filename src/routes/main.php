@@ -4,11 +4,13 @@ use App\Http\Route;
 use App\Middlewares\AuthAdmin;
 use App\Middlewares\AuthUser;
 use App\Controllers\Admin\AdminController;
+use App\Controllers\BrandController;
 use App\Controllers\CategoriesController;
 use App\Controllers\ProductController;
 use App\Controllers\UserController;
 use App\Controllers\HomeController;
 use App\Controllers\MediaController;
+use App\Controllers\VariantsController;
 
 Route::get('/', [HomeController::class, 'index']);
 
@@ -82,17 +84,43 @@ Route::group([
     // Route::get("/$prefix/get-folder/{id}", [MediaController::class], $middlewares);
 });
 
-//pro
+//products
 Route::group([
     'prefix' => 'products',
     'middlewares' => [AuthAdmin::class]
 ], function($prefix, $middlewares){
-    Route::get(strval($prefix), [ProductController::class, 'getAll']);
     Route::post("/$prefix/create", [ProductController::class, 'create'], $middlewares);
     Route::delete("/$prefix", [ProductController::class, 'delete'] , $middlewares);
-    Route::get("/$prefix/{id}", [ProductController::class, 'getProduct']);
+    // Route::get("/$prefix/{id}", [ProductController::class, 'getProduct']);
+    // Route::get(strval($prefix), [ProductController::class, 'getAll']);
 });
 
+//brands
+Route::group([
+    "prefix" => "brands",
+    'middlewares' => [AuthAdmin::class]
+], function($prefix, $middlewares){
+    Route::post("/$prefix/create", [BrandController::class, 'create'], $middlewares);
+    Route::delete("/$prefix/{id}", [BrandController::class, 'delete'], $middlewares);
+    Route::put("/$prefix/{id}", [BrandController::class, "update"], $middlewares);
+    Route::get("/$prefix", [BrandController::class, "getAll"]);
+});
 
+//variations
+Route::group([
+    "prefix" => "variations",
+    "middlewares" => [AuthAdmin::class]
+], function($prefix, $middlewares){
+    //variações
+    Route::post("/$prefix/create-variation", [VariantsController::class, "createVariant"], $middlewares);
+    Route::get("/$prefix/get-variations", [VariantsController::class, "getAllVariation"], $middlewares);
+    Route::put("/$prefix/variation/{id}", [VariantsController::class, "updateVariation"], $middlewares);
+    Route::delete("/$prefix/variation/{id}", [VariantsController::class, "deleteVariation"], $middlewares);
+    //valores das variações
+    Route::post("/$prefix/create-value", [VariantsController::class, "addValueVariation"], $middlewares);
+    Route::get("/$prefix/get-values", [VariantsController::class, "getValueVariation"], $middlewares);
+    Route::put("/$prefix/value/{id}", [VariantsController::class, "updateValueVariation"], $middlewares);
+    Route::delete("/$prefix/delete-value/{id}", [VariantsController::class, "deleteValueVariation"], $middlewares);
+});
 
 
