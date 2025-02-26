@@ -9,7 +9,7 @@ use PDOException;
 class Product extends Database
 {
     public static function create(array $data)
-    {
+    {   
         $pdo = self::getConnection();
 
         $pdo->beginTransaction();
@@ -17,7 +17,6 @@ class Product extends Database
         try {
 
             $products = $data['products'];
-
             $sql = "INSERT INTO PRODUCTS (name, description, id_branch) VALUES (:name, :description, :id_branch)";
 
             $stmt = $pdo->prepare($sql);
@@ -34,7 +33,7 @@ class Product extends Database
                 throw new Exception("Erro ao criar produto.");
             }
 
-            $productVariant = self::createVariant($products['variant'], $productId, $pdo);
+            $productVariant = self::createVariant($products['variations'], $productId, $pdo);
 
             if (!$productVariant) {
                 throw new Exception("Erro ao criar variação");
@@ -58,7 +57,11 @@ class Product extends Database
             $pdo->commit();
 
             return $productId;
-        } catch (Exception $e) {
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            return ['error' => $e->getMessage()];
+        }
+         catch (Exception $e) {
             $pdo->rollBack();
             return ['error' => $e->getMessage()];
         }
@@ -66,7 +69,7 @@ class Product extends Database
 
     public static function createVariant(array $variants, int $productId, PDO $pdo)
     {
-        $sql = "INSERT INTO PRODUCT_VARIANT (id_product, sku, price, stock, is_default, discount) 
+        $sql = "INSERT INTO PRODUCT_VARIANTS (id_product, sku, price, qtd_stock, is_default, discount) 
             VALUES (:id_product, :sku, :price, :stock, :is_default, :discount)";
 
         $stmt = $pdo->prepare($sql);

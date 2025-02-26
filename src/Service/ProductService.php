@@ -21,8 +21,8 @@ class ProductService
 
             $Product = Product::create($fields);
 
-            if (!$Product) {
-                throw new Exception("Não foi possível cadastrar o produto");
+            if (isset($Product['error'])) {
+                throw new Exception($Product['error']);
             }
 
             return "Produto cadastrado com sucesso";
