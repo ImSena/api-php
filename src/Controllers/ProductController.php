@@ -11,7 +11,6 @@ class ProductController
     public function create(Request $request, Response $response)
     {
         $body = $request::body();
-        $files = $request::files();
 
         $productService = ProductService::create($body);
 

@@ -18,7 +18,7 @@ class VariantsController
             return $response::json([
                 'success' => false,
                 "message" => $variationService['error']
-            ]);
+            ], 400);
         }
 
         $response::json([
@@ -35,7 +35,7 @@ class VariantsController
             return $response::json([
                 'success' => false,
                 "message" => $variationService['error']
-            ]);
+            ], 400);
         }
 
         $response::json([
@@ -56,7 +56,7 @@ class VariantsController
             return $response::json([
                 'success' => false,
                 "message" => $variationService['error']
-            ]);
+            ], 400);
         }
 
         $response::json([
@@ -75,7 +75,7 @@ class VariantsController
             return $response::json([
                 'success' => false,
                 "message" => $variationService['error']
-            ]);
+            ], 400);
         }
 
         $response::json([
@@ -94,7 +94,7 @@ class VariantsController
             return $response::json([
                 'success' => false,
                 "message" => $variationService['error']
-            ]);
+            ], 400);
         }
 
         $response::json([
@@ -103,9 +103,61 @@ class VariantsController
         ]);
     }
 
-    public function getValueVariation(Request $request, Response $response, $id) {}
+    public function getValueVariation(Request $request, Response $response, $id) 
+    {
+        $id = intval($id[0]);
 
-    public function updateValueVariation(Request $request, Response $response, $id) {}
+        $variationService = VariationService::getValueVariation($id);
 
-    public function deleteValueVariation(Request $request, Response $response, $id) {}
+        if(isset($variationService['error'])){
+            return $response::json([
+                "success" => false,
+                "message" => $variationService['error']
+            ], 400);
+        }
+
+        $response::json([
+            "success" => true,
+            "message" => $variationService
+        ]);
+    }
+
+    public function updateValueVariation(Request $request, Response $response, $id) 
+    {
+        $body = $request::body();
+        $id = intval($id[0]);
+
+        $variationService = VariationService::updateValueVariation($body, $id);
+
+        if(isset($variationService['error'])){
+            return $response::json([
+                "success" => false,
+                "message" => $variationService['error']
+            ], 400);
+        }
+
+        $response::json([
+            "success" => true,
+            "message" => $variationService
+        ]);
+    }
+
+    public function deleteValueVariation(Request $request, Response $response, $id) 
+    {
+        $id = intval($id[0]);
+
+        $variationService = VariationService::deleteValue($id);
+
+        if(isset($variationService['error'])){
+            return $response::json([
+                "success" => false,
+                "message" => $variationService['error'] 
+            ], 400);
+        }
+
+        $response::json([
+            "success" => true,
+            "message" => $variationService
+        ]);
+    }
 }

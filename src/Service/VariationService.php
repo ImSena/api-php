@@ -6,6 +6,7 @@ use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Variation;
 use App\Utils\Validator;
 use Exception;
+use Firebase\JWT\ExpiredException;
 use PDOException;
 
 class VariationService
@@ -103,6 +104,70 @@ class VariationService
             }
 
             return "Variação criada com sucesso";
+        } catch (PDOException $e) {
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function getValueVariation(int $id)
+    {
+        try{
+
+            $fields = Validator::validate([
+                "id" => $id ?? ''
+            ]);
+
+            $Variation = Variation::getValuesVariation($fields['id']);
+
+            return [
+                "message" => "Valores dos atributos resgatados",
+                "content" => $Variation
+            ];
+        } catch (PDOException $e) {
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function updateValueVariation(array $data, int $id)
+    {
+        try{
+            $fields = Validator::validate([
+                "id" => $id ?? '',
+                "value" => $data['value'] ?? ''
+            ]);
+
+            $Variation = Variation::updateValue($fields);
+
+            if(!$Variation){
+                throw new Exception("Não foi possível atualizar valor");
+            }
+
+            return "Valor atualizado com sucesso";
+        } catch (PDOException $e) {
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function deleteValue(int $id)
+    {
+        try{
+            $fields = Validator::validate([
+                "id" => $id ?? ''
+            ]);
+
+            $Variation = Variation::deleteValue($fields['id']);
+
+            if(!$Variation){
+                throw new Exception("Não foi possível deletar o valor");
+            }
+
+            return "Valor deletado com sucesso";
         } catch (PDOException $e) {
             return ['error' => DatabaseErrorHelpers::error($e)];
         } catch (Exception $e) {

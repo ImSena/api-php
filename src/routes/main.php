@@ -118,7 +118,7 @@ Route::group([
     Route::delete("/$prefix/variation/{id}", [VariantsController::class, "deleteVariation"], $middlewares);
     //valores das variações
     Route::post("/$prefix/create-value", [VariantsController::class, "addValueVariation"], $middlewares);
-    Route::get("/$prefix/get-values", [VariantsController::class, "getValueVariation"], $middlewares);
+    Route::get("/$prefix/get-values/{id}", [VariantsController::class, "getValueVariation"], $middlewares);
     Route::put("/$prefix/value/{id}", [VariantsController::class, "updateValueVariation"], $middlewares);
     Route::delete("/$prefix/delete-value/{id}", [VariantsController::class, "deleteValueVariation"], $middlewares);
 });

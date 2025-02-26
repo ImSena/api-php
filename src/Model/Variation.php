@@ -78,4 +78,46 @@ class Variation extends Database
 
         return $stmt->rowCount() > 0;
     }
+
+    public static function getValuesVariation(int $id):array
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT id_variant_attribute_value, value, viewer FROM VARIANT_ATTRIBUTES_VALUES WHERE id_variant_attribute = :id";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    public static function updateValue(array $data):bool
+    {
+        $pdo = self::getConnection();
+
+        $sql = "UPDATE VARIANT_ATTRIBUTES_VALUES SET value = :value WHERE id_variant_attribute_value = :id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":value", $data['value'], PDO::PARAM_STR);
+        $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public static function deleteValue(int $id):bool
+    {
+        $pdo = self::getConnection();
+
+        $sql = "DELETE FROM VARIANT_ATTRIBUTES_VALUES WHERE id_variant_attribute_value = :id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
+    }
 }
