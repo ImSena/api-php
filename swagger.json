@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://192.168.15.11/api-php"
+      "url": "http://192.168.15.7/api-php"
     }
   ],
   "components": {

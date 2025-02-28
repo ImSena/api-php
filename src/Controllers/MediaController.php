@@ -23,9 +23,10 @@ class MediaController{
 
         $response::json([
             "success" => true,
-            "message" => $MediaService
+            "content" => $MediaService
         ]);
     }
+    
     // Folders
     public function createFolder(Request $request, Response $response){
         $body = $request::body();

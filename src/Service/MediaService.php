@@ -26,7 +26,21 @@ class MediaService
 
             $Folders = Media::getContentsInFolder($fields);
 
-            return $Folders;
+            $newFolder = $Folders;
+
+            for($i = 0; $i < count($newFolder); $i++){
+                if($newFolder[$i]['type'] == 'file'){
+                    $data = ["id_media" => $newFolder[$i]['id']];
+                    $path = Media::getPathToFile($data);
+                    $extension = self::getExtension($newFolder[$i]['file_type']);
+                    // colocar server name
+                    // $_SERVER['HTTP_HOST'];
+                    $newFolder[$i]['file_path'] = $path.'.'.$extension;
+                    
+                }
+            }
+            
+            return $newFolder;
         } catch (PDOException $e) {
             return ['error' => DatabaseErrorHelpers::error($e)];
         } catch (Exception $e) {

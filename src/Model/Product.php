@@ -39,7 +39,7 @@ class Product extends Database
                 throw new Exception("Erro ao criar variação");
             }
 
-            foreach ($products['variant'] as $index => $variant) {
+            foreach ($products['variations'] as $index => $variant) {
                 $productVariantId = $productVariant[$index];
                 $productPictures = self::createProductPictures($variant['pictures'], $productVariantId, $variant['value_variant'], $pdo);
 
@@ -84,7 +84,7 @@ class Product extends Database
                 ':is_default' => $variant['is_default'],
                 ':discount' => $variant['discount']
             ]);
-            $productVariantId = $pdo->lastInsertId();
+            $productVariantId = (int) $pdo->lastInsertId();
             $productVariants[] = $productVariantId;
             self::createRelationVariant($productVariantId, $variant['value_variant'], $pdo);
         }
@@ -99,8 +99,8 @@ class Product extends Database
 
         $stmt = $pdo->prepare($sql);
 
-        $stmt->bindParam(":id_variant_attribute_value", $productVariantId, PDO::PARAM_INT);
-        $stmt->bindParam(":id_product_variant", $value_variant, PDO::PARAM_INT);
+        $stmt->bindParam(":id_product_variant", $productVariantId, PDO::PARAM_INT);
+        $stmt->bindParam(":id_variant_attribute_value", $value_variant, PDO::PARAM_INT);
 
         $stmt->execute();
     }

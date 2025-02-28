@@ -64,7 +64,7 @@ class Media extends Database
 
             SELECT 
                 m.id_media AS id, 
-                m.file_name AS name, 
+                m.alias AS name, 
                 'file' AS type, 
                 m.file_type
             FROM MEDIA m
@@ -86,7 +86,6 @@ class Media extends Database
 
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Remover 'file_type' e 'file_path' das pastas no PHP
         foreach ($results as &$row) {
             if ($row['type'] === 'folder') {
                 unset($row['file_type']);
