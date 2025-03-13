@@ -131,7 +131,40 @@ class Media extends Database
         $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
         $stmt->execute();
 
+        self::updateSubfoldersAndFiles($pdo, $id_folder, $is_trash);
+
         return $stmt->rowCount() > 0;
+    }
+    private static function updateSubfoldersAndFiles(PDO $pdo, int $id_folder, bool $is_trash): void
+    {
+    
+        $sql = "UPDATE folders SET is_trash = :is_trash WHERE id_folder = :id_folder";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
+        $stmt->bindParam(":is_trash", $is_trash, PDO::PARAM_BOOL);
+        $stmt->execute();
+
+        $sql = "UPDATE media SET is_trash = :is_trash WHERE id_folder = :id_folder";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
+        $stmt->bindParam(":is_trash", $is_trash, PDO::PARAM_BOOL);
+        $stmt->execute();
+
+        $parent_id = self::getSubFolder($id_folder);
+        
+        if($parent_id){
+            self::updateSubfoldersAndFiles($pdo, $parent_id['id_folder'], $is_trash);
+        }
+    }
+    private static function getSubFolder($id_folder)
+    {
+        $pdo = self::getConnection();
+        $sql = "SELECT id_folder FROM folders WHERE parent_id = :id_folder";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
+        $stmt->execute();
+        $parent_id = $stmt->fetch();
+        return $parent_id ?? null;
     }
     public static function moveFolderToTrash(array $data): bool
     {
@@ -213,14 +246,13 @@ class Media extends Database
         }
         return $path;
     }
-
     //Files
     public static function createFiles(int $id_folder, array $files, PDO $pdo): bool
     {
         $sql = "INSERT INTO MEDIA (file_name, alias, file_type, file_size, id_folder) 
                 VALUES (:file_name, :alias, :file_type, :file_size, :id_folder)";
         $stmt = $pdo->prepare($sql);
-        
+
         foreach ($files as $file) {
             $stmt->bindValue(":file_name", $file['name_date'], PDO::PARAM_STR);
             $stmt->bindValue(":alias", $file['unique_name'], PDO::PARAM_STR);
@@ -262,15 +294,14 @@ class Media extends Database
 
         $stmt->execute();
 
-        return $stmt->fetch();    
-
+        return $stmt->fetch();
     }
 
     public static function fileExists(string $alias): bool
     {
         $pdo = self::getConnection();
 
-    
+
         $sql = "SELECT COUNT(*) FROM MEDIA WHERE alias = :alias";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":alias", $alias, PDO::PARAM_STR);
@@ -319,7 +350,7 @@ class Media extends Database
 
         $stmt = $pdo->prepare($sql);
 
-        $stmt->bindParam(":is_trash",$is_trash, PDO::PARAM_BOOL);
+        $stmt->bindParam(":is_trash", $is_trash, PDO::PARAM_BOOL);
         $stmt->bindParam(":id_media", $id_media, PDO::PARAM_INT);
 
         $stmt->execute();

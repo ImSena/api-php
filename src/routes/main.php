@@ -90,9 +90,9 @@ Route::group([
     'middlewares' => [AuthAdmin::class]
 ], function($prefix, $middlewares){
     Route::post("/$prefix/create", [ProductController::class, 'create'], $middlewares);
-    Route::delete("/$prefix", [ProductController::class, 'delete'] , $middlewares);
+    // Route::delete("/$prefix", [ProductController::class, 'delete'] , $middlewares);
     // Route::get("/$prefix/{id}", [ProductController::class, 'getProduct']);
-    // Route::get(strval($prefix), [ProductController::class, 'getAll']);
+    // Route::get("/$prefix", [ProductController::class, 'getAll']);
 });
 
 //brands

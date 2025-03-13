@@ -34,6 +34,7 @@ class ValidatorFiles
             'audio/wav',
             'audio/ogg',
             'audio/aac',
+            'image/x-icon',
         ];
 
         $allowedExtensions = [
@@ -65,6 +66,7 @@ class ValidatorFiles
             'wav',
             'ogg',
             'aac',
+            'ico'
         ];
 
         $maxSize = 50 * 1024 * 1024;
@@ -83,7 +85,7 @@ class ValidatorFiles
                 }
 
                 if ($file['size'] > $maxSize) {
-                    $errors[] = "O arquivo {$file['name']} é muito grande. Tamanho máximo é de 50MB";
+                    $errors[] = "O arquivo {$file['name']} é muito grande. Tamanho máximo é de 50Kb";
                     break;
                 }
 

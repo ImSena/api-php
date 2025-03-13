@@ -118,7 +118,8 @@ class VariantsController
 
         $response::json([
             "success" => true,
-            "message" => $variationService
+            "message" => $variationService['message'],
+            "content" => $variationService['content']
         ]);
     }
 
