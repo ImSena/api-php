@@ -451,7 +451,7 @@ class MediaService
             return ['error' => $e->getMessage()];
         }
     }
-    private static function getExtension($file_type):string
+    public static function getExtension($file_type):string
     {
         $allowedTypes = [
             'image/jpg' => 'jpg',

@@ -27,23 +27,39 @@ class ProductController
         ], 200);
     }
 
-    // public function delete(Request $request, Response $response)
-    // {
+    public function getAll(Request $request, Response $response){
+        $productService = ProductService::getAll();
 
-    //     $body = $request::body();
+        if(isset($productService['error'])){
+            return $response::json([
+                'success'=> false,
+                'message' => $productService['error'],
+            ], 400);
+        }
 
-    //     $productService = ProductService::delete($body);
+        return $response::json([
+            'success' => true,
+            'message' => $productService['message'],
+            'content' => $productService['content']
+        ], 200);
+    }
 
-    //     if(isset($productService['error'])){
-    //         return $response::json([
-    //             'success' => false,
-    //             'message' => $productService['error']
-    //         ],400);
-    //     }
+    public function getAllCategory(Request $request, Response $response, $id)
+    {
+        $id = intval($id[0]);
+        $productService = ProductService::getAllCategory($id);
 
-    //     return $response::json([
-    //         'success' => true,
-    //         'message' => $productService
-    //     ], 200);
-    // }
+        if(isset($productService['error'])){
+            return $response::json([
+                'success'=> false,
+                'message' => $productService['error'],
+            ], 400);
+        }
+
+        return $response::json([
+            'success' => true,
+            'message' => $productService['message'],
+            'content' => $productService['content']
+        ], 200);
+    }
 }

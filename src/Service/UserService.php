@@ -295,4 +295,42 @@ class UserService{
             return ['error' => $e->getMessage()];
         }
     }
+
+    public static function getAllUsers($id)
+    {
+        try {
+            $user = User::selectAll($id);
+    
+            if (!$user) {
+                throw new Exception("Usuários não encontrados.");
+            }
+    
+            foreach ($user as $key => &$value) {
+                if ($value['person_type'] === 'Física') {
+                    unset($value['corporate_name']);
+                    unset($value['trade_name']);
+                } else {
+                    unset($value['dt_birth']);
+                    unset($value['gender']);
+                }
+            }
+
+            $totalUser = User::getTotalUsers();
+
+            if(!$totalUser){
+                throw new Exception("Valor total não resgatado");
+            }
+
+            $pages = [
+                "limit" => 25,
+                "total" => $totalUser['total']
+            ];
+    
+            return ['message'=> "Users resgatados", "content" => $user, "pages"=>$pages];
+        } catch (PDOException $e) {
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
 }

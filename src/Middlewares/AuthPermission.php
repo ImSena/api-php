@@ -6,14 +6,14 @@ use App\Http\Request;
 use App\Http\Response;
 use App\Jwt\JwtAuth;
 
-class AuthUser
+class AuthPermission
 {
     public function handle(Request $request, Response $response)
     {
         $token = $request::getToken();
 
         if (!$token) {
-            return $this->denyAccess($response, 'Acesso negado.', 401);
+            return self::denyAccess($response, 'Acesso negado.', 401);
         }
 
         $decoded = JwtAuth::verifyToken($token);
@@ -24,18 +24,20 @@ class AuthUser
 
         $data = $decoded['decoded'] ?? [];
 
-        if (($data['rule'] ?? '') !== 'user') {
+
+        if($data['rule'] == 'admin'){
+            $authAdmin = new AuthAdmin();
+            return $authAdmin->handle($request, $response);
+        }else if($data['rule'] == 'user'){
+            $authUser = new AuthUser();
+            return $authUser->handle($request, $response);
+        }else{
             return $this->denyAccess($response, 'Acesso negado.', 403);
         }
 
-        if (empty($data['status']) || $data['status'] !== 'ACTIVE') {
-            return $this->denyAccess($response, 'Usuário precisa estar ativo!', 401);
+        if (($data['rule'] ?? '') !== 'user') {
+            return $this->denyAccess($response, 'Acesso negado.', 403);
         }
-
-        $request::setUserId($data['id_user']);
-        $request::setRule($data['rule']);
-
-        return true;
     }
 
     private function denyAccess(Response $response, string $message, int $statusCode)

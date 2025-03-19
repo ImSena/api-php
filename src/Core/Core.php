@@ -34,7 +34,7 @@ class Core
                 continue;
             }
 
-            $pattern = '#^' . str_replace('{id}', '([\w-]+)', $route['path']) . '$#';
+            $pattern = '#^' . str_replace('{param}', '([\w-]+)', $route['path']) . '$#';
 
             if (preg_match($pattern, $url, $matches)) {
                 $routeFound = true;

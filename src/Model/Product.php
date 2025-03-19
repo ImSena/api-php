@@ -9,7 +9,7 @@ use PDOException;
 class Product extends Database
 {
     public static function create(array $data)
-    {   
+    {
         $pdo = self::getConnection();
 
         $pdo->beginTransaction();
@@ -17,13 +17,13 @@ class Product extends Database
         try {
 
             $products = $data['products'];
-            $sql = "INSERT INTO PRODUCTS (name, description, id_branch) VALUES (:name, :description, :id_branch)";
+            $sql = "INSERT INTO PRODUCTS (name, description, id_brand) VALUES (:name, :description, :id_brand)";
 
             $stmt = $pdo->prepare($sql);
 
             $stmt->bindParam(":name", $products['name'], PDO::PARAM_STR);
             $stmt->bindParam(":description", $products['description'], PDO::PARAM_STR);
-            $stmt->bindParam(":id_branch", $products['id_branch'], PDO::PARAM_INT);
+            $stmt->bindParam(":id_brand", $products['id_branch'], PDO::PARAM_INT);
 
             $stmt->execute();
 
@@ -50,7 +50,7 @@ class Product extends Database
 
             $categoryProduct = self::relationCategory($pdo, $productId, $data['id_category']);
 
-            if(!$categoryProduct){
+            if (!$categoryProduct) {
                 throw new Exception("Não foi possível relacionar categoria");
             }
 
@@ -60,14 +60,13 @@ class Product extends Database
         } catch (PDOException $e) {
             $pdo->rollBack();
             return ['error' => $e->getMessage()];
-        }
-         catch (Exception $e) {
+        } catch (Exception $e) {
             $pdo->rollBack();
             return ['error' => $e->getMessage()];
         }
     }
 
-    public static function createVariant(array $variants, int $productId, PDO $pdo)
+    private static function createVariant(array $variants, int $productId, PDO $pdo)
     {
         $sql = "INSERT INTO PRODUCT_VARIANTS (id_product, sku, price, qtd_stock, is_default, discount) 
             VALUES (:id_product, :sku, :price, :stock, :is_default, :discount)";
@@ -86,13 +85,16 @@ class Product extends Database
             ]);
             $productVariantId = (int) $pdo->lastInsertId();
             $productVariants[] = $productVariantId;
-            self::createRelationVariant($productVariantId, $variant['value_variant'], $pdo);
+
+            if (!empty($variant['value_variant'])) {
+                self::createRelationVariant($productVariantId, $variant['value_variant'], $pdo);
+            }
         }
 
         return $productVariants;
     }
 
-    public static function createRelationVariant(int $productVariantId, int $value_variant, PDO $pdo)
+    private static function createRelationVariant(int $productVariantId, int $value_variant, PDO $pdo)
     {
         $sql = "INSERT INTO PRODUCT_VARIANTS_ATTRIBUTES (id_variant_attribute_value, id_product_variant) VALUES
         (:id_variant_attribute_value, :id_product_variant)";
@@ -105,7 +107,7 @@ class Product extends Database
         $stmt->execute();
     }
 
-    public static function createProductPictures(array $pictures, $id_product_variant, $id_variant_attribute_value, PDO $pdo)
+    private static function createProductPictures(array $pictures, $id_product_variant, $id_variant_attribute_value, PDO $pdo)
     {
         try {
             $sql = "INSERT INTO PRODUCT_PICTURES (id_product_variant, id_variant_attribute_value, id_media, position, is_main) 
@@ -141,6 +143,121 @@ class Product extends Database
         $stmt->execute();
 
         return !empty($pdo->lastInsertId());
+    }
+
+    public static function getAll()
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT 
+                    p.id_product,
+                    p.id_brand,
+                    p.name,
+                    pv.id_product_variant,
+                    pv.sku,
+                    pv.price,
+                    pv.qtd_stock,
+                    pv.discount,
+                    pv.is_default,
+                    m.id_media,
+                    m.file_type,
+                    b.name AS brand_name
+                FROM products AS p
+                LEFT JOIN product_variants AS pv 
+                    ON p.id_product = pv.id_product
+                LEFT JOIN product_pictures AS pp 
+                    ON pv.id_product_variant = pp.id_product_variant 
+                    AND pp.is_main = 1
+                LEFT JOIN media AS m 
+                    ON pp.id_media = m.id_media
+                LEFT JOIN brands AS b
+                    ON p.id_brand = b.id_brand
+                WHERE p.status > 0
+                ORDER BY p.id_product, pv.id_product_variant";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    public static function getById(int $id)
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT 
+                    p.id_product,
+                    p.name,
+                    pv.sku,
+                    pv.price,
+                    pv.qtd_stock,
+                    pv.discount,
+                    m.id_media,
+                    m.file_type,
+                    b.name AS brand_name
+                FROM products AS p
+                LEFT JOIN product_variants AS pv 
+                    ON p.id_product = pv.id_product
+                LEFT JOIN product_pictures AS pp 
+                    ON pv.id_product_variant = pp.id_product_variant 
+                    AND pp.is_main = 1
+                LEFT JOIN media AS m 
+                    ON pp.id_media = m.id_media
+                LEFT JOIN brands AS b
+                    ON p.id_brand = b.id_brand
+                WHERE p.status > 0 AND pv.id_product_variant = :id
+                ORDER BY p.id_product, pv.id_product_variant
+                LIMIT 1";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
+    public static function getAllCategory($id_category)
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT 
+                p.id_product,
+                p.id_brand,
+                p.name,
+                pv.id_product_variant,
+                pv.sku,
+                pv.price,
+                pv.qtd_stock,
+                pv.discount,
+                pv.is_default,
+                m.id_media,
+                m.file_type,
+                b.name AS brand_name
+            FROM products AS p
+            LEFT JOIN product_variants AS pv 
+                ON p.id_product = pv.id_product
+            LEFT JOIN product_pictures AS pp 
+                ON pv.id_product_variant = pp.id_product_variant 
+                AND pp.is_main = 1
+            LEFT JOIN media AS m 
+                ON pp.id_media = m.id_media
+            LEFT JOIN brands AS b
+                ON p.id_brand = b.id_brand
+            LEFT JOIN product_categories AS pc
+                ON p.id_product = pc.id_product
+            WHERE p.status > 0 
+                AND pc.id_category = :id_category 
+            ORDER BY p.id_product, pv.id_product_variant";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(':id_category', $id_category, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
     }
 
     public static function deleteProduct(array $data): bool

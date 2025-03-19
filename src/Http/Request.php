@@ -3,6 +3,31 @@
 namespace App\Http;
 class Request
 {
+
+    private static $userId = null;
+    private static $rule = null;
+
+
+    public static function setRule($rule)
+    {
+        self::$rule = $rule;
+    }
+
+    public static function getRule()
+    {
+        return self::$rule;
+    }
+
+    public static function setUserId($userId)
+    {
+        self::$userId = $userId;
+    }
+
+    public static function getUserId()
+    {
+        return self::$userId;
+    }
+
     public static function method()
     {
         return $_SERVER['REQUEST_METHOD'];

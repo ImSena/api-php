@@ -143,4 +143,28 @@ class UserController
             "type" => "USER"
         ], 200);
     }
+
+    public function getAll(Request $request, Response $response, $id)
+    {
+
+        $id = isset($id[0]) ? $id[0] : 1;
+
+        $userService = UserService::getAllUsers($id);
+
+        if(isset($userService['error'])){
+            return $response::json([
+                'success' => false,
+                'message' => $userService['error']
+            ], 400);
+        }
+
+        $response::json([
+            'success' => true,
+            'message' => $userService['message'],
+            'content' => $userService['content'],
+            'pages' => $userService['pages'],
+        ], 200);
+    }
+
+    
 }
