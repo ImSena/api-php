@@ -333,4 +333,46 @@ class UserService{
             return ['error' => $e->getMessage()];
         }
     }
+
+    public static function getById(int $id){
+        try{
+            $User = User::getById($id);
+
+            if(!$User){
+                throw new Exception("Não foi possível resgatar usuário");
+            }
+
+            $phoneService = PhoneService::getAllByIdUser($id);
+
+            if($User['person_type'] == "Física"){
+                unset($User['cnpj']);
+                unset($User['corporate_name']);
+                unset($User['trade_name']);
+                unset($User['state_registration']);
+            }else{
+                unset($User['cpf']);
+                unset($User['dt_birth']);
+                unset($User['gender']);
+            }
+
+            foreach($phoneService['content'] as $phone){
+                unset($phone['id_user']);
+                $User['contact'][] = $phone;
+            }
+
+            return [
+                "message" => "Usuário resgatado com sucesso",
+                "content" => $User
+            ];
+        }catch(PDOException $e){
+            return[
+                'error' => DatabaseErrorHelpers::error($e)
+            ];
+        }
+        catch(Exception $e){
+            return [
+                'error' => $e->getMessage()
+            ];
+        }
+    }
 }

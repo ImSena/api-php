@@ -216,7 +216,7 @@ class User extends Database
 
         return $stmt->fetchAll();
     }
-    
+
     public static function getTotalUsers()
     {
         $pdo = self::getConnection();
@@ -227,6 +227,58 @@ class User extends Database
         $stmt->execute();
 
         return $stmt->fetch();
+    }
 
+    public static function getById(int $id)
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT 
+                u.id_user,
+                u.username,
+                u.email,
+                CASE
+                    WHEN np.id_natural_person IS NOT NULL THEN 'Física' 
+                    WHEN lp.id_legal_person IS NOT NULL THEN 'Jurídica' 
+                    ELSE NULL 
+                END AS person_type,
+                CASE
+                    WHEN np.id_natural_person IS NOT NULL THEN np.cpf
+                    ELSE NULL
+                END AS cpf,
+                CASE
+                    WHEN np.id_natural_person IS NOT NULL THEN np.dt_birth
+                    ELSE NULL
+                END AS dt_birth,
+                CASE
+                    WHEN np.id_natural_person IS NOT NULL THEN np.gender
+                    ELSE NULL
+                END AS gender,
+                CASE
+                    WHEN lp.id_legal_person IS NOT NULL THEN lp.cnpj
+                    ELSE NULL
+                END AS cnpj,
+                CASE
+                    WHEN lp.id_legal_person IS NOT NULL THEN lp.corporate_name
+                    ELSE NULL
+                END AS corporate_name,
+                CASE
+                    WHEN lp.id_legal_person IS NOT NULL THEN lp.trade_name
+                    ELSE NULL
+                END AS trade_name,
+                CASE
+                    WHEN lp.id_legal_person IS NOT NULL THEN lp.state_registration
+                    ELSE NULL
+                END AS state_registration
+            FROM users u
+            LEFT JOIN ecommerce.natural_people np ON u.id_natural_person = np.id_natural_person
+            LEFT JOIN ecommerce.legal_people lp ON u.id_legal_person = lp.id_legal_person
+            WHERE u.id_user = :id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+    
+        return  $stmt->fetch();
     }
 }

@@ -82,4 +82,17 @@ class Address extends Database
 
         return $addresses;
     }
+
+    public static function getById(int $id)
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT id_user, public_area, number, complement, district, city, state, zip_code FROM addresses WHERE id_address = :id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
 }

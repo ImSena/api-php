@@ -135,33 +135,12 @@ class ProductService
                 throw new Exception("Não foi possível resgatar dados do produto");
             }
 
-            $result = [];
-
-            $id_product = $product['id_product'];
-            $result[$id_product] = [
-                'id_product' => $product['id_product'],
-                'branch' => $product['brand_name'],
-                'name' => $product['name'],
-                'variations' => []
-            ];
-
+            
             $path = Media::getPathToFile($product);
             $extension = MediaService::getExtension($product['file_type']);
             $product['image_path'] = $path . '.' . $extension; 
-
-            $result[$id_product]['variations'][] = [
-                'id_product_variant' => $product['id_product'],
-                'sku' => $product['sku'],
-                'price' => $product['price'],
-                'qtd_stock' => $product['qtd_stock'],
-                'discount' => $product['discount'],
-                'image_path' => $product['image_path'], 
-                'is_default' => true 
-            ];
-
-            $formattedResult = array_values($result);
-
-            return ['message' => "Produto Resgatado", 'content' => $formattedResult];
+                
+            return ['message' => "Produto Resgatado", 'content' => $product];
         } catch (PDOException $e) {
             return ['error' => DatabaseErrorHelpers::error($e)];
         } catch (Exception $e) {

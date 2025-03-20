@@ -10,9 +10,11 @@ use App\Utils\Validator;
 use Exception;
 use PDOException;
 
-class OrderService{
-    public static function create(array $data){
-        try{
+class OrderService
+{
+    public static function create(array $data)
+    {
+        try {
 
             $fields = Validator::validate([
                 "id_address" => $data['id_address'] ?? '',
@@ -23,7 +25,7 @@ class OrderService{
 
             $Order = Order::create($fields);
 
-            if(!$Order){
+            if (!$Order) {
                 throw new Exception("Não foi possível realizar pedidos");
             }
 
@@ -35,11 +37,9 @@ class OrderService{
         }
     }
 
-    public static function getAll(array $data){
-        try{
-
-            var_dump(ProductService::getProduct(1));exit;
-
+    public static function getAll(array $data)
+    {
+        try {
             $statusOrder = [
                 'PENDING',
                 'PROCESSING',
@@ -60,33 +60,49 @@ class OrderService{
             $limitPage = $data['rule'] == 'admin' ? 25 : 10;
             $fields['params'] = $data['params'];
 
-            if(count($fields['params']) > 1){
+            if (count($fields['params']) > 1) {
                 $fields['params']['status'] = strtoupper($fields['params']['status']);
-                if(!in_array($fields['params']['status'], $statusOrder)){
+                if (!in_array($fields['params']['status'], $statusOrder)) {
                     throw new Exception("Status do pedido inexistente");
                 }
 
                 $Order = Order::getAllStatus($fields);
                 $totalOrders = Order::getTotalStatus($fields);
-            }else{
+            } else {
                 $Order = Order::getAll($fields);
                 $totalOrders = Order::getTotalOrders($fields);
             }
-        
-            if(!$Order){
+
+            if (!$Order) {
                 throw new Exception("Não foi possível buscar pedidos");
             }
 
-            if(!$totalOrders){
+            if (!$totalOrders) {
                 throw new Exception("Não foi possível buscar quantidade total de pedidos");
             }
 
-            // foreach($Order as $items){
-            //     $product = Product::getById()
-            // }
+            foreach($Order as &$item){
+                $productItem = Order::getOrderIdProductItems($item['id_order']);
+                
+                $address = AddressService::getById($item['id_address']);
+                unset($address['content']['id_user']);
+                $item['address_shipped'] = $address['content']; 
+                unset($item['id_address']);
+
+                foreach($productItem as $product){
+                    $item['products'][] = Product::getById($product['id_product_variant']);
+                }   
+                
+                if($data['rule'] == 'admin'){
+                    $User = UserService::getById(1);
+                    $item['user'] = $User['content'];
+                }
+
+                unset($item['id_user']);
+            }
 
             $qtdPage = Pagination::calculateTotalPages($totalOrders['total'],  $limitPage);
-            
+
             $pages = [
                 "qtdPage" => $qtdPage,
                 "total" => $totalOrders['total']
@@ -104,11 +120,12 @@ class OrderService{
         }
     }
 
-    public static function getById(int $id){
-        try{
+    public static function getById(int $id)
+    {
+        try {
             $Order = Order::getById($id);
 
-            if(!$Order){
+            if (!$Order) {
                 throw new Exception("Não foi possível buscar pedido");
             }
 

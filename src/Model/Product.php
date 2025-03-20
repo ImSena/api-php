@@ -187,7 +187,7 @@ class Product extends Database
         $pdo = self::getConnection();
 
         $sql = "SELECT 
-                    p.id_product,
+                    pv.id_product_variant,
                     p.name,
                     pv.sku,
                     pv.price,

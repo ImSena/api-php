@@ -72,4 +72,28 @@ class AddressService
             ];
         }
     }
+
+    public static function getById(int $id){
+        try{
+            $Address = Address::getById($id);
+
+            if(!$Address){
+                throw new Exception("Não foi possível encontrar o endereço correspondente");
+            }
+
+            return [
+                'message' => "Endereço encontrado",
+                'content' => $Address
+            ];
+        }catch(PDOException $e){
+            return[
+                'error' => DatabaseErrorHelpers::error($e)
+            ];
+        }
+        catch(Exception $e){
+            return [
+                'error' => $e->getMessage()
+            ];
+        }
+    }
 }
