@@ -109,8 +109,10 @@ Route::group([
     Route::post("/$prefix/create", [ProductController::class, 'create'], $middlewares);
     // Route::delete("/$prefix", [ProductController::class, 'delete'] , $middlewares);
     // Route::get("/$prefix/{param}", [ProductController::class, 'getProduct']);
-    Route::get("/$prefix", [ProductController::class, 'getAll']);
-    Route::get("/$prefix/get-product-category/{param}", [ProductController::class, 'getAllCategory']);
+    //primeiro parâmetro seria o que gostaria de buscar (por categoria, marca...), segundo é o id e o terceiro a pagina para o offset
+    Route::get("/$prefix/get-all-by/{param}/{param}/{param}", [ProductController::class, 'getAllBy']);
+    //parametro para a páginação
+    Route::get("/$prefix/{param}", [ProductController::class, 'getAll']);
 });
 
 //brands

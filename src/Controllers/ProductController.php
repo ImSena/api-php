@@ -14,52 +14,83 @@ class ProductController
 
         $productService = ProductService::create($body);
 
-        if(isset($productService['error'])){
+        if (isset($productService['error'])) {
             return $response::json([
-                'success'=> false,
+                'success' => false,
                 'message' => $productService['error'],
             ], 400);
         }
 
-        return $response::json([
+        $response::json([
             'success' => true,
             'message' => $productService
         ], 200);
     }
+    public function getAll(Request $request, Response $response, $param)
+    {
+        $params['page'] = isset($param[0]) ? intval($param[0]) : 1;
 
-    public function getAll(Request $request, Response $response){
-        $productService = ProductService::getAll();
+        $productService = ProductService::getAll($params['page']);
 
-        if(isset($productService['error'])){
+        if (isset($productService['error'])) {
             return $response::json([
-                'success'=> false,
+                'success' => false,
                 'message' => $productService['error'],
             ], 400);
         }
 
-        return $response::json([
+        $response::json([
             'success' => true,
             'message' => $productService['message'],
-            'content' => $productService['content']
+            'content' => $productService['content'],
+            'page' => $productService['page'],
+        ], 200);
+    }
+    public function getAllCategory(Request $request, Response $response, $param)
+    {
+
+        $params = [];
+        $params['id_category'] = isset($param[0]) ? $param[0] : 1;
+        $params['page'] = isset($param[1]) ? intval($param[1]) : 1;
+
+        $productService = ProductService::getAllCategory($params);
+
+        if (isset($productService['error'])) {
+            return $response::json([
+                'success' => false,
+                'message' => $productService['error'],
+            ], 400);
+        }
+
+        $response::json([
+            'success' => true,
+            'message' => $productService['message'],
+            'content' => $productService['content'],
+            'page' => $productService['page'],
         ], 200);
     }
 
-    public function getAllCategory(Request $request, Response $response, $id)
+    public function getAllBy(Request $request, Response $response, $param)
     {
-        $id = intval($id[0]);
-        $productService = ProductService::getAllCategory($id);
+        $params = [];
+        $params['type_by'] = isset($param[0]) ? $param[0] : 'category';
+        $params['id_by'] = isset($param[1]) ? (int)$param[1] : 1;
+        $params['page'] = isset($param[2]) ? (int)$param[2] : 1;
+
+        $productService = ProductService::getAllBy($params);
 
         if(isset($productService['error'])){
             return $response::json([
-                'success'=> false,
-                'message' => $productService['error'],
+                'success' => false,
+                'message' => $productService['error']
             ], 400);
         }
 
-        return $response::json([
+        $response::json([
             'success' => true,
             'message' => $productService['message'],
-            'content' => $productService['content']
-        ], 200);
+            'content' => $productService['content'],
+            'page' => $productService['page'],
+        ]);
     }
 }

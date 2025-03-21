@@ -145,9 +145,18 @@ class Product extends Database
         return !empty($pdo->lastInsertId());
     }
 
-    public static function getAll()
+    /**
+     * @param int $page Indique o offset da pagina
+     */
+
+    public static function getAll(int $page)
     {
         $pdo = self::getConnection();
+
+        $limit = 40;
+        $page = isset($page) ? (int) $page : 1;
+        $offset = ($page - 1) * $limit;
+
 
         $sql = "SELECT 
                     p.id_product,
@@ -173,13 +182,26 @@ class Product extends Database
                 LEFT JOIN brands AS b
                     ON p.id_brand = b.id_brand
                 WHERE p.status > 0
-                ORDER BY p.id_product, pv.id_product_variant";
+                ORDER BY p.id_product, pv.id_product_variant
+                LIMIT :limit OFFSET :offset";
 
         $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindParam(":offset", $offset, PDO::PARAM_INT);
+
 
         $stmt->execute();
 
         return $stmt->fetchAll();
+    }
+
+    public static function getTotalProducts(){
+        $pdo = self::getConnection();
+
+        $sql = "SELECT COUNT(id_product) AS total FROM products";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetch();
     }
 
     public static function getById(int $id)
@@ -218,9 +240,13 @@ class Product extends Database
         return $stmt->fetch();
     }
 
-    public static function getAllCategory($id_category)
+    public static function getAllCategory($params)
     {
         $pdo = self::getConnection();
+
+        $limit = 40;
+        $page = isset($params['page']) ? (int) $params['page'] : 1;
+        $offset = ($page - 1) * $limit;
 
         $sql = "SELECT 
                 p.id_product,
@@ -249,15 +275,89 @@ class Product extends Database
                 ON p.id_product = pc.id_product
             WHERE p.status > 0 
                 AND pc.id_category = :id_category 
-            ORDER BY p.id_product, pv.id_product_variant";
+            ORDER BY p.id_product, pv.id_product_variant
+            LIMIT :limit OFFSET :offset";
 
         $stmt = $pdo->prepare($sql);
 
-        $stmt->bindParam(':id_category', $id_category, PDO::PARAM_INT);
+        $stmt->bindParam(':id_category', $params['id_category'], PDO::PARAM_INT);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
 
         $stmt->execute();
 
         return $stmt->fetchAll();
+    }
+    /**
+     * @param int $id Esse id é da categoria especificada.
+     */
+
+    public static function getTotalByCategory(int $id)
+    {
+        $pdo = self::getConnection();
+        $sql = "SELECT COUNT(id_product) AS total FROM product_categories WHERE id_category = :id_category";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id_category", $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
+    public static function getAllBrand(array $params)
+    {
+        $pdo = self::getConnection();
+
+        $limit = 40;
+        $page = isset($params['page']) ? (int) $params['page'] : 1;
+        $offset = ($page - 1) * $limit;
+
+        $sql = "SELECT 
+                p.id_product,
+                p.name,
+                pv.id_product_variant,
+                pv.sku,
+                pv.price,
+                pv.qtd_stock,
+                pv.discount,
+                pv.is_default,
+                m.id_media,
+                m.file_type,
+                b.name AS brand_name
+            FROM products AS p
+            LEFT JOIN product_variants AS pv 
+                ON p.id_product = pv.id_product
+            LEFT JOIN product_pictures AS pp 
+                ON pv.id_product_variant = pp.id_product_variant 
+                AND pp.is_main = 1
+            LEFT JOIN media AS m 
+                ON pp.id_media = m.id_media
+            LEFT JOIN brands AS b
+                ON p.id_brand = b.id_brand
+            WHERE p.status > 0 
+                AND p.id_brand = :id_brand 
+            ORDER BY p.id_product, pv.id_product_variant
+            LIMIT :limit OFFSET :offset";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(":id_brand", $params['id_brand'], PDO::PARAM_INT);
+            $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+            $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
+
+            $stmt->execute();
+
+            return $stmt->fetchAll();
+    }
+
+    public static function getTotalByBrand(int $id)
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT COUNT(id_product) AS total FROM products WHERE id_brand = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch();
     }
 
     public static function deleteProduct(array $data): bool
