@@ -10,7 +10,7 @@ class Variation extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "INSERT INTO VARIANT_ATTRIBUTES (name) VALUES (:name)";
+        $sql = "INSERT INTO variant_attributes (name) VALUES (:name)";
 
         $stmt = $pdo->prepare($sql);
 
@@ -24,7 +24,7 @@ class Variation extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "SELECT id_variant_attribute, name FROM VARIANT_ATTRIBUTES";
+        $sql = "SELECT id_variant_attribute, name FROM variant_attributes";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
@@ -36,7 +36,7 @@ class Variation extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE VARIANT_ATTRIBUTES SET name = :name WHERE id_variant_attribute = :id";
+        $sql = "UPDATE variant_attributes SET name = :name WHERE id_variant_attribute = :id";
 
         $stmt = $pdo->prepare($sql);
 
@@ -52,7 +52,7 @@ class Variation extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "DELETE FROM VARIANT_ATTRIBUTES WHERE id_variant_attribute = :id";
+        $sql = "DELETE FROM variant_attributes WHERE id_variant_attribute = :id";
 
         $stmt = $pdo->prepare($sql);
 
@@ -83,7 +83,7 @@ class Variation extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "SELECT id_variant_attribute_value, value, viewer FROM VARIANT_ATTRIBUTES_VALUES WHERE id_variant_attribute = :id";
+        $sql = "SELECT id_variant_attribute_value, value, viewer FROM variant_attributes_values WHERE id_variant_attribute = :id";
 
         $stmt = $pdo->prepare($sql);
 
@@ -97,7 +97,7 @@ class Variation extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE VARIANT_ATTRIBUTES_VALUES SET value = :value WHERE id_variant_attribute_value = :id";
+        $sql = "UPDATE variant_attributes_values SET value = :value WHERE id_variant_attribute_value = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":value", $data['value'], PDO::PARAM_STR);
@@ -112,7 +112,7 @@ class Variation extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "DELETE FROM VARIANT_ATTRIBUTES_VALUES WHERE id_variant_attribute_value = :id";
+        $sql = "DELETE FROM variant_attributes_values WHERE id_variant_attribute_value = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);

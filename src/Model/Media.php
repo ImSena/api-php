@@ -17,14 +17,14 @@ class Media extends Database
     private static function ensureRootFolderExists(): void
     {
         $pdo = self::getConnection();
-        $sql = "SELECT id_folder FROM FOLDERS WHERE folder_name = 'uploads' AND parent_id IS NULL";
+        $sql = "SELECT id_folder FROM folders WHERE folder_name = 'uploads' AND parent_id IS NULL";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
         $result = $stmt->fetch();
 
         if (!$result) {
-            $sql = "INSERT INTO FOLDERS (folder_name, parent_id) VALUES ('uploads', NULL)";
+            $sql = "INSERT INTO folders (folder_name, parent_id) VALUES ('uploads', NULL)";
             $pdo->exec($sql);
         }
     }
@@ -33,7 +33,7 @@ class Media extends Database
     {
         self::ensureRootFolderExists();
 
-        $sql = "INSERT INTO FOLDERS (folder_name, parent_id) VALUES (:folder_name, :parent_id)";
+        $sql = "INSERT INTO folders (folder_name, parent_id) VALUES (:folder_name, :parent_id)";
 
         $stmt = $pdo->prepare($sql);
 
@@ -49,13 +49,12 @@ class Media extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "
-           SELECT 
+        $sql = "SELECT 
                 f.id_folder AS id, 
                 f.folder_name AS name, 
                 'folder' AS type, 
                 NULL AS file_type
-            FROM FOLDERS f
+            FROM folders f
             WHERE 
                 (:parent_id = 'UPLOADS' AND f.parent_id IS NULL) 
                 OR (f.parent_id = :parent_id AND f.is_trash = :is_trash)
@@ -67,12 +66,10 @@ class Media extends Database
                 m.alias AS name, 
                 'file' AS type, 
                 m.file_type
-            FROM MEDIA m
+            FROM media m
             WHERE 
                 (:parent_id = 'UPLOADS' AND m.id_folder IN (SELECT id_folder FROM FOLDERS WHERE parent_id IS NULL)) 
-                OR (m.id_folder = :parent_id AND m.is_trash = :is_trash);
-
-        ";
+                OR (m.id_folder = :parent_id AND m.is_trash = :is_trash);";
 
         $stmt = $pdo->prepare($sql);
 
@@ -97,7 +94,7 @@ class Media extends Database
     }
     public static function editFolder(array $data, PDO $pdo): bool
     {
-        $sql = "UPDATE FOLDERS SET folder_name = :folder_name WHERE id_folder = :id_folder";
+        $sql = "UPDATE folders SET folder_name = :folder_name WHERE id_folder = :id_folder";
 
         $stmt = $pdo->prepare($sql);
 
@@ -110,7 +107,7 @@ class Media extends Database
     }
     public static function moveFolder(array $data, $pdo): bool
     {
-        $sql = "UPDATE FOLDERS SET parent_id = :parent_id WHERE id_folder = :id_folder";
+        $sql = "UPDATE folders SET parent_id = :parent_id WHERE id_folder = :id_folder";
 
         $stmt = $pdo->prepare($sql);
 
@@ -125,7 +122,7 @@ class Media extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE FOLDERS SET is_trash = :is_trash WHERE id_folder = :id_folder";
+        $sql = "UPDATE folders SET is_trash = :is_trash WHERE id_folder = :id_folder";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":is_trash", $is_trash, PDO::PARAM_BOOL);
         $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
@@ -176,7 +173,7 @@ class Media extends Database
     }
     public static function deleteFolder(array $data, $pdo): bool
     {
-        $sql = "DELETE FROM FOLDERS WHERE id_folder = :id_folder AND is_trash = TRUE";
+        $sql = "DELETE FROM folders WHERE id_folder = :id_folder AND is_trash = TRUE";
 
         $stmt = $pdo->prepare($sql);
 
@@ -193,7 +190,7 @@ class Media extends Database
         $path = '';
 
         while ($parent_id !== null) {
-            $sql = "SELECT folder_name, parent_id FROM FOLDERS WHERE id_folder = :parent_id";
+            $sql = "SELECT folder_name, parent_id FROM folders WHERE id_folder = :parent_id";
 
             $stmt = $pdo->prepare($sql);
 
@@ -218,7 +215,7 @@ class Media extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "SELECT parent_id, folder_name FROM FOLDERS WHERE id_folder = :id_folder";
+        $sql = "SELECT parent_id, folder_name FROM folders WHERE id_folder = :id_folder";
 
         $stmt = $pdo->prepare($sql);
 
@@ -249,7 +246,7 @@ class Media extends Database
     //Files
     public static function createFiles(int $id_folder, array $files, PDO $pdo): bool
     {
-        $sql = "INSERT INTO MEDIA (file_name, alias, file_type, file_size, id_folder) 
+        $sql = "INSERT INTO media (file_name, alias, file_type, file_size, id_folder) 
                 VALUES (:file_name, :alias, :file_type, :file_size, :id_folder)";
         $stmt = $pdo->prepare($sql);
 
@@ -270,7 +267,7 @@ class Media extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE MEDIA SET alias = :file_name WHERE id_media = :id_media";
+        $sql = "UPDATE media SET alias = :file_name WHERE id_media = :id_media";
 
         $stmt = $pdo->prepare($sql);
 
@@ -302,7 +299,7 @@ class Media extends Database
         $pdo = self::getConnection();
 
 
-        $sql = "SELECT COUNT(*) FROM MEDIA WHERE alias = :alias";
+        $sql = "SELECT COUNT(*) FROM media WHERE alias = :alias";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":alias", $alias, PDO::PARAM_STR);
         $stmt->execute();
@@ -314,7 +311,7 @@ class Media extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "SELECT m.file_name, f.parent_id, f.id_folder, m.file_type FROM MEDIA m
+        $sql = "SELECT m.file_name, f.parent_id, f.id_folder, m.file_type FROM media m
                 JOIN FOLDERS f ON m.id_folder = f.id_folder
                 WHERE m.id_media = :id_media";
 
@@ -331,7 +328,7 @@ class Media extends Database
     }
     public static function moveFile(array $data, PDO $pdo): bool
     {
-        $sql = "UPDATE MEDIA SET id_folder = :id_folder WHERE id_media = :id_media";
+        $sql = "UPDATE media SET id_folder = :id_folder WHERE id_media = :id_media";
 
         $stmt = $pdo->prepare($sql);
 
@@ -346,7 +343,7 @@ class Media extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE MEDIA SET is_trash = :is_trash WHERE id_media = :id_media";
+        $sql = "UPDATE media SET is_trash = :is_trash WHERE id_media = :id_media";
 
         $stmt = $pdo->prepare($sql);
 
@@ -369,7 +366,7 @@ class Media extends Database
 
     public static function deleteFile(array $data, PDO $pdo): bool
     {
-        $sql = "DELETE FROM MEDIA WHERE id_media = :id_media AND is_trash = TRUE";
+        $sql = "DELETE FROM media WHERE id_media = :id_media AND is_trash = TRUE";
 
         $stmt = $pdo->prepare($sql);
 

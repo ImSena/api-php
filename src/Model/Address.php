@@ -20,7 +20,7 @@ class Address extends Database
                 throw new Exception("Erro ao desativar endereço padrão");
             }
 
-            $sql = "INSERT INTO ADDRESSES (id_user, public_area, number, complement, district, city, state, zip_code) VALUES (:id_user, :public_area, :number, :complement, :district, :city, :state, :zip_code)";
+            $sql = "INSERT INTO addresses (id_user, public_area, number, complement, district, city, state, zip_code) VALUES (:id_user, :public_area, :number, :complement, :district, :city, :state, :zip_code)";
 
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(":id_user", $data['id_user'], PDO::PARAM_INT);
@@ -52,7 +52,7 @@ class Address extends Database
 
     private static function setDefault(PDO $pdo, int $id_user, bool $is_default = false, $id = false)
     {
-        $sql = "UPDATE ADDRESSES SET is_default = :is_default WHERE id_user = :id";
+        $sql = "UPDATE addresses SET is_default = :is_default WHERE id_user = :id";
 
         if ($id) {
             $sql .= " AND id = :id";
@@ -73,7 +73,7 @@ class Address extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "SELECT id_address, public_area, number, complement, district, city, state, zip_code, is_default FROM ADDRESSES WHERE id_user = :id";
+        $sql = "SELECT id_address, public_area, number, complement, district, city, state, zip_code, is_default FROM addresses WHERE id_user = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();

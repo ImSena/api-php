@@ -20,8 +20,8 @@ class User extends Database
             $phone = $data['phone'];
 
             $sql = $person_type == "LEGAL"
-                ? "INSERT INTO LEGAL_PEOPLE (cnpj, corporate_name, trade_name, state_registration) VALUES (:cnpj, :corporate_name, :trade_name, :state_registration)"
-                : "INSERT INTO NATURAL_PEOPLE (cpf, dt_birth, gender) VALUES(:cpf, :dt_birth, :gender)";
+                ? "INSERT INTO legal_people (cnpj, corporate_name, trade_name, state_registration) VALUES (:cnpj, :corporate_name, :trade_name, :state_registration)"
+                : "INSERT INTO natural_people (cpf, dt_birth, gender) VALUES(:cpf, :dt_birth, :gender)";
 
             $stmt = $pdo->prepare($sql);
             if ($person_type == 'LEGAL') {
@@ -44,8 +44,8 @@ class User extends Database
             }
 
             $sql = $person_type == 'LEGAL'
-                ? "INSERT INTO USERS (username, email, password, id_legal_person) VALUES (:username, :email, :password, :id_person)"
-                : "INSERT INTO USERS (username, email, password, id_natural_person) VALUES (:username, :email, :password, :id_person)";
+                ? "INSERT INTO users (username, email, password, id_legal_person) VALUES (:username, :email, :password, :id_person)"
+                : "INSERT INTO users (username, email, password, id_natural_person) VALUES (:username, :email, :password, :id_person)";
 
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(":username", $data['username'], PDO::PARAM_STR);
@@ -86,7 +86,7 @@ class User extends Database
     {
         $pdo = $pdo ?? self::getConnection();
 
-        $sql = "INSERT INTO ADDRESSES (id_user, public_area, number, complement, district, city, state, zip_code) VALUES (:id_user, :public_area, :number, :complement,:district, :city, :state, :zip_code)";
+        $sql = "INSERT INTO addresses (id_user, public_area, number, complement, district, city, state, zip_code) VALUES (:id_user, :public_area, :number, :complement,:district, :city, :state, :zip_code)";
 
         $stmt = $pdo->prepare($sql);
 
@@ -108,7 +108,7 @@ class User extends Database
     {
         $pdo = $pdo ?? self::getConnection();
 
-        $sql = "INSERT INTO PHONES (id_user, type, number) VALUES (:id_user, :type, :number)";
+        $sql = "INSERT INTO phones (id_user, type, number) VALUES (:id_user, :type, :number)";
 
         $stmt = $pdo->prepare($sql);
 
@@ -148,7 +148,7 @@ class User extends Database
     public static function updateAccess($data, $id)
     {
         $pdo = self::getConnection();
-        $sql = "UPDATE USERS SET password = :password WHERE id_user = :id";
+        $sql = "UPDATE users SET password = :password WHERE id_user = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":password", $data['password'], PDO::PARAM_STR);
@@ -163,7 +163,7 @@ class User extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE USERS SET status = :status WHERE id_user = :id";
+        $sql = "UPDATE users SET status = :status WHERE id_user = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":status", $status, PDO::PARAM_STR);

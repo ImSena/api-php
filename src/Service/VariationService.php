@@ -6,7 +6,6 @@ use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Variation;
 use App\Utils\Validator;
 use Exception;
-use Firebase\JWT\ExpiredException;
 use PDOException;
 
 class VariationService

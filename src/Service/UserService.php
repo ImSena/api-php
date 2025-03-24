@@ -4,7 +4,7 @@ namespace App\Service;
 
 use App\Helpers\DatabaseErrorHelpers;
 use App\Jwt\JwtAuth;
-use App\Model\Token_user;
+use App\Model\TokenUser;
 use App\Utils\SendEmail;
 use App\Utils\Validator;
 use Exception;
@@ -194,7 +194,7 @@ class UserService{
             }
 
             if ($sendEmail) {
-                $tokenStatus = Token_user::selectLastToken($user);
+                $tokenStatus = TokenUser::selectLastToken($user);
 
                 if ($tokenStatus) {
                     $dateCreated = new DateTime($tokenStatus['created_at']);
@@ -217,9 +217,9 @@ class UserService{
                 'type' => 'ACTIVE'
             ];
 
-            $token_user = Token_user::inactiveAll($user['id_user'], $fields['type']);
+            $token_user = TokenUser::inactiveAll($user['id_user'], $fields['type']);
 
-            $token_user = Token_user::create($fields);
+            $token_user = TokenUser::create($fields);
 
             if (!$token_user) {
                 throw new Exception("Não foi possível gerar link de ativação de conta");
@@ -274,9 +274,9 @@ class UserService{
 
             $fields['token'] = $token;
 
-            Token_user::inactiveAll($fields['id_user'], $fields['type']);
+            TokenUser::inactiveAll($fields['id_user'], $fields['type']);
 
-            $token = Token_user::create($fields);
+            $token = TokenUser::create($fields);
 
             if (!$token) {
                 throw new Exception("Não foi possível gerar o link. Tente novamente mais tarde");

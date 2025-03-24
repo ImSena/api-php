@@ -4,7 +4,6 @@ namespace App\Service;
 
 use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Media;
-use App\Model\Picture_products;
 use App\Model\Product;
 use App\Utils\Pagination;
 use App\Utils\Validator;

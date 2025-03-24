@@ -17,7 +17,7 @@ class Product extends Database
         try {
 
             $products = $data['products'];
-            $sql = "INSERT INTO PRODUCTS (name, description, id_brand) VALUES (:name, :description, :id_brand)";
+            $sql = "INSERT INTO products (name, description, id_brand) VALUES (:name, :description, :id_brand)";
 
             $stmt = $pdo->prepare($sql);
 
@@ -68,7 +68,7 @@ class Product extends Database
 
     private static function createVariant(array $variants, int $productId, PDO $pdo)
     {
-        $sql = "INSERT INTO PRODUCT_VARIANTS (id_product, sku, price, qtd_stock, is_default, discount) 
+        $sql = "INSERT INTO product_variants (id_product, sku, price, qtd_stock, is_default, discount) 
             VALUES (:id_product, :sku, :price, :stock, :is_default, :discount)";
 
         $stmt = $pdo->prepare($sql);
@@ -96,7 +96,7 @@ class Product extends Database
 
     private static function createRelationVariant(int $productVariantId, int $value_variant, PDO $pdo)
     {
-        $sql = "INSERT INTO PRODUCT_VARIANTS_ATTRIBUTES (id_variant_attribute_value, id_product_variant) VALUES
+        $sql = "INSERT INTO product_variants_attributes (id_variant_attribute_value, id_product_variant) VALUES
         (:id_variant_attribute_value, :id_product_variant)";
 
         $stmt = $pdo->prepare($sql);
@@ -110,7 +110,7 @@ class Product extends Database
     private static function createProductPictures(array $pictures, $id_product_variant, $id_variant_attribute_value, PDO $pdo)
     {
         try {
-            $sql = "INSERT INTO PRODUCT_PICTURES (id_product_variant, id_variant_attribute_value, id_media, position, is_main) 
+            $sql = "INSERT INTO product_pictures (id_product_variant, id_variant_attribute_value, id_media, position, is_main) 
             VALUES (:id_product_variant, :id_variant_attribute_value, :id_media, :position, :is_main)";
 
             $stmt = $pdo->prepare($sql);
@@ -133,7 +133,7 @@ class Product extends Database
     private static function relationCategory($pdo, $productId, $categoryId)
     {
 
-        $sql = "INSERT INTO PRODUCT_CATEGORIES (id_product, id_category) VALUES (:id_product, :id_category)";
+        $sql = "INSERT INTO product_categories (id_product, id_category) VALUES (:id_product, :id_category)";
 
         $stmt = $pdo->prepare($sql);
 
@@ -364,7 +364,7 @@ class Product extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE PRODUCTS SET status = 0 WHERE id_product = :id_product";
+        $sql = "UPDATE products SET status = 0 WHERE id_product = :id_product";
 
         $stmt = $pdo->prepare($sql);
 

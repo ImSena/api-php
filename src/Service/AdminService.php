@@ -5,8 +5,7 @@ namespace App\Service;
 use App\Helpers\DatabaseErrorHelpers;
 use App\Jwt\JwtAuth;
 use App\Model\Admin;
-use App\Model\Token;
-use App\Model\Token_admin;
+use App\Model\TokenAdmin;
 use App\Utils\SendEmail;
 use App\Utils\Validator;
 use DateTime;
@@ -110,7 +109,7 @@ class AdminService
             }
 
             if ($sendEmail) {
-                $tokenStatus = Token_admin::selectLastToken($admin);
+                $tokenStatus = TokenAdmin::selectLastToken($admin);
 
                 if ($tokenStatus) {
                     $dateCreated = new DateTime($tokenStatus['created_at']);
@@ -133,9 +132,9 @@ class AdminService
                 'type' => 'ACTIVE'
             ];
 
-            $token_admin = Token_admin::inactiveAll($admin['id_admin'], $fields['type']);
+            $token_admin = TokenAdmin::inactiveAll($admin['id_admin'], $fields['type']);
 
-            $token_admin = Token_admin::create($fields);
+            $token_admin = TokenAdmin::create($fields);
 
             if (!$token_admin) {
                 throw new Exception("Não foi possível gerar link de ativação de conta");
@@ -190,9 +189,9 @@ class AdminService
 
             $fields['token'] = $token;
 
-            Token_admin::inactiveAll($fields['id_admin'], $fields['type']);
+            TokenAdmin::inactiveAll($fields['id_admin'], $fields['type']);
 
-            $token = Token_admin::create($fields);
+            $token = TokenAdmin::create($fields);
 
             if (!$token) {
                 throw new Exception("Não foi possível gerar o link. Tente novamente mais tarde");

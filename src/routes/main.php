@@ -12,6 +12,7 @@ use App\Controllers\UserController;
 use App\Controllers\HomeController;
 use App\Controllers\MediaController;
 use App\Controllers\OrderController;
+use App\Controllers\PaymentsController;
 use App\Controllers\VariantsController;
 use App\Middlewares\AuthPermission;
 
@@ -148,7 +149,15 @@ Route::group([
     "middlewares" => [AuthPermission::class]
 ], function($prefix, $middlewares){
     Route::post("/$prefix", [OrderController::class, "create"], [AuthUser::class]);
+    Route::get("/$prefix/{param}", [OrderController::class, "getById"], $middlewares);
     Route::get("/$prefix/{param}/{param}", [OrderController::class, "getAll"], $middlewares);
-    Route::get("/$prefix/{param}", [OrderController::class, "getAll"], $middlewares);
 });
 
+Route::group([
+    "prefix" => "payments",
+    "middlewares" => [AuthPermission::class]
+], function($prefix, $middlewares){
+    Route::post("/$prefix/pay/{param}", [PaymentsController::class, "pay"], $middlewares);
+    Route::get("/$prefix", [PaymentsController::class, 'getPayments'], $middlewares);
+    Route::get("/$prefix/{param}", [PaymentsController::class, 'getDetails'], $middlewares);
+});

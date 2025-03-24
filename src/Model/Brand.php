@@ -10,7 +10,7 @@ class Brand extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "INSERT INTO BRANDS (name) VALUES (:name)";
+        $sql = "INSERT INTO brands (name) VALUES (:name)";
 
         $stmt = $pdo->prepare($sql);
 
@@ -24,7 +24,7 @@ class Brand extends Database
     public static function getAll():array
     {
         $pdo = self::getConnection();
-        $sql = "SELECT id_brand, name FROM BRANDS";
+        $sql = "SELECT id_brand, name FROM brands";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
 
@@ -34,7 +34,7 @@ class Brand extends Database
     public static function update(array $data):bool
     {
         $pdo = self::getConnection();
-        $sql = "UPDATE BRANDS SET name = :name WHERE id_brand = :id_brand";
+        $sql = "UPDATE brands SET name = :name WHERE id_brand = :id_brand";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
         $stmt->bindParam(":id_brand", $data['id'], PDO::PARAM_INT);

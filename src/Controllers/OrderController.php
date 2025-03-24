@@ -9,7 +9,7 @@ use App\Service\OrderService;
 class OrderController{
 
 
-    public static function create(Request $request, Response $response)
+    public function create(Request $request, Response $response)
     {
         $body = $request::body();
         $body['id_user'] = $request::getUserId();
@@ -29,7 +29,7 @@ class OrderController{
         ]);
     }
 
-    public static function getAll(Request $request, Response $response, $param)
+    public function getAll(Request $request, Response $response, $param)
     {
 
         $params = [];
@@ -62,7 +62,7 @@ class OrderController{
         ]);
     }
 
-    public static function getById(Request $request, Response $response, $id)
+    public function getById(Request $request, Response $response, $id)
     {
         $id = intval($id[0]);
 

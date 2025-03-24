@@ -14,7 +14,7 @@ class Order extends Database
         $pdo->beginTransaction();
         try {
 
-            $sql = "INSERT INTO ORDERS (id_user, id_address";
+            $sql = "INSERT INTO orders (id_user, id_address";
             $values = "VALUES (:id_user, :id_address";
 
             if (!empty($data['id_coupon'])) {
@@ -53,7 +53,6 @@ class Order extends Database
             return $orderId;
         } catch (PDOException $e) {
             $pdo->rollBack();
-            var_dump($e);
             return false;
         } catch (Exception $e) {
             $pdo->rollBack();
@@ -67,7 +66,7 @@ class Order extends Database
             throw new Exception("Estoque insuficiente para um ou mais itens.");
         }
 
-        $sql = "INSERT INTO ORDER_ITEM (id_order, id_product_variant, quantity) VALUES (:id_order, :id_product_variant, :quantity)";
+        $sql = "INSERT INTO order_item (id_order, id_product_variant, quantity) VALUES (:id_order, :id_product_variant, :quantity)";
         $stmt = $pdo->prepare($sql);
         foreach ($orderItems as $item) {
             $stmt->bindParam(":id_order", $orderId, PDO::PARAM_INT);
@@ -86,7 +85,7 @@ class Order extends Database
     }
     private static function hasSufficientStock(array $orderItems, $pdo)
     {
-        $sql = "SELECT qtd_stock FROM PRODUCT_VARIANTS WHERE id_product_variant = :id_product_variant";
+        $sql = "SELECT qtd_stock FROM product_variants WHERE id_product_variant = :id_product_variant";
         $stmt = $pdo->prepare($sql);
 
         foreach ($orderItems as $item) {
@@ -102,7 +101,7 @@ class Order extends Database
     }
     private static function updateProductStock(array $orderItems, $pdo)
     {
-        $sql = "UPDATE PRODUCT_VARIANTS SET qtd_stock = qtd_stock - :quantity WHERE id_product_variant = :id_product_variant";
+        $sql = "UPDATE product_variants SET qtd_stock = qtd_stock - :quantity WHERE id_product_variant = :id_product_variant";
         $stmt = $pdo->prepare($sql);
 
         foreach ($orderItems as $item) {
@@ -118,7 +117,7 @@ class Order extends Database
     }
     private static function createOrderStatus(int $orderId, $pdo)
     {
-        $sql = "INSERT INTO ORDER_STATUS (id_order) VALUES (:id_order)";
+        $sql = "INSERT INTO order_status (id_order) VALUES (:id_order)";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id_order", $orderId, PDO::PARAM_INT);
         $stmt->execute();
@@ -194,7 +193,6 @@ class Order extends Database
 
         return $stmt->fetchAll();
     }
-
     public static function getTotalOrders($permissions)
     {
 
@@ -346,7 +344,7 @@ class Order extends Database
     public static function getById(int $id)
     {
         $pdo = self::getConnection();
-        $sql = "SELECT * FROM ORDERS WHERE id = :id";
+        $sql = "SELECT * FROM ORDERS WHERE id_order = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();

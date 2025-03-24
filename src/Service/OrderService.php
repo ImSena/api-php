@@ -129,6 +129,22 @@ class OrderService
                 throw new Exception("Não foi possível buscar pedido");
             }
 
+            $productItems = Order::getOrderIdProductItems($id);
+
+            $totalPrice = 0.00;
+            foreach($productItems as $product)
+            {
+                $product = Product::getById($product['id_product_variant']);
+                $Order['products'][] = $product;
+                $price = floatval($product['price']);
+                $discount = floatval($product['discount']);
+                $price -= $discount;
+                $totalPrice += $price;
+
+            }
+
+            $Order['total_price'] = $totalPrice;
+
             return [
                 'message' => 'Pedido encontrado com sucesso',
                 'content' => $Order

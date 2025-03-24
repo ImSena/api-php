@@ -4,7 +4,7 @@ namespace App\Service;
 
 use App\Helpers\DatabaseErrorHelpers;
 use App\Jwt\JwtAuth;
-use App\Model\Token_user;
+use App\Model\TokenUser;
 use App\Utils\Validator;
 use Exception;
 use PDOException;
@@ -25,11 +25,11 @@ class AccountUserService
             $token = JwtAuth::verifyToken($fields['token']);
 
             if (is_array($token) && isset($token['decoded']['error'])) {
-                Token_user::inactiveToken($data['token']);
+                TokenUser::inactiveToken($data['token']);
                 throw new Exception($token['decoded']['error']);
             }
 
-            $tokenModel = Token_user::select($data['token']);
+            $tokenModel = TokenUser::select($data['token']);
 
             if (isset($tokenModel['status']) && $tokenModel['status'] == 'INACTIVE') {
                 throw new Exception("Não foi possível atualizar a senha, pois o link está expirado!");
@@ -38,7 +38,7 @@ class AccountUserService
             if (!$admin) {
                 throw new Exception("Não foi possível atualizar a senha. Tente novamente mais tarde");
             }
-            $tokenModel = Token_user::inactiveToken($data['token']);
+            $tokenModel = TokenUser::inactiveToken($data['token']);
 
             return "Senha alterada com sucesso!";
         } catch (PDOException $e) {
@@ -58,11 +58,11 @@ class AccountUserService
             $token = JwtAuth::verifyToken($fields['token']);
 
             if (is_array($token) && isset($token['decoded']['error'])) {
-                Token_user::inactiveToken($data['token']);
+                TokenUser::inactiveToken($data['token']);
                 throw new Exception($token['decoded']['error']);
             }
 
-            $tokenModel = Token_user::select($data['token']);
+            $tokenModel = TokenUser::select($data['token']);
 
             if (isset($tokenModel['status']) && $tokenModel['status'] == 'INACTIVE') {
                 throw new Exception("Não foi possível ativar a conta, pois o link está expirado!");
@@ -74,7 +74,7 @@ class AccountUserService
                 throw new Exception("Não foi possível atualizar a conta. Tente novamente mais tarde");
             }
 
-            $tokenModel = Token_user::inactiveToken($data['token']);
+            $tokenModel = TokenUser::inactiveToken($data['token']);
 
             return "Conta ativada com sucesso!";
         } catch (PDOException $e) {
