@@ -23,7 +23,7 @@ class Product extends Database
 
             $stmt->bindParam(":name", $products['name'], PDO::PARAM_STR);
             $stmt->bindParam(":description", $products['description'], PDO::PARAM_STR);
-            $stmt->bindParam(":id_brand", $products['id_branch'], PDO::PARAM_INT);
+            $stmt->bindParam(":id_brand", $products['id_brand'], PDO::PARAM_INT);
 
             $stmt->execute();
 
@@ -65,7 +65,6 @@ class Product extends Database
             return ['error' => $e->getMessage()];
         }
     }
-
     private static function createVariant(array $variants, int $productId, PDO $pdo)
     {
         $sql = "INSERT INTO product_variants (id_product, sku, price, qtd_stock, is_default, discount) 
@@ -93,7 +92,6 @@ class Product extends Database
 
         return $productVariants;
     }
-
     private static function createRelationVariant(int $productVariantId, int $value_variant, PDO $pdo)
     {
         $sql = "INSERT INTO product_variants_attributes (id_variant_attribute_value, id_product_variant) VALUES
@@ -106,7 +104,6 @@ class Product extends Database
 
         $stmt->execute();
     }
-
     private static function createProductPictures(array $pictures, $id_product_variant, $id_variant_attribute_value, PDO $pdo)
     {
         try {
@@ -129,7 +126,6 @@ class Product extends Database
             return false;
         }
     }
-
     private static function relationCategory($pdo, $productId, $categoryId)
     {
 
@@ -144,11 +140,9 @@ class Product extends Database
 
         return !empty($pdo->lastInsertId());
     }
-
     /**
      * @param int $page Indique o offset da pagina
      */
-
     public static function getAll(int $page)
     {
         $pdo = self::getConnection();
@@ -194,8 +188,8 @@ class Product extends Database
 
         return $stmt->fetchAll();
     }
-
-    public static function getTotalProducts(){
+    public static function getTotalProducts()
+    {
         $pdo = self::getConnection();
 
         $sql = "SELECT COUNT(id_product) AS total FROM products";
@@ -203,7 +197,6 @@ class Product extends Database
         $stmt->execute();
         return $stmt->fetch();
     }
-
     public static function getById(int $id)
     {
         $pdo = self::getConnection();
@@ -239,7 +232,6 @@ class Product extends Database
 
         return $stmt->fetch();
     }
-
     public static function getAllCategory($params)
     {
         $pdo = self::getConnection();
@@ -291,7 +283,6 @@ class Product extends Database
     /**
      * @param int $id Esse id é da categoria especificada.
      */
-
     public static function getTotalByCategory(int $id)
     {
         $pdo = self::getConnection();
@@ -302,7 +293,6 @@ class Product extends Database
 
         return $stmt->fetch();
     }
-
     public static function getAllBrand(array $params)
     {
         $pdo = self::getConnection();
@@ -338,16 +328,15 @@ class Product extends Database
             ORDER BY p.id_product, pv.id_product_variant
             LIMIT :limit OFFSET :offset";
 
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(":id_brand", $params['id_brand'], PDO::PARAM_INT);
-            $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
-            $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id_brand", $params['id_brand'], PDO::PARAM_INT);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
 
-            $stmt->execute();
+        $stmt->execute();
 
-            return $stmt->fetchAll();
+        return $stmt->fetchAll();
     }
-
     public static function getTotalByBrand(int $id)
     {
         $pdo = self::getConnection();
@@ -374,9 +363,92 @@ class Product extends Database
 
         return $stmt->rowCount() > 0;
     }
-
     public static function getDatabaseConnection()
     {
         return self::getConnection();
+    }
+
+    public static function getVariations(int $id)
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT id_product_variant, sku, price, qtd_stock, is_default, discount FROM product_variants WHERE id_product = :id_product";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id_product", $id, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    public static function getMain(int $id)
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT 
+                    b.name AS brand, 
+                    p.name AS name, 
+                    p.description 
+                FROM products AS p 
+                LEFT JOIN brands AS b 
+                ON p.id_brand = b.id_brand 
+                WHERE p.id_product = :id
+                ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
+    /**
+     * @param int $id Esse id é o id do produto
+     */
+    public static function getPicturesProduct(int $id)
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT 
+                    pp.id_media,
+                    pp.is_main,
+                    pp.position,
+                    m.file_type
+                FROM product_pictures AS pp 
+                LEFT JOIN media AS m ON m.id_media = pp.id_media
+                WHERE id_product_variant = :id";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+    /**
+     * @param int $id Esse id é o id do produto
+     */
+    public static function getValueVariant(int $id)
+    {
+        $pdo = self::getConnection();
+
+        $sql = "SELECT 
+                    pva.id_variant_attribute_value,
+                    vav.value,
+                    vav.viewer,
+                    va.name
+                FROM 
+                    product_variants_attributes AS pva 
+                LEFT JOIN variant_attributes_values AS vav 
+                    ON pva.id_variant_attribute_value = vav.id_variant_attribute_value
+                LEFT JOIN variant_attributes AS va
+                    ON vav.id_variant_attribute = va.id_variant_attribute
+                WHERE pva.id_product_variant = :id
+                ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
     }
 }

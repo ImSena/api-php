@@ -25,7 +25,6 @@ class TokenUser extends Database
 
         return $stmt->rowCount() > 0;
     }
-
     public static function select(string $token)
     {
         $pdo = self::getConnection();
@@ -52,12 +51,11 @@ class TokenUser extends Database
 
         return $stmt->fetch();
     }
-
     public static function inactiveAll(string $id_user, string $type)
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE tokens_user SET status = 'INACTIVE' WHERE id_user = :id_user AND type = :type";
+        $sql = "UPDATE tokens_users SET status = 'INACTIVE' WHERE id_user = :id_user AND type = :type";
 
         $stmt = $pdo->prepare($sql);
 
@@ -72,7 +70,7 @@ class TokenUser extends Database
     {
         $pdo = self::getConnection();
 
-        $sql = "UPDATE tokens_user SET status = 'INACTIVE' WHERE token = :token";
+        $sql = "UPDATE tokens_users SET status = 'INACTIVE' WHERE token = :token";
 
         $stmt = $pdo->prepare($sql);
 

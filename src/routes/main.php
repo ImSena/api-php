@@ -112,7 +112,7 @@ Route::group([
     // Route::get("/$prefix/{param}", [ProductController::class, 'getProduct']);
     //primeiro parâmetro seria o que gostaria de buscar (por categoria, marca...), segundo é o id e o terceiro a pagina para o offset
     Route::get("/$prefix/get-all-by/{param}/{param}/{param}", [ProductController::class, 'getAllBy']);
-    //parametro para a páginação
+    Route::get("/$prefix/get-by-id/{param}", [ProductController::class, 'getById']);
     Route::get("/$prefix/{param}", [ProductController::class, 'getAll']);
 });
 

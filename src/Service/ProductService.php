@@ -59,7 +59,7 @@ class ProductService
                 if (!isset($result[$id_product])) {
                     $result[$id_product] = [
                         'id_product' => $product['id_product'],
-                        'branch' => $product['brand_name'],
+                        'brand' => $product['brand_name'],
                         'name' => $product['name'],
                         'variations' => []
                     ];
@@ -115,7 +115,7 @@ class ProductService
                 if (!isset($result[$id_product])) {
                     $result[$id_product] = [
                         'id_product' => $product['id_product'],
-                        'branch' => $product['brand_name'],
+                        'brand' => $product['brand_name'],
                         'name' => $product['name'],
                         'variations' => []
                     ];
@@ -177,7 +177,7 @@ class ProductService
                 if (!isset($result[$id_product])) {
                     $result[$id_product] = [
                         'id_product' => $product['id_product'],
-                        'branch' => $product['brand_name'],
+                        'brand' => $product['brand_name'],
                         'name' => $product['name'],
                         'variations' => []
                     ];
@@ -235,7 +235,6 @@ class ProductService
                 throw new Exception("Não foi possível resgatar dados do produto");
             }
 
-            
             $path = Media::getPathToFile($product);
             $extension = MediaService::getExtension($product['file_type']);
             $product['image_path'] = $path . '.' . $extension; 
@@ -285,6 +284,37 @@ class ProductService
         } catch (PDOException $e) {
             return ['error' => DatabaseErrorHelpers::error($e)];
         } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function getProductAndVariations(array $params)
+    {
+        try{
+            $Product = Product::getMain($params['id_product']);
+            $ProductVariation = Product::getVariations($params['id_product']);
+            foreach ($ProductVariation as $prod) {
+                $prod['pictures'] = Product::getPicturesProduct($prod['id_product_variant']);
+                foreach($prod['pictures'] as &$picture){
+                    $path = Media::getPathToFile($picture);
+                    $extension = MediaService::getExtension($picture['file_type']);
+                    $picture['image_path'] = $path.'.'. $extension;
+                    unset($picture['id_media']);
+                    unset($picture['file_type']);
+                }
+                $prod['value_variant'] = Product::getValueVariant($prod['id_product_variant']);
+                $Product['variations'][] = $prod;
+            }
+
+            if(!$Product){
+                throw new Exception("Não foi possível encontrar o produto");
+            }
+
+            return $Product;
+
+        }catch(PDOException $e){
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        }catch(Exception $e){
             return ['error' => $e->getMessage()];
         }
     }

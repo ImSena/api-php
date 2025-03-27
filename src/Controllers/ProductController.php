@@ -48,7 +48,6 @@ class ProductController
     }
     public function getAllCategory(Request $request, Response $response, $param)
     {
-
         $params = [];
         $params['id_category'] = isset($param[0]) ? $param[0] : 1;
         $params['page'] = isset($param[1]) ? intval($param[1]) : 1;
@@ -85,12 +84,32 @@ class ProductController
                 'message' => $productService['error']
             ], 400);
         }
-
         $response::json([
             'success' => true,
             'message' => $productService['message'],
             'content' => $productService['content'],
             'page' => $productService['page'],
+        ]);
+    }
+
+    public function getById(Request $request, Response $response, $param)
+    {
+        $params = [];
+        $params['id_product'] = isset($param[0]) ? (int) $param[0] : 1;
+
+        $productService = ProductService::getProductAndVariations($params);
+
+        if(isset($productService['error'])){
+            return $response::json([
+                'success' => false,
+                'message' => $productService['error']
+            ], 400);
+        }
+
+        $response::json([
+            'success' => true,
+            'message' => "Produto resgatado com sucesso.",
+            'content' => $productService,
         ]);
     }
 }
