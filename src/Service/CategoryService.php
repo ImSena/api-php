@@ -12,6 +12,8 @@ class CategoryService
 {
     public static function createCategory(array $data){
         try{
+            $Category = new Category();
+
             $fields = Validator::validate([
                 "name" => $data['name'] ?? '',
             ]);
@@ -30,7 +32,7 @@ class CategoryService
                 $fields['parent_category'] = null;
             }
 
-            $category = Category::create($data);
+            $category = $Category->create($data);
 
             if(!$category){
                 throw new Exception("Não foi possível cadastrar categoria");
@@ -47,7 +49,8 @@ class CategoryService
     public static function getAllParent()
     {
         try{
-            $category = Category::getAllParent();
+            $Category = new Category();
+            $category = $Category->getAllParent();
 
             return $category;
         }catch(PDOException $e){
@@ -60,7 +63,8 @@ class CategoryService
     public static function getAllCategories(): array
     {
         try{
-            $category = Category::getAllCategories();
+            $Category = new Category();
+            $category = $Category->getAllCategories();
 
             return $category;
         }catch(PDOException $e){
@@ -73,7 +77,8 @@ class CategoryService
     public static function update(array $data)
     {
         try{
-            
+            $Category = new Category();
+
             $fields = Validator::validate([
                 "id_category" => $data['id_category'] ?? '',
                 "name" => $data['name'] ?? '',
@@ -94,7 +99,7 @@ class CategoryService
                 $fields['parent_category'] = null;
             }
 
-            $category = Category::update($fields);
+            $category = $Category->update($fields);
 
             return $category;
         }catch(PDOException $e){
@@ -107,12 +112,12 @@ class CategoryService
     public static function delete(array $data)
     {
         try{
-
+            $Category = new Category();
             $fields = Validator::validate([
                 "id_category" => $data['id_category'] ?? ''
             ]);
 
-            $category = Category::delete($fields);
+            $category = $Category->delete($fields);
 
             if(!$category){
                 throw new Exception("Não foi possível deletar categoria");

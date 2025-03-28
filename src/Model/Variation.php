@@ -6,9 +6,9 @@ use PDO;
 
 class Variation extends Database
 {
-    public static function createVariation(array $data):bool
+    public function createVariation(array $data):bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "INSERT INTO variant_attributes (name) VALUES (:name)";
 
@@ -20,9 +20,9 @@ class Variation extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function getAllVariants():array 
+    public function getAllVariants():array 
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT id_variant_attribute, name FROM variant_attributes";
 
@@ -32,9 +32,9 @@ class Variation extends Database
         return $stmt->fetchAll();
     }
 
-    public static function updateVariation(array $data):bool
+    public function updateVariation(array $data):bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "UPDATE variant_attributes SET name = :name WHERE id_variant_attribute = :id";
 
@@ -48,9 +48,9 @@ class Variation extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function deleteVariation(int $id):bool
+    public function deleteVariation(int $id):bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "DELETE FROM variant_attributes WHERE id_variant_attribute = :id";
 
@@ -62,9 +62,9 @@ class Variation extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function createValue(array $data):bool
+    public function createValue(array $data):bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "INSERT INTO variant_attributes_values (id_variant_attribute, value, viewer) VALUES (:id_variant_attribute, :value, :viewer)";
 
@@ -79,9 +79,9 @@ class Variation extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function getValuesVariation(int $id):array
+    public function getValuesVariation(int $id):array
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT id_variant_attribute_value, value, viewer FROM variant_attributes_values WHERE id_variant_attribute = :id";
 
@@ -93,9 +93,9 @@ class Variation extends Database
         return $stmt->fetchAll();
     }
 
-    public static function updateValue(array $data):bool
+    public function updateValue(array $data):bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "UPDATE variant_attributes_values SET value = :value WHERE id_variant_attribute_value = :id";
 
@@ -108,9 +108,9 @@ class Variation extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function deleteValue(int $id):bool
+    public function deleteValue(int $id):bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "DELETE FROM variant_attributes_values WHERE id_variant_attribute_value = :id";
 

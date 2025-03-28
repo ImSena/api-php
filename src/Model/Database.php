@@ -1,17 +1,21 @@
 <?php
 
 namespace App\Model;
-
-use App\Helpers\DatabaseErrorHelpers;
-use Exception;
 use PDO;
-use PDOException;
 
 require_once('./config.php');
 
 class Database
 {
-    protected static function getConnection()
+
+    private $pdo;
+
+    public function __construct()
+    {
+        $this->pdo = $this->getConnection();
+    }
+
+    protected function getConnection()
     {
         $dsn = "mysql:host=" . HOST . ";dbname=" . DBNAME . ";charset=utf8mb4;";
 
@@ -19,7 +23,15 @@ class Database
 
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $pdo->setAttribute(PDO::ATTR_PERSISTENT, true);
 
         return $pdo;
     }
+
+    public function getPdo()
+    {
+        return $this->pdo;
+    }
+
+
 }

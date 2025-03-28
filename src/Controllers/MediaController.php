@@ -67,6 +67,7 @@ class MediaController{
     {
         $body = $request::body();
 
+
         $MediaService = MediaService::moveFolder($body);
 
         if(isset($MediaService['error'])){
@@ -103,7 +104,6 @@ class MediaController{
     public function restoreFolder(Request $request, Response $response)
     {
         $body = $request::body();
-
         $MediaService = MediaService::restoreFolder($body);
 
         if(isset($MediaService['error'])){

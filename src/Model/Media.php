@@ -9,14 +9,14 @@ class Media extends Database
 {
 
     //para poder usar no service para begintransaction
-    public static function getConnectionDatabase()
-    {
-        return self::getConnection();
-    }
+    // public function getConnectionDatabase()
+    // {
+    //     return self::getConnection();
+    // }
     //criar o folder uploads caso não exista
-    private static function ensureRootFolderExists(): void
+    private function ensureRootFolderExists(): void
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $sql = "SELECT id_folder FROM folders WHERE folder_name = 'uploads' AND parent_id IS NULL";
 
         $stmt = $pdo->prepare($sql);
@@ -29,9 +29,9 @@ class Media extends Database
         }
     }
     //criar folder
-    public static function createFolder(array $data, PDO $pdo): bool
+    public function createFolder(array $data, PDO $pdo): bool
     {
-        self::ensureRootFolderExists();
+        $this->ensureRootFolderExists();
 
         $sql = "INSERT INTO folders (folder_name, parent_id) VALUES (:folder_name, :parent_id)";
 
@@ -45,9 +45,9 @@ class Media extends Database
 
         return !empty($pdo->lastInsertId());
     }
-    public static function getContentsInFolder(array $data): array
+    public function getContentsInFolder(array $data): array
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT 
                 f.id_folder AS id, 
@@ -92,7 +92,7 @@ class Media extends Database
 
         return $results;
     }
-    public static function editFolder(array $data, PDO $pdo): bool
+    public function editFolder(array $data, PDO $pdo): bool
     {
         $sql = "UPDATE folders SET folder_name = :folder_name WHERE id_folder = :id_folder";
 
@@ -105,7 +105,7 @@ class Media extends Database
 
         return $stmt->rowCount() > 0;
     }
-    public static function moveFolder(array $data, $pdo): bool
+    public function moveFolder(array $data, $pdo): bool
     {
         $sql = "UPDATE folders SET parent_id = :parent_id WHERE id_folder = :id_folder";
 
@@ -118,9 +118,9 @@ class Media extends Database
 
         return $stmt->rowCount() > 0;
     }
-    private static function setFolderTrashStatus(int $id_folder, bool $is_trash): bool
+    private function setFolderTrashStatus(int $id_folder, bool $is_trash): bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getConnection();
 
         $sql = "UPDATE folders SET is_trash = :is_trash WHERE id_folder = :id_folder";
         $stmt = $pdo->prepare($sql);
@@ -132,9 +132,9 @@ class Media extends Database
 
         return $stmt->rowCount() > 0;
     }
-    private static function updateSubfoldersAndFiles(PDO $pdo, int $id_folder, bool $is_trash): void
+    private function updateSubfoldersAndFiles(PDO $pdo, int $id_folder, bool $is_trash): void
     {
-    
+
         $sql = "UPDATE folders SET is_trash = :is_trash WHERE id_folder = :id_folder";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
@@ -148,14 +148,14 @@ class Media extends Database
         $stmt->execute();
 
         $parent_id = self::getSubFolder($id_folder);
-        
-        if($parent_id){
+
+        if ($parent_id) {
             self::updateSubfoldersAndFiles($pdo, $parent_id['id_folder'], $is_trash);
         }
     }
-    private static function getSubFolder($id_folder)
+    private function getSubFolder($id_folder)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $sql = "SELECT id_folder FROM folders WHERE parent_id = :id_folder";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
@@ -163,15 +163,15 @@ class Media extends Database
         $parent_id = $stmt->fetch();
         return $parent_id ?? null;
     }
-    public static function moveFolderToTrash(array $data): bool
+    public function moveFolderToTrash(array $data): bool
     {
-        return self::setFolderTrashStatus($data['id_folder'], true);
+        return $this->setFolderTrashStatus($data['id_folder'], true);
     }
-    public static function restoreFolder(array $data): bool
+    public function restoreFolder(array $data): bool
     {
-        return self::setFolderTrashStatus($data['id_folder'], false);
+        return $this->setFolderTrashStatus($data['id_folder'], false);
     }
-    public static function deleteFolder(array $data, $pdo): bool
+    public function deleteFolder(array $data, $pdo): bool
     {
         $sql = "DELETE FROM folders WHERE id_folder = :id_folder AND is_trash = TRUE";
 
@@ -183,55 +183,96 @@ class Media extends Database
 
         return $stmt->rowCount() > 0;
     }
+    
     //pegar o caminho completo até as subpasta
-    public static function getFullFolderPath(int $parent_id): string
+    // public static function getFullFolderPath(int $parent_id): string
+    // {
+    //     $pdo = self::getConnection();
+    //     $path = '';
+
+    //     while ($parent_id !== null) {
+    //         $sql = "SELECT folder_name, parent_id FROM folders WHERE id_folder = :parent_id";
+
+    //         $stmt = $pdo->prepare($sql);
+
+    //         $stmt->bindParam(":parent_id", $parent_id, PDO::PARAM_INT);
+
+    //         $stmt->execute();
+
+    //         $folder = $stmt->fetch();
+
+    //         if (!$folder) {
+    //             throw new Exception("Pasta pai não encontrada");
+    //         }
+
+    //         $path = $folder['folder_name'] . '/' . $path;
+    //         $parent_id = $folder['parent_id'];
+    //     }
+
+    //     return '/' . rtrim($path, '/');
+    // }
+
+    public function getFullFolderPath(int $parent_id): string
     {
-        $pdo = self::getConnection();
-        $path = '';
+        $folderCache = [];  // Cache em memória para pastas
 
-        while ($parent_id !== null) {
-            $sql = "SELECT folder_name, parent_id FROM folders WHERE id_folder = :parent_id";
-
-            $stmt = $pdo->prepare($sql);
-
-            $stmt->bindParam(":parent_id", $parent_id, PDO::PARAM_INT);
-
-            $stmt->execute();
-
-            $folder = $stmt->fetch();
-
-            if (!$folder) {
-                throw new Exception("Pasta pai não encontrada");
-            }
-
-            $path = $folder['folder_name'] . '/' . $path;
-            $parent_id = $folder['parent_id'];
+        if (isset($folderCache[$parent_id])) {
+            return $folderCache[$parent_id];
         }
 
-        return '/' . rtrim($path, '/');
+        $pdo = $this->getPdo();
+        $path = '';
+
+        // Consultar todos os pais de uma vez
+        $sql = "WITH RECURSIVE folder_hierarchy AS (
+                SELECT id_folder, folder_name, parent_id
+                FROM folders
+                WHERE id_folder = :parent_id
+            UNION ALL
+                SELECT f.id_folder, f.folder_name, f.parent_id
+                FROM folders f
+                JOIN folder_hierarchy fh ON f.id_folder = fh.parent_id
+            )
+            SELECT folder_name, parent_id
+            FROM folder_hierarchy
+            ORDER BY parent_id DESC";  // Ordenar para construir o caminho na direção correta
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":parent_id", $parent_id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        // Construir o caminho
+        $result = $stmt->fetchAll();
+        foreach ($result as $folder) {
+            $path = $folder['folder_name'] . '/' . $path;
+        }
+
+        $folderCache[$parent_id] = '/' . rtrim($path, '/');
+        return $folderCache[$parent_id];
     }
 
-    public static function getPathToFolder(int $id_folder, bool $old = true, bool $delete = false): string
-    {
-        $pdo = self::getConnection();
 
+    public function getPathToFolder(int $id_folder, bool $old = true, bool $delete = false): string
+    {
+        $folderCache = [];  // Cache em memória para pastas
+
+        if (isset($folderCache[$id_folder])) {
+            return $folderCache[$id_folder];
+        }
+
+        $pdo = $this->getPdo();
         $sql = "SELECT parent_id, folder_name FROM folders WHERE id_folder = :id_folder";
 
         $stmt = $pdo->prepare($sql);
-
         $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
-
         $stmt->execute();
 
         $result = $stmt->fetch();
-
         if (!$result) {
             throw new Exception("Pasta não encontrada");
         }
 
         $path = "";
-
-
         if (empty($result['parent_id'])) {
             $path = "/uploads";
         } else {
@@ -241,10 +282,47 @@ class Media extends Database
                 $path = self::getFullFolderPath($result['parent_id']) . '/' . $result['folder_name'];
             }
         }
+
+        // Armazenar o caminho da pasta no cache
+        $folderCache[$id_folder] = $path;
+
         return $path;
     }
+
+    // public static function getPathToFolder(int $id_folder, bool $old = true, bool $delete = false): string
+    // {
+    //     $pdo = self::getConnection();
+
+    //     $sql = "SELECT parent_id, folder_name FROM folders WHERE id_folder = :id_folder";
+
+    //     $stmt = $pdo->prepare($sql);
+
+    //     $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
+
+    //     $stmt->execute();
+
+    //     $result = $stmt->fetch();
+
+    //     if (!$result) {
+    //         throw new Exception("Pasta não encontrada");
+    //     }
+
+    //     $path = "";
+
+
+    //     if (empty($result['parent_id'])) {
+    //         $path = "/uploads";
+    //     } else {
+    //         if ($old) {
+    //             $path =  self::getFullFolderPath($result['parent_id']);
+    //         } else {
+    //             $path = self::getFullFolderPath($result['parent_id']) . '/' . $result['folder_name'];
+    //         }
+    //     }
+    //     return $path;
+    // }
     //Files
-    public static function createFiles(int $id_folder, array $files, PDO $pdo): bool
+    public function createFiles(int $id_folder, array $files, PDO $pdo): bool
     {
         $sql = "INSERT INTO media (file_name, alias, file_type, file_size, id_folder) 
                 VALUES (:file_name, :alias, :file_type, :file_size, :id_folder)";
@@ -263,9 +341,9 @@ class Media extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function editFile(array $data): bool
+    public function editFile(array $data): bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "UPDATE media SET alias = :file_name WHERE id_media = :id_media";
 
@@ -279,9 +357,9 @@ class Media extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function getExtensionAndName(int $id_file)
+    public function getExtensionAndName(int $id_file)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT file_type, alias FROM media WHERE id_media = :id_media";
 
@@ -294,9 +372,9 @@ class Media extends Database
         return $stmt->fetch();
     }
 
-    public static function fileExists(string $alias): bool
+    public function fileExists(string $alias): bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
 
         $sql = "SELECT COUNT(*) FROM media WHERE alias = :alias";
@@ -307,26 +385,61 @@ class Media extends Database
         return $stmt->fetchColumn() > 0;
     }
 
-    public static function getPathToFile(array $data): string
-    {
-        $pdo = self::getConnection();
 
+    public function getPathToFile(array $data): string
+    {
+        $folderCache = [];  // Variável estática para armazenar caminhos de pastas em cache
+
+        // Verificar cache para o caminho do arquivo
+        $pdo = $this->getPdo();
+
+        // Recuperar as informações do arquivo
         $sql = "SELECT m.file_name, f.parent_id, f.id_folder, m.file_type FROM media m
-                JOIN FOLDERS f ON m.id_folder = f.id_folder
-                WHERE m.id_media = :id_media";
+            JOIN FOLDERS f ON m.id_folder = f.id_folder
+            WHERE m.id_media = :id_media";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id_media", $data['id_media'], PDO::PARAM_INT);
         $stmt->execute();
 
         $result = $stmt->fetch();
+        if (!$result) {
+            throw new Exception("Arquivo não encontrado");
+        }
 
-        $folderPath = self::getPathToFolder($result['id_folder'], false);
+        // Verificar se o caminho da pasta está no cache
+        if (!isset($folderCache[$result['id_folder']])) {
+            $folderPath = $this->getPathToFolder($result['id_folder'], false);
+            $folderCache[$result['id_folder']] = $folderPath;
+        } else {
+            $folderPath = $folderCache[$result['id_folder']];
+        }
+
         $filePath = $folderPath . '/' . $result['file_name'];
-
         return $filePath;
     }
-    public static function moveFile(array $data, PDO $pdo): bool
+
+
+    // public static function getPathToFile(array $data): string
+    // {
+    //     $pdo = self::getConnection();
+
+    //     $sql = "SELECT m.file_name, f.parent_id, f.id_folder, m.file_type FROM media m
+    //             JOIN FOLDERS f ON m.id_folder = f.id_folder
+    //             WHERE m.id_media = :id_media";
+
+    //     $stmt = $pdo->prepare($sql);
+    //     $stmt->bindParam(":id_media", $data['id_media'], PDO::PARAM_INT);
+    //     $stmt->execute();
+
+    //     $result = $stmt->fetch();
+
+    //     $folderPath = self::getPathToFolder($result['id_folder'], false);
+    //     $filePath = $folderPath . '/' . $result['file_name'];
+
+    //     return $filePath;
+    // }
+    public function moveFile(array $data, PDO $pdo): bool
     {
         $sql = "UPDATE media SET id_folder = :id_folder WHERE id_media = :id_media";
 
@@ -339,9 +452,9 @@ class Media extends Database
 
         return $stmt->rowCount() > 0;
     }
-    private static function setStatusTrashFile(int $id_media, bool $is_trash)
+    private function setStatusTrashFile(int $id_media, bool $is_trash)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "UPDATE media SET is_trash = :is_trash WHERE id_media = :id_media";
 
@@ -354,17 +467,17 @@ class Media extends Database
 
         return $stmt->rowCount() > 0;
     }
-    public static function moveFileToTrash(array $data): bool
+    public function moveFileToTrash(array $data): bool
     {
-        return self::setStatusTrashFile($data['id_media'], true);
+        return $this->setStatusTrashFile($data['id_media'], true);
     }
 
-    public static function restoreFile(array $data): bool
+    public function restoreFile(array $data): bool
     {
-        return self::setStatusTrashFile($data['id_media'], false);
+        return $this->setStatusTrashFile($data['id_media'], false);
     }
 
-    public static function deleteFile(array $data, PDO $pdo): bool
+    public function deleteFile(array $data, PDO $pdo): bool
     {
         $sql = "DELETE FROM media WHERE id_media = :id_media AND is_trash = TRUE";
 

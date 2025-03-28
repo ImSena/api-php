@@ -8,9 +8,9 @@ use PDOException;
 
 class Address extends Database
 {
-    public static function create($data)
+    public function create($data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $pdo->beginTransaction();
 
         try {
@@ -50,7 +50,7 @@ class Address extends Database
         }
     }
 
-    private static function setDefault(PDO $pdo, int $id_user, bool $is_default = false, $id = false)
+    private function setDefault(PDO $pdo, int $id_user, bool $is_default = false, $id = false)
     {
         $sql = "UPDATE addresses SET is_default = :is_default WHERE id_user = :id";
 
@@ -69,9 +69,9 @@ class Address extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function getAll(int $id)
+    public function getAll(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT id_address, public_area, number, complement, district, city, state, zip_code, is_default FROM addresses WHERE id_user = :id";
         $stmt = $pdo->prepare($sql);
@@ -83,9 +83,9 @@ class Address extends Database
         return $addresses;
     }
 
-    public static function getById(int $id)
+    public function getById(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT id_user, public_area, number, complement, district, city, state, zip_code FROM addresses WHERE id_address = :id";
 

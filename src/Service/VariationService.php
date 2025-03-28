@@ -13,11 +13,12 @@ class VariationService
     public static function createVariation(array $data)
     {
         try {
+            $Variation = new Variation();
             $fields = Validator::validate([
                 "name" => $data['name'] ?? ''
             ]);
 
-            $Variation = Variation::createVariation($fields);
+            $Variation = $Variation->createVariation($fields);
 
             if (!$Variation) {
                 throw new Exception("Não foi possível criar atributo");
@@ -34,7 +35,9 @@ class VariationService
     public static function getAllVariations()
     {
         try {
-            $Variation = Variation::getAllVariants();
+            $Variation = new Variation();
+
+            $Variation = $Variation->getAllVariants();
 
             return [
                 'message' => "Resgatado com sucesso",
@@ -50,13 +53,16 @@ class VariationService
     public static function updateVariation(array $data, int $id)
     {
         try {
+
+            $Variation = new Variation();
+
             $fields = Validator::validate([
                 "name" => $data['name']
             ]);
 
             $fields['id'] = $id;
 
-            $Variation = Variation::updateVariation($fields);
+            $Variation = $Variation->updateVariation($fields);
 
             if (!$Variation) {
                 throw new Exception("Não foi possível atualizar Variação");
@@ -73,7 +79,9 @@ class VariationService
     public static function deleteVariation(int $id)
     {
         try {
-            $Variation = Variation::deleteVariation($id);
+            $Variation = new Variation();
+
+            $Variation = $Variation->deleteVariation($id);
 
             if (!$Variation) {
                 throw new Exception("Não foi possível deletar atributo");
@@ -90,13 +98,16 @@ class VariationService
     public static function createValue(array $data)
     {
         try {
+
+            $Variation = new Variation();
+
             $fields = Validator::validate([
                 "id_variant_attribute" => $data['id_variant_attribute'] ?? '',
                 "value" => $data['value'] ?? '',
                 "viewer" => $data['viewer'] ?? 'LIST'
             ]);
 
-            $Variation = Variation::createValue($fields);
+            $Variation = $Variation->createValue($fields);
 
             if(!$Variation){
                 throw new Exception("Não foi possível adicionar valor a variação");
@@ -113,12 +124,13 @@ class VariationService
     public static function getValueVariation(int $id)
     {
         try{
+            $Variation = new Variation();
 
             $fields = Validator::validate([
                 "id" => $id ?? ''
             ]);
 
-            $Variation = Variation::getValuesVariation($fields['id']);
+            $Variation = $Variation->getValuesVariation($fields['id']);
 
             return [
                 "message" => "Valores dos atributos resgatados",
@@ -134,12 +146,15 @@ class VariationService
     public static function updateValueVariation(array $data, int $id)
     {
         try{
+
+            $Variation = new Variation();
+
             $fields = Validator::validate([
                 "id" => $id ?? '',
                 "value" => $data['value'] ?? ''
             ]);
 
-            $Variation = Variation::updateValue($fields);
+            $Variation = $Variation->updateValue($fields);
 
             if(!$Variation){
                 throw new Exception("Não foi possível atualizar valor");
@@ -156,11 +171,13 @@ class VariationService
     public static function deleteValue(int $id)
     {
         try{
+            $Variation = new Variation();
+
             $fields = Validator::validate([
                 "id" => $id ?? ''
             ]);
 
-            $Variation = Variation::deleteValue($fields['id']);
+            $Variation = $Variation->deleteValue($fields['id']);
 
             if(!$Variation){
                 throw new Exception("Não foi possível deletar o valor");

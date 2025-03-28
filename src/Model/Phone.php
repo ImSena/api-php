@@ -6,8 +6,8 @@ use PDO;
 
 class Phone extends Database
 {
-    public static function getAllByIdUser(int $id){
-        $pdo = self::getConnection();
+    public function getAllByIdUser(int $id){
+        $pdo = $this->getPdo();
 
         $sql = "SELECT * FROM phones WHERE id_user = :id";
         $stmt = $pdo->prepare($sql);

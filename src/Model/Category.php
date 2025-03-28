@@ -6,9 +6,9 @@ use PDO;
 
 class Category extends Database
 {
-    public static function create(array $data)
+    public function create(array $data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $hasParentCategory = isset($data['parent_category']);
 
@@ -29,9 +29,9 @@ class Category extends Database
         return !empty($pdo->lastInsertId());
     }
 
-    public static function getAllParent()
+    public function getAllParent()
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT id_category, name FROM categories WHERE parent_category_id IS NULL";
 
@@ -42,9 +42,9 @@ class Category extends Database
         return $stmt->fetchAll();
     }
 
-    public static function getAllCategories()
+    public function getAllCategories()
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT id_category, name, parent_category_id FROM categories WHERE parent_category_id IS NOT NULL";
 
@@ -56,8 +56,8 @@ class Category extends Database
     }
 
 
-    public static function update(array $data){
-        $pdo = self::getConnection();
+    public function update(array $data){
+        $pdo = $this->getPdo();
 
         $sql = "UPDATE categories SET parent_category_id = :parent_category_id, name = :name WHERE id_category = :id";
 
@@ -75,9 +75,9 @@ class Category extends Database
         return $stmt->rowCount();
     }
 
-    public static function delete(array $data)
+    public function delete(array $data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $sql = "DELETE FROM categories WHERE id_category = :id_category";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id_category", $data['id_category'], PDO::PARAM_INT);

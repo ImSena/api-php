@@ -16,6 +16,8 @@ class OrderService
     {
         try {
 
+            $Order = new Order();
+
             $fields = Validator::validate([
                 "id_address" => $data['id_address'] ?? '',
                 "order_items" => $data['order_items'] ?? ''
@@ -23,7 +25,7 @@ class OrderService
             $fields['id_user'] = $data['id_user'];
             $fields['id_coupon'] = $data['id_coupon'] ?? null;
 
-            $Order = Order::create($fields);
+            $Order = $Order->create($fields);
 
             if (!$Order) {
                 throw new Exception("Não foi possível realizar pedidos");
@@ -40,6 +42,9 @@ class OrderService
     public static function getAll(array $data)
     {
         try {
+
+            $Order = new Order();
+            $Product = new Product();
             $statusOrder = [
                 'PENDING',
                 'PROCESSING',
@@ -66,14 +71,14 @@ class OrderService
                     throw new Exception("Status do pedido inexistente");
                 }
 
-                $Order = Order::getAllStatus($fields);
-                $totalOrders = Order::getTotalStatus($fields);
+                $OrderResult = $Order->getAllStatus($fields);
+                $totalOrders = $Order->getTotalStatus($fields);
             } else {
-                $Order = Order::getAll($fields);
-                $totalOrders = Order::getTotalOrders($fields);
+                $OrderResult = $Order->getAll($fields);
+                $totalOrders = $Order->getTotalOrders($fields);
             }
 
-            if (!$Order) {
+            if (!$OrderResult) {
                 throw new Exception("Não foi possível buscar pedidos");
             }
 
@@ -81,8 +86,8 @@ class OrderService
                 throw new Exception("Não foi possível buscar quantidade total de pedidos");
             }
 
-            foreach($Order as &$item){
-                $productItem = Order::getOrderIdProductItems($item['id_order']);
+            foreach($OrderResult as &$item){
+                $productItem = $Order->getOrderIdProductItems($item['id_order']);
                 
                 $address = AddressService::getById($item['id_address']);
                 unset($address['content']['id_user']);
@@ -90,7 +95,7 @@ class OrderService
                 unset($item['id_address']);
 
                 foreach($productItem as $product){
-                    $item['products'][] = Product::getById($product['id_product_variant']);
+                    $item['products'][] = $Product->getById($product['id_product_variant']);
                 }   
                 
                 if($data['rule'] == 'admin'){
@@ -123,19 +128,21 @@ class OrderService
     public static function getById(int $id)
     {
         try {
-            $Order = Order::getById($id);
+            $Order = new Order();
+            $OrderResult = $Order->getById($id);
+            $Product = new Product();
 
-            if (!$Order) {
+            if (!$OrderResult) {
                 throw new Exception("Não foi possível buscar pedido");
             }
 
-            $productItems = Order::getOrderIdProductItems($id);
+            $productItems = $Order->getOrderIdProductItems($id);
 
             $totalPrice = 0.00;
             foreach($productItems as $product)
             {
-                $product = Product::getById($product['id_product_variant']);
-                $Order['products'][] = $product;
+                $product = $Product->getById($product['id_product_variant']);
+                $OrderResult['products'][] = $product;
                 $price = floatval($product['price']);
                 $discount = floatval($product['discount']);
                 $price -= $discount;
@@ -143,11 +150,11 @@ class OrderService
 
             }
 
-            $Order['total_price'] = $totalPrice;
+            $OrderResult['total_price'] = $totalPrice;
 
             return [
                 'message' => 'Pedido encontrado com sucesso',
-                'content' => $Order
+                'content' => $OrderResult
             ];
         } catch (PDOException $e) {
             return ['error' => DatabaseErrorHelpers::error($e)];

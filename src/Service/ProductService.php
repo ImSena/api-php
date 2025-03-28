@@ -15,12 +15,13 @@ class ProductService
     public static function create(array $data)
     {
         try {
+            $Product = new Product();
             $fields = Validator::validate([
                 "id_category" => $data['id_category'] ?? '',
                 "products" => $data['products'] ?? '',
             ]);
 
-            $Product = Product::create($fields);
+            $Product = $Product->create($fields);
 
             if (isset($Product['error'])) {
                 throw new Exception($Product['error']);
@@ -41,13 +42,15 @@ class ProductService
     public static function getAll($page)
     {
         try {
-            $Products = Product::getAll($page);
+            $Product = new Product();
+            $Products = $Product->getAll($page);
+            $Media = new Media();
 
             if (!$Products) {
                 throw new Exception("Não foi encontrado nenhum produto.");
             }
 
-            $totalProducts = Product::getTotalProducts();
+            $totalProducts = $Product->getTotalProducts();
 
             if(!$totalProducts){
                 throw new Exception("Não foi possível encontrar o total de produtos");
@@ -65,7 +68,7 @@ class ProductService
                     ];
                 }
 
-                $path = Media::getPathToFile($product);
+                $path = $Media->getPathToFile($product);
                 $extension = MediaService::getExtension($product['file_type']);
                 $product['image_path'] = $path . '.' . $extension;
                 $result[$id_product]['variations'][] = [
@@ -100,7 +103,9 @@ class ProductService
     public static function getAllCategory(array $params)
     {
         try {
-            $Products = Product::getAllCategory($params);
+            $Product = new Product();
+            $Media = new Media();
+            $Products = $Product->getAllCategory($params);
 
             
             // var_dump($Products);exit;
@@ -121,7 +126,7 @@ class ProductService
                     ];
                 }
 
-                $path = Media::getPathToFile($product);
+                $path = $Media->getPathToFile($product);
                 $extension = MediaService::getExtension($product['file_type']);
                 $product['image_path'] = $path . '.' . $extension;
                 $result[$id_product]['variations'][] = [
@@ -135,7 +140,7 @@ class ProductService
                 ];
             }
 
-            $total = Product::getTotalByCategory($params['id_category']);
+            $total = $Product->getTotalByCategory($params['id_category']);
 
             if(!$total){
                 throw new Exception("Não foi possível pegar o total de produtos.");
@@ -163,8 +168,9 @@ class ProductService
     public static function getAllBrand(array $params)
     {
         try{
-
-            $Products = Product::getAllBrand($params);
+            $Product = new Product();
+            $Media = new Media();
+            $Products = $Product->getAllBrand($params);
 
             if(!$Products){
                 throw new Exception("Não há produtos cadastrados nessa marca");
@@ -183,7 +189,7 @@ class ProductService
                     ];
                 }
 
-                $path = Media::getPathToFile($product);
+                $path = $Media->getPathToFile($product);
                 $extension = MediaService::getExtension($product['file_type']);
                 $product['image_path'] = $path . '.' . $extension;
                 $result[$id_product]['variations'][] = [
@@ -199,7 +205,7 @@ class ProductService
 
             $limitPage = 40;
 
-            $total = Product::getTotalByBrand($params['id_brand']);
+            $total = $Product->getTotalByBrand($params['id_brand']);
 
             if(!$total){
                 throw new Exception("Não foi possível resgatar total de produtos por marca");
@@ -229,13 +235,15 @@ class ProductService
     public static function getProduct($id)
     {
         try {
-            $product = Product::getById($id);
+            $Product = new Product();
+            $Media = new Media();
+            $product = $Product->getById($id);
 
             if (!$product) {
                 throw new Exception("Não foi possível resgatar dados do produto");
             }
 
-            $path = Media::getPathToFile($product);
+            $path = $Media->getPathToFile($product);
             $extension = MediaService::getExtension($product['file_type']);
             $product['image_path'] = $path . '.' . $extension; 
                 
@@ -291,26 +299,28 @@ class ProductService
     public static function getProductAndVariations(array $params)
     {
         try{
-            $Product = Product::getMain($params['id_product']);
-            $ProductVariation = Product::getVariations($params['id_product']);
+            $Product = new Product();
+            $Media = new Media();
+            $ProductResult = $Product->getMain($params['id_product']);
+            $ProductVariation = $Product->getVariations($params['id_product']);
             foreach ($ProductVariation as $prod) {
-                $prod['pictures'] = Product::getPicturesProduct($prod['id_product_variant']);
+                $prod['pictures'] = $Product->getPicturesProduct($prod['id_product_variant']);
                 foreach($prod['pictures'] as &$picture){
-                    $path = Media::getPathToFile($picture);
+                    $path = $Media->getPathToFile($picture);
                     $extension = MediaService::getExtension($picture['file_type']);
                     $picture['image_path'] = $path.'.'. $extension;
                     unset($picture['id_media']);
                     unset($picture['file_type']);
                 }
-                $prod['value_variant'] = Product::getValueVariant($prod['id_product_variant']);
-                $Product['variations'][] = $prod;
+                $prod['value_variant'] = $Product->getValueVariant($prod['id_product_variant']);
+                $ProductResult['variations'][] = $prod;
             }
 
-            if(!$Product){
+            if(!$ProductResult){
                 throw new Exception("Não foi possível encontrar o produto");
             }
 
-            return $Product;
+            return $ProductResult;
 
         }catch(PDOException $e){
             return ['error' => DatabaseErrorHelpers::error($e)];

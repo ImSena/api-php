@@ -8,10 +8,9 @@ use Pdo;
 class Admin extends Database
 {
 
-    public static function create(array $data)
+    public function create(array $data)
     {
-
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $sql = "INSERT INTO admins (name, email, password, permission) VALUES (:name, :email, :password, :permission)";
         $stmt = $pdo->prepare($sql);
 
@@ -25,8 +24,8 @@ class Admin extends Database
         return $pdo->lastInsertId() > 0 ? true : false;
     }
 
-    public static function select(array $data){
-        $pdo = self::getConnection();
+    public function select(array $data){
+        $pdo = $this->getPdo();
         $sql = "SELECT * FROM admins WHERE email = :email";
 
         $stmt = $pdo->prepare($sql);
@@ -38,9 +37,9 @@ class Admin extends Database
         return $stmt->fetch();
     }
 
-    public static function updateAccess($data, $id)
+    public function updateAccess($data, $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $sql = "UPDATE admins SET password = :password WHERE id_admin = :id";
 
         $stmt = $pdo->prepare($sql);
@@ -52,9 +51,9 @@ class Admin extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function activeAdmin($status, $id)
+    public function activeAdmin($status, $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "UPDATE admins SET status = :status WHERE id_admin = :id";
 

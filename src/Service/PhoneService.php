@@ -12,7 +12,9 @@ class PhoneService
     public static function getAllByIdUser(int $id){
         try{
 
-            $Phone = Phone::getAllByIdUser($id);
+            $Phone = new Phone();
+
+            $Phone = $Phone->getAllByIdUser($id);
 
             if(!$Phone){
                 throw new Exception("Não foi possível encontrar telefone");

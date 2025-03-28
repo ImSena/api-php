@@ -8,9 +8,9 @@ use PDOException;
 
 class Order extends Database
 {
-    public static function create(array $data)
+    public function create(array $data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $pdo->beginTransaction();
         try {
 
@@ -39,12 +39,12 @@ class Order extends Database
                 throw new Exception("Erro ao criar pedido");
             }
 
-            $orderItems = self::createOrderItems($data['order_items'], $orderId, $pdo);
+            $orderItems = $this->createOrderItems($data['order_items'], $orderId, $pdo);
             if (!$orderItems) {
                 throw new Exception("Erro ao criar item do pedido");
             }
 
-            $orderStatus = self::createOrderStatus($orderId, $pdo);
+            $orderStatus = $this->createOrderStatus($orderId, $pdo);
             if (!$orderStatus) {
                 throw new Exception("Erro ao criar status do pedido");
             }
@@ -59,10 +59,10 @@ class Order extends Database
             return false;
         }
     }
-    private static function createOrderItems(array $orderItems, int $orderId, $pdo)
+    private function createOrderItems(array $orderItems, int $orderId, $pdo)
     {
 
-        if (!self::hasSufficientStock($orderItems, $pdo)) {
+        if (!$this->hasSufficientStock($orderItems, $pdo)) {
             throw new Exception("Estoque insuficiente para um ou mais itens.");
         }
 
@@ -78,12 +78,12 @@ class Order extends Database
             }
         }
 
-        if (!self::updateProductStock($orderItems, $pdo)) {
+        if (!$this->updateProductStock($orderItems, $pdo)) {
             return false;
         }
         return true;
     }
-    private static function hasSufficientStock(array $orderItems, $pdo)
+    private function hasSufficientStock(array $orderItems, $pdo)
     {
         $sql = "SELECT qtd_stock FROM product_variants WHERE id_product_variant = :id_product_variant";
         $stmt = $pdo->prepare($sql);
@@ -99,7 +99,7 @@ class Order extends Database
         }
         return true;
     }
-    private static function updateProductStock(array $orderItems, $pdo)
+    private function updateProductStock(array $orderItems, $pdo)
     {
         $sql = "UPDATE product_variants SET qtd_stock = qtd_stock - :quantity WHERE id_product_variant = :id_product_variant";
         $stmt = $pdo->prepare($sql);
@@ -115,7 +115,7 @@ class Order extends Database
         }
         return true;
     }
-    private static function createOrderStatus(int $orderId, $pdo)
+    private function createOrderStatus(int $orderId, $pdo)
     {
         $sql = "INSERT INTO order_status (id_order) VALUES (:id_order)";
         $stmt = $pdo->prepare($sql);
@@ -126,17 +126,17 @@ class Order extends Database
         }
         return true;
     }
-    public static function getAll(array $data)
+    public function getAll(array $data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         if ($data['rule'] == 'user') {
-            return self::getOrdersUser($data, $pdo);
+            return $this->getOrdersUser($data, $pdo);
         } else {
-            return self::getOrders($data, $pdo);
+            return $this->getOrders($data, $pdo);
         }
     }
-    private static function getOrdersUser(array $permissions, PDO $pdo)
+    private function getOrdersUser(array $permissions, PDO $pdo)
     {
 
         $limit = 10;
@@ -166,7 +166,7 @@ class Order extends Database
 
         return $stmt->fetchAll();
     }
-    private static function getOrders(array $permissions, PDO $pdo)
+    private function getOrders(array $permissions, PDO $pdo)
     {
         $limit = 25;
         $page = isset($permissions['params']['page']) ? (int) $permissions['params']['page'] : 1;
@@ -193,18 +193,18 @@ class Order extends Database
 
         return $stmt->fetchAll();
     }
-    public static function getTotalOrders($permissions)
+    public function getTotalOrders($permissions)
     {
 
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         if ($permissions['rule'] = 'user') {
-            return self::getTotalOrdersUser($permissions['id_user'], $pdo);
+            return $this->getTotalOrdersUser($permissions['id_user'], $pdo);
         } else {
-            return self::getTotalOrdersAdmin($pdo);
+            return $this->getTotalOrdersAdmin($pdo);
         }
     }
-    private static function getTotalOrdersUser(int $id_user, PDO $pdo)
+    private function getTotalOrdersUser(int $id_user, PDO $pdo)
     {
         $sql = "SELECT COUNT(id_order) AS total 
                 FROM orders 
@@ -215,7 +215,7 @@ class Order extends Database
 
         return $stmt->fetch();
     }
-    private static function getTotalOrdersAdmin(PDO $pdo)
+    private function getTotalOrdersAdmin(PDO $pdo)
     {
         $sql = "SELECT COUNT(id_order) AS total 
                 FROM orders";
@@ -225,9 +225,9 @@ class Order extends Database
 
         return $stmt->fetch();
     }
-    public static function getAllStatus(array $data)
+    public function getAllStatus(array $data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $limit = 0;
         $sql = '';
@@ -283,9 +283,9 @@ class Order extends Database
         return $stmt->fetchAll();
     }
 
-    public static function getTotalStatus(array $data)
+    public function getTotalStatus(array $data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $limit = 0;
         $sql = '';
@@ -341,9 +341,9 @@ class Order extends Database
         return $stmt->fetch();
     }
 
-    public static function getById(int $id)
+    public function getById(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $sql = "SELECT * FROM ORDERS WHERE id_order = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
@@ -351,9 +351,9 @@ class Order extends Database
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public static function getOrderIdProductItems(int $id)
+    public function getOrderIdProductItems(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT id_product_variant FROM order_item WHERE id_order = :id";
 

@@ -8,9 +8,9 @@ use PDO;
 
 class User extends Database
 {
-    public static function create(array $data)
+    public function create(array $data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $pdo->beginTransaction();
 
         try {
@@ -61,13 +61,13 @@ class User extends Database
                 throw new Exception("Não foi possível criar a conta pois não foi possível cadastrar usuário. Tente novamente mais tarde");
             }
 
-            $address = self::registerAddress($address, $user_id, $pdo);
+            $address = $this->registerAddress($address, $user_id, $pdo);
 
             if (!$address) {
                 throw new Exception("Não foi possível criar uma conta, pois o endereço está com erro. Tente novamente mais tarde");
             }
 
-            $phone = self::registerPhone($phone, $user_id, $pdo);
+            $phone = $this->registerPhone($phone, $user_id, $pdo);
 
             if (!$phone) {
                 throw new Exception("Não foi possível criar a conta, pois telefone está com erro. Tente novamente mais tarde.");
@@ -82,9 +82,9 @@ class User extends Database
         }
     }
 
-    public static function registerAddress(array $data, int $user_id, ?PDO $pdo = null)
+    public function registerAddress(array $data, int $user_id, ?PDO $pdo = null)
     {
-        $pdo = $pdo ?? self::getConnection();
+        $pdo = $pdo ?? $this->getPdo();
 
         $sql = "INSERT INTO addresses (id_user, public_area, number, complement, district, city, state, zip_code) VALUES (:id_user, :public_area, :number, :complement,:district, :city, :state, :zip_code)";
 
@@ -104,9 +104,9 @@ class User extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function registerPhone(array $data, int $user_id, ?PDO $pdo = null)
+    public function registerPhone(array $data, int $user_id, ?PDO $pdo = null)
     {
-        $pdo = $pdo ?? self::getConnection();
+        $pdo = $pdo ?? $this->getPdo();
 
         $sql = "INSERT INTO phones (id_user, type, number) VALUES (:id_user, :type, :number)";
 
@@ -121,9 +121,9 @@ class User extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function select(array $data)
+    public function select(array $data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT 
                 u.*, 
@@ -145,9 +145,9 @@ class User extends Database
         return $stmt->fetch();
     }
 
-    public static function updateAccess($data, $id)
+    public function updateAccess($data, $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $sql = "UPDATE users SET password = :password WHERE id_user = :id";
 
         $stmt = $pdo->prepare($sql);
@@ -159,9 +159,9 @@ class User extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function activeUser($status, $id)
+    public function activeUser($status, $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "UPDATE users SET status = :status WHERE id_user = :id";
 
@@ -174,14 +174,14 @@ class User extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function selectAll($page)
+    public function selectAll($page)
     {
 
         $limit = 25;
         $page = isset($page) ? (int) $page : 1;
         $offset = ($page - 1) * $limit;
 
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT 
                 u.username,
@@ -217,9 +217,9 @@ class User extends Database
         return $stmt->fetchAll();
     }
 
-    public static function getTotalUsers()
+    public function getTotalUsers()
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT COUNT(id_user) AS total FROM users";
 
@@ -229,9 +229,9 @@ class User extends Database
         return $stmt->fetch();
     }
 
-    public static function getById(int $id)
+    public function getById(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT 
                 u.id_user,

@@ -17,6 +17,8 @@ class UserService{
     public static function create(array $data)
     {
         try{
+            $User = new User();
+
             $fields = Validator::validate([
                 "type" => $data['type'] ?? '',
                 "username" => $data['username'] ?? '',
@@ -65,7 +67,7 @@ class UserService{
 
             self::isUserExists($fields);
 
-            $user = User::create($fields);
+            $user = $User->create($fields);
 
             if(!$user){
                 throw new Exception("Não foi possível criar a conta. Tente novamente mais tarde");
@@ -81,12 +83,13 @@ class UserService{
 
     private static function isUserExists(array $user){
         try{
+            $User = new User();
 
             $fields = [];
 
             $fields['login'] = $user['email'];
 
-            $userModel = User::select($fields);
+            $userModel = $User->select($fields);
 
             if($userModel){
                 throw new Exception("Usuário já cadastrado! Realize seu login");
@@ -103,7 +106,7 @@ class UserService{
                     throw new Exception("Não foi possível criar a conta, pois verificação de conta falhou. Tente novamente mais tarde");
             }
 
-            $userModel = User::select($fields);
+            $userModel = $User->select($fields);
 
             if($userModel){
                 throw new Exception("Usuário já cadastrado! Realize seu login");
@@ -118,6 +121,8 @@ class UserService{
     public static function login(array $data)
     {
         try{
+
+            $User = new User();
 
             $fields = Validator::validate([
                 "login" => $data['login'] ?? '',
@@ -138,7 +143,7 @@ class UserService{
                 break;
             }
 
-            $user = User::select($fields);
+            $user = $User->select($fields);
 
             if(!$user)
             {
@@ -179,11 +184,14 @@ class UserService{
     {
         try {
 
+            $User = new User();
+            $TokenUser = new TokenUser();
+
             $fields = Validator::validate([
                 "login" => $data['login'] ?? '',
             ]);
 
-            $user = User::select($fields);
+            $user = $User->select($fields);
 
             if (!$user) {
                 throw new Exception("Usuário não encontrado!");
@@ -194,7 +202,7 @@ class UserService{
             }
 
             if ($sendEmail) {
-                $tokenStatus = TokenUser::selectLastToken($user);
+                $tokenStatus = $TokenUser->selectLastToken($user);
 
                 if ($tokenStatus) {
                     $dateCreated = new DateTime($tokenStatus['created_at']);
@@ -217,9 +225,9 @@ class UserService{
                 'type' => 'ACTIVE'
             ];
 
-            $token_user = TokenUser::inactiveAll($user['id_user'], $fields['type']);
+            $token_user = $TokenUser->inactiveAll($user['id_user'], $fields['type']);
 
-            $token_user = TokenUser::create($fields);
+            $token_user = $TokenUser->create($fields);
 
             if (!$token_user) {
                 throw new Exception("Não foi possível gerar link de ativação de conta");
@@ -248,6 +256,9 @@ class UserService{
     {
 
         try {
+            $User = new User();
+            $TokenUser = new TokenUser();
+
             $fields = Validator::validate([
                 "login" => $data['login'] ?? ''
             ]);
@@ -255,7 +266,7 @@ class UserService{
             $fields['email'] = Validator::validateEmail($fields['login']);
             $fields['type'] = "FORGET";
 
-            $user = User::select($fields);
+            $user = $User->select($fields);
 
             if (!$user) {
                 throw new Exception("Usuário não encontrado.");
@@ -274,9 +285,9 @@ class UserService{
 
             $fields['token'] = $token;
 
-            TokenUser::inactiveAll($fields['id_user'], $fields['type']);
+            $TokenUser->inactiveAll($fields['id_user'], $fields['type']);
 
-            $token = TokenUser::create($fields);
+            $token = $TokenUser->create($fields);
 
             if (!$token) {
                 throw new Exception("Não foi possível gerar o link. Tente novamente mais tarde");
@@ -299,7 +310,9 @@ class UserService{
     public static function getAllUsers($id)
     {
         try {
-            $user = User::selectAll($id);
+            $User = new User();
+
+            $user = $User->selectAll($id);
     
             if (!$user) {
                 throw new Exception("Usuários não encontrados.");
@@ -315,7 +328,7 @@ class UserService{
                 }
             }
 
-            $totalUser = User::getTotalUsers();
+            $totalUser = $User->getTotalUsers();
 
             if(!$totalUser){
                 throw new Exception("Valor total não resgatado");
@@ -336,7 +349,8 @@ class UserService{
 
     public static function getById(int $id){
         try{
-            $User = User::getById($id);
+            $user = new User();
+            $User = $user->getById($id);
 
             if(!$User){
                 throw new Exception("Não foi possível resgatar usuário");

@@ -13,7 +13,7 @@ class AddressService
     public static function create(array $data)
     {
         try{
-
+            $Address = new Address();
             $fields = Validator::validate([
                 "id_user" => $data['id_user'] ?? '',
                 "public_area" => $data['public_area'] ?? '',
@@ -26,7 +26,7 @@ class AddressService
 
             $fields['complement'] = $data['complement'] ?? null;
 
-            $Address = Address::create($fields);
+            $Address = $Address->create($fields);
 
             if(!$Address){
                 throw new Exception("Não foi possível criar endereço");
@@ -50,7 +50,8 @@ class AddressService
     public static function getAll(int $id)
     {
         try{
-            $Address = Address::getAll($id);
+            $Address = new Address();
+            $Address = $Address->getAll($id);
 
             if(!$Address){
                 throw new Exception("Não foi possível encontrar endereços");
@@ -75,7 +76,8 @@ class AddressService
 
     public static function getById(int $id){
         try{
-            $Address = Address::getById($id);
+            $Address = new Address();
+            $Address = $Address->getById($id);
 
             if(!$Address){
                 throw new Exception("Não foi possível encontrar o endereço correspondente");

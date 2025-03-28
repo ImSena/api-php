@@ -8,9 +8,9 @@ use PDOException;
 
 class Product extends Database
 {
-    public static function create(array $data)
+    public function create(array $data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $pdo->beginTransaction();
 
@@ -33,7 +33,7 @@ class Product extends Database
                 throw new Exception("Erro ao criar produto.");
             }
 
-            $productVariant = self::createVariant($products['variations'], $productId, $pdo);
+            $productVariant = $this->createVariant($products['variations'], $productId, $pdo);
 
             if (!$productVariant) {
                 throw new Exception("Erro ao criar variação");
@@ -41,14 +41,14 @@ class Product extends Database
 
             foreach ($products['variations'] as $index => $variant) {
                 $productVariantId = $productVariant[$index];
-                $productPictures = self::createProductPictures($variant['pictures'], $productVariantId, $variant['value_variant'], $pdo);
+                $productPictures = $this->createProductPictures($variant['pictures'], $productVariantId, $variant['value_variant'], $pdo);
 
                 if (!$productPictures) {
                     throw new Exception("Não foi possível cadastrar imagem do produto");
                 }
             }
 
-            $categoryProduct = self::relationCategory($pdo, $productId, $data['id_category']);
+            $categoryProduct = $this->relationCategory($pdo, $productId, $data['id_category']);
 
             if (!$categoryProduct) {
                 throw new Exception("Não foi possível relacionar categoria");
@@ -65,7 +65,7 @@ class Product extends Database
             return ['error' => $e->getMessage()];
         }
     }
-    private static function createVariant(array $variants, int $productId, PDO $pdo)
+    private function createVariant(array $variants, int $productId, PDO $pdo)
     {
         $sql = "INSERT INTO product_variants (id_product, sku, price, qtd_stock, is_default, discount) 
             VALUES (:id_product, :sku, :price, :stock, :is_default, :discount)";
@@ -86,13 +86,13 @@ class Product extends Database
             $productVariants[] = $productVariantId;
 
             if (!empty($variant['value_variant'])) {
-                self::createRelationVariant($productVariantId, $variant['value_variant'], $pdo);
+                $this->createRelationVariant($productVariantId, $variant['value_variant'], $pdo);
             }
         }
 
         return $productVariants;
     }
-    private static function createRelationVariant(int $productVariantId, int $value_variant, PDO $pdo)
+    private function createRelationVariant(int $productVariantId, int $value_variant, PDO $pdo)
     {
         $sql = "INSERT INTO product_variants_attributes (id_variant_attribute_value, id_product_variant) VALUES
         (:id_variant_attribute_value, :id_product_variant)";
@@ -104,7 +104,7 @@ class Product extends Database
 
         $stmt->execute();
     }
-    private static function createProductPictures(array $pictures, $id_product_variant, $id_variant_attribute_value, PDO $pdo)
+    private function createProductPictures(array $pictures, $id_product_variant, $id_variant_attribute_value, PDO $pdo)
     {
         try {
             $sql = "INSERT INTO product_pictures (id_product_variant, id_variant_attribute_value, id_media, position, is_main) 
@@ -126,7 +126,7 @@ class Product extends Database
             return false;
         }
     }
-    private static function relationCategory($pdo, $productId, $categoryId)
+    private function relationCategory($pdo, $productId, $categoryId)
     {
 
         $sql = "INSERT INTO product_categories (id_product, id_category) VALUES (:id_product, :id_category)";
@@ -143,9 +143,9 @@ class Product extends Database
     /**
      * @param int $page Indique o offset da pagina
      */
-    public static function getAll(int $page)
+    public function getAll(int $page)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $limit = 40;
         $page = isset($page) ? (int) $page : 1;
@@ -180,26 +180,26 @@ class Product extends Database
                 LIMIT :limit OFFSET :offset";
 
         $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
-        $stmt->bindParam(":offset", $offset, PDO::PARAM_INT);
+        $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
 
 
         $stmt->execute();
 
         return $stmt->fetchAll();
     }
-    public static function getTotalProducts()
+    public function getTotalProducts()
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT COUNT(id_product) AS total FROM products";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetch();
     }
-    public static function getById(int $id)
+    public function getById(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT 
                     pv.id_product_variant,
@@ -232,9 +232,9 @@ class Product extends Database
 
         return $stmt->fetch();
     }
-    public static function getAllCategory($params)
+    public function getAllCategory($params)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $limit = 40;
         $page = isset($params['page']) ? (int) $params['page'] : 1;
@@ -283,9 +283,9 @@ class Product extends Database
     /**
      * @param int $id Esse id é da categoria especificada.
      */
-    public static function getTotalByCategory(int $id)
+    public function getTotalByCategory(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $sql = "SELECT COUNT(id_product) AS total FROM product_categories WHERE id_category = :id_category";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id_category", $id, PDO::PARAM_INT);
@@ -293,9 +293,9 @@ class Product extends Database
 
         return $stmt->fetch();
     }
-    public static function getAllBrand(array $params)
+    public function getAllBrand(array $params)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $limit = 40;
         $page = isset($params['page']) ? (int) $params['page'] : 1;
@@ -337,9 +337,9 @@ class Product extends Database
 
         return $stmt->fetchAll();
     }
-    public static function getTotalByBrand(int $id)
+    public function getTotalByBrand(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT COUNT(id_product) AS total FROM products WHERE id_brand = :id";
         $stmt = $pdo->prepare($sql);
@@ -349,9 +349,9 @@ class Product extends Database
         return $stmt->fetch();
     }
 
-    public static function deleteProduct(array $data): bool
+    public function deleteProduct(array $data): bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "UPDATE products SET status = 0 WHERE id_product = :id_product";
 
@@ -363,14 +363,14 @@ class Product extends Database
 
         return $stmt->rowCount() > 0;
     }
-    public static function getDatabaseConnection()
+    public function getDatabaseConnection()
     {
-        return self::getConnection();
+        return $this->getPdo();
     }
 
-    public static function getVariations(int $id)
+    public function getVariations(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT id_product_variant, sku, price, qtd_stock, is_default, discount FROM product_variants WHERE id_product = :id_product";
 
@@ -381,9 +381,9 @@ class Product extends Database
         return $stmt->fetchAll();
     }
 
-    public static function getMain(int $id)
+    public function getMain(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT 
                     b.name AS brand, 
@@ -405,9 +405,9 @@ class Product extends Database
     /**
      * @param int $id Esse id é o id do produto
      */
-    public static function getPicturesProduct(int $id)
+    public function getPicturesProduct(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT 
                     pp.id_media,
@@ -427,9 +427,9 @@ class Product extends Database
     /**
      * @param int $id Esse id é o id do produto
      */
-    public static function getValueVariant(int $id)
+    public function getValueVariant(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT 
                     pva.id_variant_attribute_value,

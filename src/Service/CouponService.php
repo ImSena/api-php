@@ -13,12 +13,14 @@ class CouponService{
     {
         try{
 
+            $Coupon = new Coupon();
+
             $fields = Validator::validate([
                 "name" => $data['name'] ?? '',
                 "dicount" => $data['discount'] ?? '',
             ]);
 
-            $Coupon = Coupon::create($fields);
+            $Coupon = $Coupon->create($fields);
 
         }catch(PDOException $e){
             return ['error' => DatabaseErrorHelpers::error($e)];
@@ -36,7 +38,9 @@ class CouponService{
     {
         try{
 
-            $Coupon = Coupon::getCoupon($id);
+            $Coupon = new Coupon();
+
+            $Coupon = $Coupon->getCoupon($id);
 
             if(!$Coupon){
                 throw new Exception("Não foi possivel resgatar cupom promocional");

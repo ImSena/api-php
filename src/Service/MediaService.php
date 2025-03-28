@@ -19,19 +19,21 @@ class MediaService
     {
         try {
 
+            $Media = new Media();
+
             $fields = Validator::validate([
                 "parent_id" => $data['parent_id'] ?? 1,
                 "is_trash" => $data['is_trash'] ?? false
             ]);
 
-            $Folders = Media::getContentsInFolder($fields);
+            $Folders = $Media->getContentsInFolder($fields);
 
             $newFolder = $Folders;
 
             for($i = 0; $i < count($newFolder); $i++){
                 if($newFolder[$i]['type'] == 'file'){
                     $data = ["id_media" => $newFolder[$i]['id']];
-                    $path = Media::getPathToFile($data);
+                    $path = $Media->getPathToFile($data);
                     $extension = self::getExtension($newFolder[$i]['file_type']);
                     // colocar server name
                     // $_SERVER['HTTP_HOST'];
@@ -49,7 +51,8 @@ class MediaService
     }
     public static function createFolder(array $data): array | string
     {
-        $pdo = Media::getConnectionDatabase();
+        $Media = new Media();
+        $pdo = $Media->getPdo();
 
         try {
             $pdo->beginTransaction();
@@ -59,15 +62,15 @@ class MediaService
                 "parent_id" => $data['parent_id'] ?? '',
             ]);
 
-            $folderId = Media::createFolder($fields, $pdo);
+            $folderId = $Media->createFolder($fields, $pdo);
 
             if (!$folderId) {
                 throw new Exception("Não foi possível criar a pasta no banco de dados.");
             }
 
-            $path = PATH . Media::getFullFolderPath($data['parent_id']) . '/' . $data['folder_name'];
+            $path = PATH . $Media->getFullFolderPath($data['parent_id']) . '/' . $data['folder_name'];
 
-            if (!is_dir($path) && !mkdir($path, 0777, true)) {
+            if (!is_dir($path) && !mkdir($path, 0777, false)) {
                 throw new Exception("Erro ao criar a pasta no servidor.");
             }
 
@@ -84,8 +87,8 @@ class MediaService
     }
     public static function editFolder(array $data): array | string
     {
-
-        $pdo = Media::getConnectionDatabase();
+        $Media = new Media();
+        $pdo = $Media->getPdo();
         try {
 
             $pdo->beginTransaction();
@@ -100,11 +103,11 @@ class MediaService
             if ($fields['id_folder'] == 1 || $fields['id_folder'] < 1) {
                 throw new Exception("Não foi possível editar o nome da pasta.");
             }
-            $newPath = PATH . Media::getPathToFolder($fields['id_folder']) . '/' . $fields['folder_name'];
+            $newPath = PATH . $Media->getPathToFolder($fields['id_folder']) . '/' . $fields['folder_name'];
 
-            $oldPath = PATH . Media::getPathToFolder($fields['id_folder'], false);
+            $oldPath = PATH . $Media->getPathToFolder($fields['id_folder'], false);
 
-            $Folder = Media::editFolder($fields, $pdo);
+            $Folder = $Media->editFolder($fields, $pdo);
 
             if (!$Folder) {
                 throw new Exception("Não foi possível editar a pasta.");
@@ -127,7 +130,8 @@ class MediaService
     //terminar lógica para mudar id dos arquivos também
     public static function moveFolder(array $data): array | string
     {
-        $pdo = Media::getConnectionDatabase();
+        $Media = new Media();
+        $pdo = $Media->getPdo();
 
         try {
             $pdo->beginTransaction();
@@ -143,14 +147,14 @@ class MediaService
                 throw new Exception("Não foi possível mover a pasta.");
             }
 
-            $Folder = Media::moveFolder($fields, $pdo);
+            $Folder = $Media->moveFolder($fields, $pdo);
 
             if (!$Folder) {
                 throw new Exception("Não foi possível mover a pasta.");
             }
 
-            $oldPath = PATH . Media::getPathToFolder($fields['id_folder'], true);
-            $newPath = PATH . Media::getPathToFolder($fields['id_new_folder']);
+            $oldPath = PATH . $Media->getPathToFolder($fields['id_folder'], true);
+            $newPath = PATH . $Media->getPathToFolder($fields['id_new_folder']);
 
             if (!is_dir($newPath)) {
                 if (!mkdir($newPath, 0777, true)) {
@@ -195,7 +199,7 @@ class MediaService
     public static function moveFolderToTrash(array $data): array | string
     {
         try {
-
+            $Media = new Media();
             $fields = Validator::validate([
                 "id_folder" => $data['id_folder'] ?? '',
             ]);
@@ -206,7 +210,7 @@ class MediaService
                 throw new Exception("Não foi possível mover a pasta para a lixeira.");
             }
 
-            $Folder = Media::moveFolderToTrash($fields);
+            $Folder = $Media->moveFolderToTrash($fields);
 
             if (!$Folder) {
                 throw new Exception("Não foi possível mover a pasta para a lixeira.");
@@ -223,6 +227,8 @@ class MediaService
     {
         try {
 
+            $Media = new Media();
+
             $fields = Validator::validate([
                 "id_folder" => $data['id_folder'] ?? '',
             ]);
@@ -233,7 +239,7 @@ class MediaService
                 throw new Exception("Não foi possível restaurar a pasta.");
             }
 
-            $Folder = Media::restoreFolder($fields);
+            $Folder = $Media->restoreFolder($fields);
 
             if (!$Folder) {
                 throw new Exception("Não foi possível restaurar a pasta.");
@@ -248,7 +254,8 @@ class MediaService
     }
     public static function deleteFolder(array $data): array | string
     {
-        $pdo = Media::getConnectionDatabase();
+        $Media = new Media();
+        $pdo = $Media->getPdo();
 
         try {
             $pdo->beginTransaction();
@@ -263,13 +270,13 @@ class MediaService
                 throw new Exception("Não foi possível deletar a pasta.");
             }
 
-            $Folder = Media::deleteFolder($fields, $pdo);
+            $Folder = $Media->deleteFolder($fields, $pdo);
 
             if (!$Folder) {
                 throw new Exception("Não foi possível deletar a pasta.");
             }
 
-            $folderPath = PATH . Media::getPathToFolder($fields['id_folder'], false);
+            $folderPath = PATH . $Media->getPathToFolder($fields['id_folder'], false);
 
             if ($folderPath == "/uploads") {
                 throw new Exception("Não foi possível deletar a pastaaa.");
@@ -305,7 +312,8 @@ class MediaService
     // Files
     public static function uploadFile(array $data, array $files): array | string
     {
-        $pdo = Media::getConnectionDatabase();
+        $Media = new Media();
+        $pdo = $Media->getPdo();
         try {
             $pdo->beginTransaction();
 
@@ -317,7 +325,7 @@ class MediaService
 
             $files['files'] = self::reformatFilesArray($files['files']);
 
-            $path_folder = PATH . Media::getPathToFolder($fields['id_folder'], false);
+            $path_folder = PATH . $Media->getPathToFolder($fields['id_folder'], false);
 
             if (!is_dir($path_folder)) {
                 throw new Exception("Pasta não existe no servidor.");
@@ -332,7 +340,7 @@ class MediaService
                 $existingFiles[] = $file['unique_name'];
             }
 
-            $File = Media::createFiles($fields['id_folder'], $files['files'], $pdo);
+            $File = $Media->createFiles($fields['id_folder'], $files['files'], $pdo);
 
             if (!$File) {
                 throw new Exception("Não foi possível criar o arquivo no banco de dados.");
@@ -409,12 +417,14 @@ class MediaService
     public static function editFile(array $data): array | string
     {
         try {
+            $Media = new Media();
+
             $fields = Validator::validate([
                 "id_file" => $data['id_file'] ?? '',
                 "file_name" => $data['file_name'] ?? '',
             ]);
 
-            $info_file = Media::getExtensionAndName($fields['id_file']);
+            $info_file = $Media->getExtensionAndName($fields['id_file']);
 
             if (!$info_file) {
                 throw new Exception("Não foi possível editar o arquivo");
@@ -431,14 +441,14 @@ class MediaService
                 $counter = 1;
             }
 
-            while (Media::fileExists($newName . '.' . $extension)) {
+            while ($Media->fileExists($newName . '.' . $extension)) {
                 $newName = $baseName . "(" . $counter . ")";
                 $counter++;
             }
 
             $fields['file_name'] = $newName . '.' . $extension;
 
-            $File = Media::editFile($fields);
+            $File = $Media->editFile($fields);
 
             if (!$File) {
                 throw new Exception("Não foi possível editar o arquivo.");
@@ -488,8 +498,8 @@ class MediaService
     }
     public static function moveFile(array $data): array | string
     {
-        
-        $pdo = Media::getConnectionDatabase();
+        $Media = new Media();
+        $pdo = $Media->getPdo();
         try {
 
             $pdo->beginTransaction();
@@ -499,21 +509,21 @@ class MediaService
                 "id_media" => $data['id_media'] ?? '',
             ]);
             
-            $info_file = Media::getExtensionAndName($fields['id_media']);
+            $info_file = $Media->getExtensionAndName($fields['id_media']);
 
             if (!$info_file) {
                 throw new Exception("Não foi possível excluir o arquivo");
             }
 
-            $File = Media::moveFile($fields, $pdo);
+            $File = $Media->moveFile($fields, $pdo);
 
             if (!$File) {
                 throw new Exception("Não foi possível mover o arquivo.");
             }
             
             $extension = self::getExtension($info_file['file_type']);
-            $filePath = PATH . Media::getPathToFile($fields).".".$extension;
-            $newPath = PATH . Media::getPathToFolder($fields['id_folder'], false) . '/' . basename($filePath) ;
+            $filePath = PATH . $Media->getPathToFile($fields).".".$extension;
+            $newPath = PATH . $Media->getPathToFolder($fields['id_folder'], false) . '/' . basename($filePath) ;
             
             if (!rename($filePath, $newPath)) {
                 throw new Exception("Erro ao mover o arquivo no servidor.");
@@ -531,11 +541,13 @@ class MediaService
     {
         try {
 
+            $Media = new Media();
+
             $fields = Validator::validate([
                 "id_media" => $data['id_media'] ?? '',
             ]);
 
-            $File = Media::moveFileToTrash($fields);
+            $File = $Media->moveFileToTrash($fields);
 
             if (!$File) {
                 throw new Exception("Não foi possível mover o arquivo para a lixeira.");
@@ -552,11 +564,13 @@ class MediaService
     {
         try {
 
+            $Media = new Media();
+
             $fields = Validator::validate([
                 "id_media" => $data['id_media'] ?? '',
             ]);
 
-            $File = Media::restoreFile($fields);
+            $File = $Media->restoreFile($fields);
 
             if (!$File) {
                 throw new Exception("Não foi possível restaurar o arquivo.");
@@ -571,7 +585,8 @@ class MediaService
     }
     public static function deleteFile(array $data): array | string
     {
-        $pdo = Media::getConnectionDatabase();
+        $Media = new Media();
+        $pdo = $Media->getPdo();
 
         try {
             $pdo->beginTransaction();
@@ -580,7 +595,7 @@ class MediaService
                 "id_media" => $data['id_media'] ?? '',
             ]);
 
-            $info_file = Media::getExtensionAndName($fields['id_media']);
+            $info_file = $Media->getExtensionAndName($fields['id_media']);
 
             if (!$info_file) {
                 throw new Exception("Não foi possível excluir o arquivo");
@@ -588,13 +603,13 @@ class MediaService
 
             $extension = self::getExtension($info_file['file_type']);
 
-            $File = Media::deleteFile($fields, $pdo);
+            $File = $Media->deleteFile($fields, $pdo);
 
             if (!$File) {
                 throw new Exception("Não foi possível deletar o arquivo.");
             }
 
-            $filePath = PATH . Media::getPathToFile($data).".".$extension;
+            $filePath = PATH . $Media->getPathToFile($data).".".$extension;
 
             if (!file_exists($filePath)) {
                 throw new Exception("O arquivo não existe: " . $filePath);

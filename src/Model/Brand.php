@@ -6,9 +6,9 @@ use PDO;
 
 class Brand extends Database
 {
-    public static function create(array $data):bool
+    public function create(array $data):bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "INSERT INTO brands (name) VALUES (:name)";
 
@@ -21,9 +21,9 @@ class Brand extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function getAll():array
+    public function getAll():array
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getConnection();
         $sql = "SELECT id_brand, name FROM brands";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
@@ -31,9 +31,9 @@ class Brand extends Database
         return $stmt->fetchAll();
     }
 
-    public static function update(array $data):bool
+    public function update(array $data):bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $sql = "UPDATE brands SET name = :name WHERE id_brand = :id_brand";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
@@ -43,9 +43,9 @@ class Brand extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function delete(int $int):bool
+    public function delete(int $int):bool
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $sql = "DELETE FROM brands WHERE id_brand = :id_brand";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id_brand", $int, PDO::PARAM_INT);

@@ -17,6 +17,8 @@ class AdminService
     public static function create(array $data, bool $isSuper)
     {
         try {
+            $Admin = new Admin();
+
             $fields = Validator::validate([
                 "name" => $data['name'] ?? '',
                 "email" => $data['email'] ?? '',
@@ -31,7 +33,7 @@ class AdminService
                 $fields['permission'] = "SUPER";
             }
 
-            $admin = Admin::create($fields);
+            $admin = $Admin->create($fields);
 
             if (!$admin) {
                 throw new Exception("Não foi possível criar um administrador");
@@ -48,6 +50,9 @@ class AdminService
     public static function login(array $data)
     {
         try {
+
+            $Admin = new Admin();
+
             $fields = Validator::validate([
                 "email" => $data['email'] ?? '',
                 'password' => $data['password'] ?? ''
@@ -55,7 +60,7 @@ class AdminService
 
             $fields['email'] = Validator::validateEmail($fields['email']);
 
-            $admin = Admin::select($fields);
+            $admin = $Admin->select($fields);
 
             if (!$admin) {
                 throw new Exception("Usuário ou senha incorretas");
@@ -93,12 +98,13 @@ class AdminService
     public static function activeAccountLink(array $data, bool $sendEmail = false)
     {
         try {
-
+            $Admin = new Admin();
+            $TokenAdmin = new TokenAdmin();
             $fields = Validator::validate([
                 "email" => $data['email'] ?? '',
             ]);
 
-            $admin = Admin::select($fields);
+            $admin = $Admin->select($fields);
 
             if (!$admin) {
                 throw new Exception("Usuário não encontrado!");
@@ -109,7 +115,7 @@ class AdminService
             }
 
             if ($sendEmail) {
-                $tokenStatus = TokenAdmin::selectLastToken($admin);
+                $tokenStatus = $TokenAdmin->selectLastToken($admin);
 
                 if ($tokenStatus) {
                     $dateCreated = new DateTime($tokenStatus['created_at']);
@@ -132,9 +138,9 @@ class AdminService
                 'type' => 'ACTIVE'
             ];
 
-            $token_admin = TokenAdmin::inactiveAll($admin['id_admin'], $fields['type']);
+            $token_admin = $TokenAdmin->inactiveAll($admin['id_admin'], $fields['type']);
 
-            $token_admin = TokenAdmin::create($fields);
+            $token_admin = $TokenAdmin->create($fields);
 
             if (!$token_admin) {
                 throw new Exception("Não foi possível gerar link de ativação de conta");
@@ -163,6 +169,9 @@ class AdminService
     {
 
         try {
+            $Admin = new Admin();
+            $TokenAdmin = new TokenAdmin();
+            
             $fields = Validator::validate([
                 "email" => $data['email'] ?? ''
             ]);
@@ -170,7 +179,7 @@ class AdminService
             $fields['email'] = Validator::validateEmail($fields['email']);
             $fields['type'] = "FORGET";
 
-            $admin = Admin::select($fields);
+            $admin = $Admin->select($fields);
 
             if (!$admin) {
                 throw new Exception("Usuário não encontrado.");
@@ -189,9 +198,9 @@ class AdminService
 
             $fields['token'] = $token;
 
-            TokenAdmin::inactiveAll($fields['id_admin'], $fields['type']);
+            $TokenAdmin->inactiveAll($fields['id_admin'], $fields['type']);
 
-            $token = TokenAdmin::create($fields);
+            $token = $TokenAdmin->create($fields);
 
             if (!$token) {
                 throw new Exception("Não foi possível gerar o link. Tente novamente mais tarde");

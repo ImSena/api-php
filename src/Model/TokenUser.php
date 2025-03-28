@@ -8,10 +8,10 @@ use Pdo;
 
 class TokenUser extends Database
 {
-    public static function create(array $data)
+    public function create(array $data)
     {
 
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "INSERT INTO tokens_users (id_user, type, token) VALUES (:id_user, :type, :token)";
 
@@ -25,9 +25,9 @@ class TokenUser extends Database
 
         return $stmt->rowCount() > 0;
     }
-    public static function select(string $token)
+    public function select(string $token)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT status FROM tokens_users WHERE token = :token";
 
@@ -39,9 +39,9 @@ class TokenUser extends Database
 
         return $stmt->fetch();
     }
-    public static function selectLastToken(array $data)
+    public function selectLastToken(array $data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $sql = "SELECT created_at FROM tokens_users WHERE id_user = :id_user AND status = 'ACTIVE'";
 
         $stmt = $pdo->prepare($sql);
@@ -51,9 +51,9 @@ class TokenUser extends Database
 
         return $stmt->fetch();
     }
-    public static function inactiveAll(string $id_user, string $type)
+    public function inactiveAll(string $id_user, string $type)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "UPDATE tokens_users SET status = 'INACTIVE' WHERE id_user = :id_user AND type = :type";
 
@@ -66,9 +66,9 @@ class TokenUser extends Database
 
         return $stmt->rowCount() > 0;
     }
-    public static function inactiveToken(string $token)
+    public function inactiveToken(string $token)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "UPDATE tokens_users SET status = 'INACTIVE' WHERE token = :token";
 

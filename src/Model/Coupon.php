@@ -6,9 +6,9 @@ use PDO;
 
 class Coupon extends Database
 {
-    public static function getCoupon(int $id)
+    public function getCoupon(int $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT name, discount FROM coupon WHERE id_coupon = :id";
         $stmt = $pdo->prepare($sql);
@@ -17,7 +17,7 @@ class Coupon extends Database
         return $stmt->fetch();
     }
 
-    public static function create(array $id){
-        
+    public function create(array $id){
+        return true;
     }
 }

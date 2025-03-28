@@ -15,11 +15,13 @@ class BrandService
     {
         try{
 
+            $Brand = new Brand();
+
             $fields = Validator::validate([
                 "name" => $data['name'] ?? ''
             ]);
 
-            $Brand = Brand::create($fields);
+            $Brand = $Brand->create($fields);
 
             if(!$Brand){
                 throw new Exception("Não foi possível Cadastrar Marca");
@@ -37,8 +39,8 @@ class BrandService
     public static function getAll()
     {
         try{
-
-            $Brand = Brand::getAll();
+            $Brand = new Brand();
+            $Brand = $Brand->getAll();
 
             return [
                 "message" => "Marcas Resgatadas",
@@ -54,14 +56,14 @@ class BrandService
     public static function update(array $data, int $id)
     {
         try{
-
+            $Brand = new Brand();
             $fields = Validator::validate([
                 "name" => $data['name'] ?? ''
             ]);
 
             $fields['id'] = $id;
 
-            $Brand = Brand::update($fields);
+            $Brand = $Brand->update($fields);
 
             if(!$Brand){
                 throw new Exception("Não foi possível atualizar a marca");
@@ -80,7 +82,8 @@ class BrandService
     {
         try{
 
-            $Brand = Brand::delete($id);
+            $Brand = new Brand();
+            $Brand = $Brand->delete($id);
 
             if(!$Brand){
                 throw new Exception("Não foi possível deletar a marca");
