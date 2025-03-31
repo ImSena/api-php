@@ -23,7 +23,7 @@ class Database
 
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $pdo->setAttribute(PDO::ATTR_PERSISTENT, true);
+        $pdo->setAttribute(PDO::ATTR_PERSISTENT, false);
 
         return $pdo;
     }

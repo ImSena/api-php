@@ -14,11 +14,11 @@ class PaymentsController{
         $body['id_order'] = $params['id_order'];
 
 
-        if(!isset($params['id_payment'])){
+        if(!isset($params['id_order'])){
             return $response::json([
                 'success' => false,
                 'message' => "Por favor, informe o id do pagamento"
-            ]);
+            ], 400);
         }
 
         $paymentService = PaymentService::payOrder($body);

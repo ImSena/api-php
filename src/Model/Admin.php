@@ -26,7 +26,7 @@ class Admin extends Database
 
     public function select(array $data){
         $pdo = $this->getPdo();
-        $sql = "SELECT * FROM admins WHERE email = :email";
+        $sql = "SELECT name, id_admin, permission, email, status, password FROM admins WHERE email = :email";
 
         $stmt = $pdo->prepare($sql);
 

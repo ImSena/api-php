@@ -183,84 +183,108 @@ class Media extends Database
 
         return $stmt->rowCount() > 0;
     }
-    
+
     //pegar o caminho completo até as subpasta
-    // public static function getFullFolderPath(int $parent_id): string
-    // {
-    //     $pdo = self::getConnection();
-    //     $path = '';
-
-    //     while ($parent_id !== null) {
-    //         $sql = "SELECT folder_name, parent_id FROM folders WHERE id_folder = :parent_id";
-
-    //         $stmt = $pdo->prepare($sql);
-
-    //         $stmt->bindParam(":parent_id", $parent_id, PDO::PARAM_INT);
-
-    //         $stmt->execute();
-
-    //         $folder = $stmt->fetch();
-
-    //         if (!$folder) {
-    //             throw new Exception("Pasta pai não encontrada");
-    //         }
-
-    //         $path = $folder['folder_name'] . '/' . $path;
-    //         $parent_id = $folder['parent_id'];
-    //     }
-
-    //     return '/' . rtrim($path, '/');
-    // }
-
     public function getFullFolderPath(int $parent_id): string
     {
-        $folderCache = [];  // Cache em memória para pastas
-
-        if (isset($folderCache[$parent_id])) {
-            return $folderCache[$parent_id];
-        }
-
         $pdo = $this->getPdo();
         $path = '';
 
-        // Consultar todos os pais de uma vez
-        $sql = "WITH RECURSIVE folder_hierarchy AS (
-                SELECT id_folder, folder_name, parent_id
-                FROM folders
-                WHERE id_folder = :parent_id
-            UNION ALL
-                SELECT f.id_folder, f.folder_name, f.parent_id
-                FROM folders f
-                JOIN folder_hierarchy fh ON f.id_folder = fh.parent_id
-            )
-            SELECT folder_name, parent_id
-            FROM folder_hierarchy
-            ORDER BY parent_id DESC";  // Ordenar para construir o caminho na direção correta
+        $this->checkUploads($pdo);
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":parent_id", $parent_id, PDO::PARAM_INT);
-        $stmt->execute();
+        while ($parent_id !== null) {
+            $sql = "SELECT folder_name, parent_id FROM folders WHERE id_folder = :parent_id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(":parent_id", $parent_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $folder = $stmt->fetch();
 
-        // Construir o caminho
-        $result = $stmt->fetchAll();
-        foreach ($result as $folder) {
+            if (!$folder) {
+                throw new Exception("Pasta pai não encontrada");
+            }
+
             $path = $folder['folder_name'] . '/' . $path;
+            $parent_id = $folder['parent_id'];
         }
 
-        $folderCache[$parent_id] = '/' . rtrim($path, '/');
-        return $folderCache[$parent_id];
+        // Caminho final da pasta
+        $fullPath = PATH . '/' . trim($path, '/');
+
+        // Criar a hierarquia de diretórios caso não exista
+        if (!is_dir($fullPath)) {
+            mkdir($fullPath, 0777, true);
+        }
+
+        return '/' . trim($path, '/');
     }
+
+    private function checkUploads($pdo){
+        $sqlCheck = "SELECT id_folder FROM folders WHERE folder_name = 'uploads' AND parent_id IS NULL";
+        $stmtCheck = $pdo->prepare($sqlCheck);
+        $stmtCheck->execute();
+        $uploadsFolder = $stmtCheck->fetch();
+
+        if (!$uploadsFolder) {
+            $sqlInsert = "INSERT INTO folders (folder_name, parent_id) VALUES ('uploads', NULL)";
+            $pdo->prepare($sqlInsert)->execute();
+        }
+
+        if (!is_dir(PATH . '/uploads')) {
+            mkdir(PATH . '/uploads', 0777, true);
+        }
+    }
+
+    // public function getFullFolderPath(int $parent_id): string
+    // {
+    //     $folderCache = [];  // Cache em memória para pastas
+
+    //     if (isset($folderCache[$parent_id])) {
+    //         return $folderCache[$parent_id];
+    //     }
+
+    //     $pdo = $this->getPdo();
+    //     $path = '';
+
+    //     // Consultar todos os pais de uma vez
+    //     $sql = "WITH RECURSIVE folder_hierarchy AS (
+    //             SELECT id_folder, folder_name, parent_id
+    //             FROM folders
+    //             WHERE id_folder = :parent_id
+    //         UNION ALL
+    //             SELECT f.id_folder, f.folder_name, f.parent_id
+    //             FROM folders f
+    //             JOIN folder_hierarchy fh ON f.id_folder = fh.parent_id
+    //         )
+    //         SELECT folder_name, parent_id
+    //         FROM folder_hierarchy
+    //         ORDER BY parent_id DESC";  // Ordenar para construir o caminho na direção correta
+
+    //     $stmt = $pdo->prepare($sql);
+    //     $stmt->bindParam(":parent_id", $parent_id, PDO::PARAM_INT);
+    //     $stmt->execute();
+
+    //     // Construir o caminho
+    //     $result = $stmt->fetchAll();
+    //     foreach ($result as $folder) {
+    //         $path = $folder['folder_name'] . '/' . $path;
+    //     }
+
+    //     $folderCache[$parent_id] = '/' . rtrim($path, '/');
+    //     return $folderCache[$parent_id];
+    // }
 
 
     public function getPathToFolder(int $id_folder, bool $old = true, bool $delete = false): string
     {
-        $folderCache = [];  // Cache em memória para pastas
+        $folderCache = [];
 
+        
         if (isset($folderCache[$id_folder])) {
             return $folderCache[$id_folder];
         }
-
+        
         $pdo = $this->getPdo();
+        $this->checkUploads($pdo);
         $sql = "SELECT parent_id, folder_name FROM folders WHERE id_folder = :id_folder";
 
         $stmt = $pdo->prepare($sql);

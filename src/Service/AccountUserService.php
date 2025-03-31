@@ -26,9 +26,9 @@ class AccountUserService
 
             $token = JwtAuth::verifyToken($fields['token']);
 
-            if (is_array($token) && isset($token['decoded']['error'])) {
+            if (is_array($token) && isset($token['error'])) {
                 $TokenUser->inactiveToken($data['token']);
-                throw new Exception($token['decoded']['error']);
+                throw new Exception($token['error']);
             }
 
             $tokenModel = $TokenUser->select($data['token']);
@@ -63,9 +63,9 @@ class AccountUserService
 
             $token = JwtAuth::verifyToken($fields['token']);
 
-            if (is_array($token) && isset($token['decoded']['error'])) {
+            if (is_array($token) && isset($token['error'])) {
                 $TokenUser->inactiveToken($data['token']);
-                throw new Exception($token['decoded']['error']);
+                throw new Exception($token['error']);
             }
 
             $tokenModel = $TokenUser->select($data['token']);

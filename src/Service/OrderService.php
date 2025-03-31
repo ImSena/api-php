@@ -150,7 +150,7 @@ class OrderService
 
             }
 
-            $OrderResult['total_price'] = $totalPrice;
+            $OrderResult['total_price'] = number_format($totalPrice, 2, ',', '.');
 
             return [
                 'message' => 'Pedido encontrado com sucesso',

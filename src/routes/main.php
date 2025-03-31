@@ -155,7 +155,7 @@ Route::group([
 
 Route::group([
     "prefix" => "payments",
-    "middlewares" => [AuthPermission::class]
+    "middlewares" => [AuthUser::class]
 ], function($prefix, $middlewares){
     Route::post("/$prefix/pay/{param}", [PaymentsController::class, "pay"], $middlewares);
     Route::get("/$prefix", [PaymentsController::class, 'getPayments'], $middlewares);

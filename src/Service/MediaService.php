@@ -56,6 +56,7 @@ class MediaService
 
         try {
             $pdo->beginTransaction();
+            $path  = PATH . $Media->getFullFolderPath($data['parent_id']) . '/' . $data['folder_name'];
 
             $fields = Validator::validate([
                 "folder_name" => strtolower($data['folder_name']) ?? '',
@@ -68,9 +69,7 @@ class MediaService
                 throw new Exception("Não foi possível criar a pasta no banco de dados.");
             }
 
-            $path = PATH . $Media->getFullFolderPath($data['parent_id']) . '/' . $data['folder_name'];
-
-            if (!is_dir($path) && !mkdir($path, 0777, false)) {
+            if (!is_dir($path) && !mkdir($path, 0777, true)) {
                 throw new Exception("Erro ao criar a pasta no servidor.");
             }
 
@@ -318,7 +317,7 @@ class MediaService
             $pdo->beginTransaction();
 
             $fields = Validator::validate([
-                "id_folder" => $data['id_folder'] ?? '',
+                "id_folder" => $data['id_folder'] ?? 1,
             ]);
 
             $files = ValidatorFiles::validate(["files" => $files ?? '']);
@@ -327,8 +326,8 @@ class MediaService
 
             $path_folder = PATH . $Media->getPathToFolder($fields['id_folder'], false);
 
-            if (!is_dir($path_folder)) {
-                throw new Exception("Pasta não existe no servidor.");
+            if(!is_dir($path_folder)){
+                mkdir($path_folder, 0777, true);
             }
 
             $existingFiles = [];
