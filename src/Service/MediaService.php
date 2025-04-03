@@ -30,18 +30,17 @@ class MediaService
 
             $newFolder = $Folders;
 
-            for($i = 0; $i < count($newFolder); $i++){
-                if($newFolder[$i]['type'] == 'file'){
+            for ($i = 0; $i < count($newFolder); $i++) {
+                if ($newFolder[$i]['type'] == 'file') {
                     $data = ["id_media" => $newFolder[$i]['id']];
                     $path = $Media->getPathToFile($data);
                     $extension = self::getExtension($newFolder[$i]['file_type']);
                     // colocar server name
                     // $_SERVER['HTTP_HOST'];
-                    $newFolder[$i]['file_path'] = $path.'.'.$extension;
-                    
+                    $newFolder[$i]['file_path'] = $path . '.' . $extension;
                 }
             }
-            
+
             return $newFolder;
         } catch (PDOException $e) {
             return ['error' => DatabaseErrorHelpers::error($e)];
@@ -326,7 +325,7 @@ class MediaService
 
             $path_folder = PATH . $Media->getPathToFolder($fields['id_folder'], false);
 
-            if(!is_dir($path_folder)){
+            if (!is_dir($path_folder)) {
                 mkdir($path_folder, 0777, true);
             }
 
@@ -334,8 +333,14 @@ class MediaService
 
             foreach ($files['files'] as &$file) {
                 usleep(1);
-                $file['unique_name'] = self::generateUniqueFilename($path_folder, $file['name'], $existingFiles);
+                $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                if ($extension === 'jpg') {
+                    $extension = 'jpeg';
+                }
+
+                $file['unique_name'] = self::generateUniqueFilename($path_folder, $file['name'], $existingFiles, $extension);
                 $file['name_date'] = round(microtime(true) * 1000) . rand(1000, 9999);
+                $file['extension'] = $extension;
                 $existingFiles[] = $file['unique_name'];
             }
 
@@ -345,13 +350,12 @@ class MediaService
                 throw new Exception("Não foi possível criar o arquivo no banco de dados.");
             }
 
-
             foreach ($files['files'] as $key => $filez) {
                 if (!file_exists($filez['tmp_name'])) {
                     throw new Exception("O arquivo temporário não existe: " . $filez['tmp_name']);
                 }
 
-                $extension = pathinfo($filez['name'], PATHINFO_EXTENSION);
+                $extension = $filez['extension'];
                 $targetPath = $path_folder . DIRECTORY_SEPARATOR . $filez['name_date'] . '.' . $extension;
 
                 if (!move_uploaded_file($filez['tmp_name'], $targetPath)) {
@@ -373,13 +377,13 @@ class MediaService
             return ['error' => $e->getMessage()];
         }
     }
-    private static function generateUniqueFilename(string $directory, string $filename, array $existingFiles): string
+
+    private static function generateUniqueFilename(string $directory, string $filename, array $existingFiles, string $extension): string
     {
         $fileInfo = pathinfo($filename);
         $baseName = preg_replace("/[^a-zA-Z0-9-_]/", "", $fileInfo['filename']); // Remove caracteres inválidos
-        $extension = isset($fileInfo['extension']) ? '.' . $fileInfo['extension'] : '';
 
-        $newFilename = $baseName . $extension;
+        $newFilename = $baseName . '.' . $extension;
 
         if (!file_exists($directory . DIRECTORY_SEPARATOR . $newFilename) && !in_array($newFilename, $existingFiles)) {
             return $newFilename;
@@ -387,12 +391,13 @@ class MediaService
 
         $counter = 1;
         while (file_exists($directory . DIRECTORY_SEPARATOR . $newFilename) || in_array($newFilename, $existingFiles)) {
-            $newFilename = $baseName . "_" . $counter . $extension;
+            $newFilename = $baseName . "_" . $counter . '.' . $extension;
             $counter++;
         }
 
         return $newFilename;
     }
+
     private static function reformatFilesArray(array $files): array
     {
         $reformatted = [];
@@ -460,7 +465,7 @@ class MediaService
             return ['error' => $e->getMessage()];
         }
     }
-    public static function getExtension($file_type):string
+    public static function getExtension($file_type): string
     {
         $allowedTypes = [
             'image/jpg' => 'jpg',
@@ -488,12 +493,11 @@ class MediaService
             'audio/aac' => 'aac',
         ];
 
-        if(!isset($allowedTypes[$file_type])){
+        if (!isset($allowedTypes[$file_type])) {
             throw new Exception("Extensão inválida: '{$file_type}'. Não foi possível atualizar o nome do arquivo.");
         }
 
         return $allowedTypes[$file_type];
-
     }
     public static function moveFile(array $data): array | string
     {
@@ -507,7 +511,7 @@ class MediaService
                 "id_folder" => $data['id_folder'] ?? '',
                 "id_media" => $data['id_media'] ?? '',
             ]);
-            
+
             $info_file = $Media->getExtensionAndName($fields['id_media']);
 
             if (!$info_file) {
@@ -519,15 +523,15 @@ class MediaService
             if (!$File) {
                 throw new Exception("Não foi possível mover o arquivo.");
             }
-            
+
             $extension = self::getExtension($info_file['file_type']);
-            $filePath = PATH . $Media->getPathToFile($fields).".".$extension;
-            $newPath = PATH . $Media->getPathToFolder($fields['id_folder'], false) . '/' . basename($filePath) ;
-            
+            $filePath = PATH . $Media->getPathToFile($fields) . "." . $extension;
+            $newPath = PATH . $Media->getPathToFolder($fields['id_folder'], false) . '/' . basename($filePath);
+
             if (!rename($filePath, $newPath)) {
                 throw new Exception("Erro ao mover o arquivo no servidor.");
             }
-            
+
             $pdo->commit();
             return "Arquivo movido com sucesso!";
         } catch (PDOException $e) {
@@ -608,16 +612,16 @@ class MediaService
                 throw new Exception("Não foi possível deletar o arquivo.");
             }
 
-            $filePath = PATH . $Media->getPathToFile($data).".".$extension;
+            $filePath = PATH . $Media->getPathToFile($data) . "." . $extension;
 
             if (!file_exists($filePath)) {
                 throw new Exception("O arquivo não existe: " . $filePath);
             }
-           
+
             if (!unlink($filePath)) {
                 throw new Exception("Erro ao deletar o arquivo no servidor.");
             }
-            
+
             $pdo->commit();
 
             return "Arquivo deletado com sucesso!";

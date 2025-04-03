@@ -71,6 +71,10 @@ class ValidatorFiles
 
         $maxSize = 50 * 1024 * 1024;
 
+        if(count($files['files']) > 9){
+            $errors[] = "Limite máximo de Files atingido";
+        }
+
         foreach ($files as $index => $value) {
 
             if (empty($value)) {

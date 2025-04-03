@@ -115,7 +115,7 @@ class OrderService
 
             return [
                 'message' => 'Pedidos encontrados com sucesso',
-                'content' => $Order,
+                'content' => $OrderResult,
                 "page" => $pages,
             ];
         } catch (PDOException $e) {

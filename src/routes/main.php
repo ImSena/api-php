@@ -13,6 +13,7 @@ use App\Controllers\HomeController;
 use App\Controllers\MediaController;
 use App\Controllers\OrderController;
 use App\Controllers\PaymentsController;
+use App\Controllers\Stripe\StoreController;
 use App\Controllers\VariantsController;
 use App\Middlewares\AuthPermission;
 
@@ -144,6 +145,7 @@ Route::group([
     Route::delete("/$prefix/delete-value/{param}", [VariantsController::class, "deleteValueVariation"], $middlewares);
 });
 
+//order
 Route::group([
     "prefix" => "order",
     "middlewares" => [AuthPermission::class]
@@ -153,6 +155,7 @@ Route::group([
     Route::get("/$prefix/{param}/{param}", [OrderController::class, "getAll"], $middlewares);
 });
 
+//payments
 Route::group([
     "prefix" => "payments",
     "middlewares" => [AuthUser::class]
@@ -160,4 +163,15 @@ Route::group([
     Route::post("/$prefix/pay/{param}", [PaymentsController::class, "pay"], $middlewares);
     Route::get("/$prefix", [PaymentsController::class, 'getPayments'], $middlewares);
     Route::get("/$prefix/{param}", [PaymentsController::class, 'getDetails'], $middlewares);
+});
+
+//store
+
+Route::group([
+    "prefix" => "store",
+    "middlewares" => [AuthAdmin::class]
+], function($prefix, $middlewares){
+    Route::post("/$prefix/create", [StoreController::class, "createStore"], $middlewares);
+    Route::post("/$prefix/{param}/onboarding", [StoreController::class, 'initiateOnboarding'], $middlewares);
+    Route::post("/$prefix/{param}/login", [StoreController::class, 'login'], $middlewares);
 });

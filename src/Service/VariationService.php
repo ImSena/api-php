@@ -37,11 +37,15 @@ class VariationService
         try {
             $Variation = new Variation();
 
-            $Variation = $Variation->getAllVariants();
+            $Variations = $Variation->getAllVariants();
+
+            foreach($Variations as &$variation){
+                $variation['values'] = $Variation->getValuesVariation($variation['id_variant_attribute']);
+            }
 
             return [
                 'message' => "Resgatado com sucesso",
-                'content' => $Variation
+                'content' => $Variations
             ];
         } catch (PDOException $e) {
             return ['error' => DatabaseErrorHelpers::error($e)];

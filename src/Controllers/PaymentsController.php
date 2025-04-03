@@ -27,12 +27,13 @@ class PaymentsController{
             return $response::json([
                 "success" => false,
                 "message" => $paymentService['error']
-            ]);
+            ], 400);
         }
 
         $response::json([
             "success" => true,
-            "message" => $paymentService
+            "message" => $paymentService['message'],
+            "session_url" => $paymentService['session_url']
         ]);
     }
 
