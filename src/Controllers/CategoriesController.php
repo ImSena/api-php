@@ -28,25 +28,6 @@ class CategoriesController
         ], 200);
     }
 
-    public function getAllParent(Request $request, Response $response)
-    {
-
-        $category = CategoryService::getAllParent();
-
-        if (isset($category['error'])) {
-            return $response::json([
-                'success' => false,
-                'message' => $category['error']
-            ], 400);
-        }
-
-        $response::json([
-            'success' => true,
-            'message' => "Categorias Pai resgatadas com sucesso!",
-            'content' => $category
-        ]);
-    }
-
     public function getCategories(Request $request, Response $response)
     {
         $category = CategoryService::getAllCategories();
