@@ -355,7 +355,7 @@ class Order extends Database
     {
         $pdo = $this->getPdo();
 
-        $sql = "SELECT id_product_variant FROM order_item WHERE id_order = :id";
+        $sql = "SELECT id_product_variant, quantity FROM order_item WHERE id_order = :id";
 
         $stmt = $pdo->prepare($sql);
 
@@ -364,5 +364,26 @@ class Order extends Database
         $stmt->execute();
 
         return $stmt->fetchAll();
+    }
+
+    public function changeStatus(string $status, int $id_order)
+    {
+        $pdo = $this->getPdo();
+        $sql = "INSERT INTO order_status (id_order, status) VALUES (:id_order, :status)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':id_order', $id_order, PDO::PARAM_INT);
+        $stmt->bindParam(":status", $status, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function verifyStatus(int $id){
+        $pdo = $this->getPdo();
+        $sql = "SELECT status FROM order_status WHERE id_order = :id ORDER BY id_order_status DESC LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch();
     }
 }

@@ -274,66 +274,29 @@ class Media extends Database
     // }
 
 
-    public function getPathToFolder(int $id_folder, bool $old = true, bool $delete = false): string
-    {
-        $folderCache = [];
-
-        
-        if (isset($folderCache[$id_folder])) {
-            return $folderCache[$id_folder];
-        }
-        
-        $pdo = $this->getPdo();
-        $this->checkUploads($pdo);
-        $sql = "SELECT parent_id, folder_name FROM folders WHERE id_folder = :id_folder";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $result = $stmt->fetch();
-        if (!$result) {
-            throw new Exception("Pasta não encontrada");
-        }
-
-        $path = "";
-        if (empty($result['parent_id'])) {
-            $path = "/uploads";
-        } else {
-            if ($old) {
-                $path =  self::getFullFolderPath($result['parent_id']);
-            } else {
-                $path = self::getFullFolderPath($result['parent_id']) . '/' . $result['folder_name'];
-            }
-        }
-
-        // Armazenar o caminho da pasta no cache
-        $folderCache[$id_folder] = $path;
-
-        return $path;
-    }
-
-    // public static function getPathToFolder(int $id_folder, bool $old = true, bool $delete = false): string
+    // public function getPathToFolder(int $id_folder, bool $old = true, bool $delete = false): string
     // {
-    //     $pdo = self::getConnection();
+    //     $folderCache = [];
 
+        
+    //     if (isset($folderCache[$id_folder])) {
+    //         return $folderCache[$id_folder];
+    //     }
+        
+    //     $pdo = $this->getPdo();
+    //     $this->checkUploads($pdo);
     //     $sql = "SELECT parent_id, folder_name FROM folders WHERE id_folder = :id_folder";
 
     //     $stmt = $pdo->prepare($sql);
-
     //     $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
-
     //     $stmt->execute();
 
     //     $result = $stmt->fetch();
-
     //     if (!$result) {
     //         throw new Exception("Pasta não encontrada");
     //     }
 
     //     $path = "";
-
-
     //     if (empty($result['parent_id'])) {
     //         $path = "/uploads";
     //     } else {
@@ -343,8 +306,45 @@ class Media extends Database
     //             $path = self::getFullFolderPath($result['parent_id']) . '/' . $result['folder_name'];
     //         }
     //     }
+
+    //     // Armazenar o caminho da pasta no cache
+    //     $folderCache[$id_folder] = $path;
+
     //     return $path;
     // }
+
+    public function getPathToFolder(int $id_folder, bool $old = true, bool $delete = false): string
+    {
+        $pdo = $this->getConnection();
+
+        $sql = "SELECT parent_id, folder_name FROM folders WHERE id_folder = :id_folder";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        $result = $stmt->fetch();
+
+        if (!$result) {
+            throw new Exception("Pasta não encontrada");
+        }
+
+        $path = "";
+
+
+        if (empty($result['parent_id'])) {
+            $path = "/uploads";
+        } else {
+            if ($old) {
+                $path =  $this->getFullFolderPath($result['parent_id']);
+            } else {
+                $path = $this->getFullFolderPath($result['parent_id']) . '/' . $result['folder_name'];
+            }
+        }
+        return $path;
+    }
     //Files
     public function createFiles(int $id_folder, array $files, PDO $pdo): bool
     {
@@ -410,59 +410,59 @@ class Media extends Database
     }
 
 
-    public function getPathToFile(array $data): string
-    {
-        $folderCache = [];  // Variável estática para armazenar caminhos de pastas em cache
-
-        // Verificar cache para o caminho do arquivo
-        $pdo = $this->getPdo();
-
-        // Recuperar as informações do arquivo
-        $sql = "SELECT m.file_name, f.parent_id, f.id_folder, m.file_type FROM media m
-            JOIN FOLDERS f ON m.id_folder = f.id_folder
-            WHERE m.id_media = :id_media";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":id_media", $data['id_media'], PDO::PARAM_INT);
-        $stmt->execute();
-
-        $result = $stmt->fetch();
-        if (!$result) {
-            throw new Exception("Arquivo não encontrado");
-        }
-
-        // Verificar se o caminho da pasta está no cache
-        if (!isset($folderCache[$result['id_folder']])) {
-            $folderPath = $this->getPathToFolder($result['id_folder'], false);
-            $folderCache[$result['id_folder']] = $folderPath;
-        } else {
-            $folderPath = $folderCache[$result['id_folder']];
-        }
-
-        $filePath = $folderPath . '/' . $result['file_name'];
-        return $filePath;
-    }
-
-
-    // public static function getPathToFile(array $data): string
+    // public function getPathToFile(array $data): string
     // {
-    //     $pdo = self::getConnection();
+    //     $folderCache = [];  // Variável estática para armazenar caminhos de pastas em cache
 
+    //     // Verificar cache para o caminho do arquivo
+    //     $pdo = $this->getPdo();
+
+    //     // Recuperar as informações do arquivo
     //     $sql = "SELECT m.file_name, f.parent_id, f.id_folder, m.file_type FROM media m
-    //             JOIN FOLDERS f ON m.id_folder = f.id_folder
-    //             WHERE m.id_media = :id_media";
+    //         JOIN FOLDERS f ON m.id_folder = f.id_folder
+    //         WHERE m.id_media = :id_media";
 
     //     $stmt = $pdo->prepare($sql);
     //     $stmt->bindParam(":id_media", $data['id_media'], PDO::PARAM_INT);
     //     $stmt->execute();
 
     //     $result = $stmt->fetch();
+    //     // if (!$result) {
+    //     //     throw new Exception("Arquivo não encontrado");
+    //     // }
 
-    //     $folderPath = self::getPathToFolder($result['id_folder'], false);
+    //     // Verificar se o caminho da pasta está no cache
+    //     if (!isset($folderCache[$result['id_folder']])) {
+    //         $folderPath = $this->getPathToFolder($result['id_folder'], false);
+    //         $folderCache[$result['id_folder']] = $folderPath;
+    //     } else {
+    //         $folderPath = $folderCache[$result['id_folder']];
+    //     }
+
     //     $filePath = $folderPath . '/' . $result['file_name'];
-
     //     return $filePath;
     // }
+
+
+    public function getPathToFile(array $data): string
+    {
+        $pdo = $this->getPdo();
+
+        $sql = "SELECT m.file_name, f.parent_id, f.id_folder, m.file_type FROM media m
+                JOIN FOLDERS f ON m.id_folder = f.id_folder
+                WHERE m.id_media = :id_media";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id_media", $data['id_media'], PDO::PARAM_INT);
+        $stmt->execute();
+
+        $result = $stmt->fetch();
+
+        $folderPath = $this->getPathToFolder($result['id_folder'], false);
+        $filePath = $folderPath . '/' . $result['file_name'];
+
+        return $filePath;
+    }
     public function moveFile(array $data, PDO $pdo): bool
     {
         $sql = "UPDATE media SET id_folder = :id_folder WHERE id_media = :id_media";

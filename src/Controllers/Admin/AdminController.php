@@ -67,7 +67,7 @@ class AdminController
                 'success' => true,
                 'message' => $adminService['message'],
                 'firstAccess' => true,
-                "type" => "ADMIN"
+                "rule" => "ADMIN"
             ], 200);
         }
 

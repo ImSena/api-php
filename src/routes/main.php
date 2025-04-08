@@ -15,6 +15,7 @@ use App\Controllers\OrderController;
 use App\Controllers\PaymentsController;
 use App\Controllers\Stripe\StoreController;
 use App\Controllers\VariantsController;
+use App\Controllers\WebhookController;
 use App\Middlewares\AuthPermission;
 
 Route::get('/', [HomeController::class, 'index']);
@@ -160,7 +161,7 @@ Route::group([
     "prefix" => "payments",
     "middlewares" => [AuthUser::class]
 ], function($prefix, $middlewares){
-    Route::post("/$prefix/pay/{param}", [PaymentsController::class, "pay"], $middlewares);
+    Route::get("/$prefix/pay/{param}", [PaymentsController::class, "pay"], $middlewares);
     Route::get("/$prefix", [PaymentsController::class, 'getPayments'], $middlewares);
     Route::get("/$prefix/{param}", [PaymentsController::class, 'getDetails'], $middlewares);
 });
@@ -174,4 +175,11 @@ Route::group([
     Route::post("/$prefix/create", [StoreController::class, "createStore"], $middlewares);
     Route::post("/$prefix/{param}/onboarding", [StoreController::class, 'initiateOnboarding'], $middlewares);
     Route::post("/$prefix/{param}/login", [StoreController::class, 'login'], $middlewares);
+});
+
+Route::group([
+    "prefix" => "webhook",
+    "middlewares" => []
+], function($prefix, $middlewares){
+    Route::post("/$prefix", [WebhookController::class, 'getEvent']);
 });

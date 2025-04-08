@@ -25,7 +25,8 @@ class OrderController{
 
         $response::json([
             "success" => true,
-            "message" => $orderService
+            "message" => $orderService['message'],
+            "id_order" => $orderService['id_order']
         ]);
     }
 

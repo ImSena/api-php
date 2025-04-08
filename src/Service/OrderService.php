@@ -31,7 +31,10 @@ class OrderService
                 throw new Exception("Não foi possível realizar pedidos");
             }
 
-            return "Pedido realizado com sucesso";
+            return [
+                'message'=> "Pedido realizado com sucesso",
+                'id_order' => $Order
+            ];
         } catch (PDOException $e) {
             return ['error' => DatabaseErrorHelpers::error($e)];
         } catch (Exception $e) {
@@ -139,14 +142,14 @@ class OrderService
             $productItems = $Order->getOrderIdProductItems($id);
 
             $totalPrice = 0.00;
-            foreach($productItems as $product)
+            foreach($productItems as $productItem)
             {
-                $product = $Product->getById($product['id_product_variant']);
+                $product = $Product->getById($productItem['id_product_variant']);
                 $OrderResult['products'][] = $product;
                 $price = floatval($product['price']);
                 $discount = floatval($product['discount']);
                 $price -= $discount;
-                $totalPrice += $price;
+                $totalPrice += $price * intval($productItem['quantity']);
 
             }
 
@@ -160,6 +163,64 @@ class OrderService
             return ['error' => DatabaseErrorHelpers::error($e)];
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function changeStatus(string $status, int $id_order)
+    {
+        try{
+
+            $statusExisting = [
+                'PENDING',
+                'PROCESSING',
+                'SHIPPED',
+                'DELIVERED',
+                'CANCELLED',
+                'REFUNDED',
+                'RETURNED'
+            ];
+
+            if (!in_array($status, $statusExisting)) {
+                throw new Exception("Status inválido: $status");
+            }
+
+            $Order = new Order();
+
+            $result = $Order->changeStatus($status, $id_order);
+
+            if(!$result){
+                throw new Exception("Não foi possível alterar o status");
+            }
+
+            return "Status do pedido alterado com sucesso.";
+        } catch (PDOException $e) {
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function verifyOrder(int $id)
+    {
+        try{
+            
+            $Order = new Order();
+
+            $result = $Order->verifyStatus($id);
+
+            if(!$result){
+                throw new Exception("Não foi possível encontrar nenhum status para esse pedido");
+            }
+
+            return $result;
+        }catch(PDOException $e){
+            return [
+                'error' => DatabaseErrorHelpers::error($e)
+            ];
+        }catch(Exception $e){
+            return [
+                'error' => $e->getMessage()
+            ];
         }
     }
 }

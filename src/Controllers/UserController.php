@@ -50,7 +50,7 @@ class UserController
                 "success" => true,
                 "message" => $userService['message'],
                 "firstAccess" => true,
-                "type" => "USER",
+                "rule" => "USER",
             ], 200);
         }
 
