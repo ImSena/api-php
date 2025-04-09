@@ -17,7 +17,8 @@ class Payment extends Database
                         status, 
                         amount, 
                         payment_method, 
-                        payment_date
+                        payment_date,
+                        send_email
                 ) 
                 VALUES (
                     :id_order,
@@ -26,7 +27,8 @@ class Payment extends Database
                     :status, 
                     :amount,
                     :payment_method,
-                    :payment_date
+                    :payment_date,
+                    :send_email
                 )";
             
         $stmt = $pdo->prepare($sql);
@@ -38,6 +40,7 @@ class Payment extends Database
         $stmt->bindParam(":amount", $data['amount'], PDO::PARAM_STR);
         $stmt->bindParam(":payment_method", $data['payment_method'], PDO::PARAM_STR);
         $stmt->bindParam(":payment_date", $data['payment_date'], PDO::PARAM_STR);
+        $stmt->bindParam(":send_email", $data['send_email'], PDO::PARAM_BOOL);
 
         $stmt->execute();
 

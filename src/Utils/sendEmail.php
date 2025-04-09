@@ -5,9 +5,7 @@ namespace App\Utils;
 use Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 
-define('HOST_EMAIL', 'smtp.escalaweb.com.br');
-define('USERNAME_MAIL', 'teste@escalaweb.com.br');
-define('PASSWORD_MAIL', 'Escalaweb$17');
+require_once __DIR__ .'/../../config.php';
 
 class SendEmail
 {

@@ -59,4 +59,16 @@ class Store extends Database{
         return $stmt->rowCount() > 0;
 
     }
+
+    public function getInfoStore()
+    {
+        $pdo = $this->getPdo();
+        $sql = "SELECT name, domain FROM store WHERE stripe_account_id IS NOT NULL ORDER BY created_at DESC LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
+
 }

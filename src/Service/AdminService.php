@@ -220,4 +220,32 @@ class AdminService
             return ['error' => $e->getMessage()];
         }
     }
+
+    public static function getInfoAdmin($permission = 'SUPER'){
+        
+        try{
+            $permissions = [
+                'SUPER',
+                'FINANCE',
+                'COMMON',
+            ];
+    
+            if(!in_array($permission, $permissions)){
+                throw new Exception("Permissão inexistente");
+            }
+
+            $Admin = new Admin();
+            $result = $Admin->getInfoAdmin($permission);
+
+            return $result;
+        }catch(PDOException $e){
+            return [
+                'error' => DatabaseErrorHelpers::error($e)
+            ];
+        }catch(Exception $e){
+            return [
+                'error' => $e->getMessage()
+            ];
+        }
+    }
 }

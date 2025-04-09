@@ -51,6 +51,7 @@ class WebhookService
 
                     $data = $event->data;
                     $id_order = $data['metadata']['id_order'];
+                    $email = $data['metadata']['email'];
                     $id_transaction = $data['id'];
                     $status = 'PAID';
                     $payment_method = $data['payment_method_types'][0];
@@ -66,6 +67,11 @@ class WebhookService
                     $amount = floatval($data['amount'] / 100);
                     $payment_date = date("Y-m-d H:i:s",$data['created']);
 
+                    $notificationService = NotificationsService::sendNotificationsClient('PAYMENT_SUCCESS', $email);
+                    $notificationAdminService = NotificationsService::sendNotificationsAdmin('ORDER_PROCESSING', []);
+
+                    $send_email = isset($notificationService['error']) || isset($notificationAdminService['error']) ? false : true;
+
                     $dataService = [
                         'id_order' => $id_order,
                         'id_transaction' => $id_transaction,
@@ -73,14 +79,9 @@ class WebhookService
                         'status' => $status,
                         'amount' => $amount,
                         'payment_method' => $payment_method,
-                        'payment_date' => $payment_date
+                        'payment_date' => $payment_date,
+                        'send_email' => $send_email
                     ];
-
-                    $paymentRegistered = PaymentService::register($dataService);
-
-                    if(isset($paymentRegistered['error'])){
-                        throw new Exception($paymentRegistered['error']);
-                    }
 
                     $orderService = OrderService::changeStatus('PROCESSING', $id_order);
 
@@ -88,7 +89,13 @@ class WebhookService
                         throw new Exception($orderService['error']);
                     }
 
-                    $res = ['status' => 'ok', 'message' => 'Pagamento confirmado'];
+                    $paymentRegistered = PaymentService::register($dataService);
+
+                    if(isset($paymentRegistered['error'])){
+                        throw new Exception($paymentRegistered['error']);
+                    }
+
+                    $response =  'Pagamento confirmado';
 
                 break;
                 default:

@@ -118,4 +118,29 @@ class StoreService{
             ];
         }
     }
+
+    public static function getInfoStore()
+    {
+        try{
+
+            $Store = new Store();
+
+            $result = $Store->getInfoStore();
+
+            if(!$result){
+                throw new Exception("Não foi possível resgatar informações da loja");
+            }
+            
+
+            return $result;
+        }catch(PDOException $e){
+            return [
+                'error' => DatabaseErrorHelpers::error($e)
+            ];
+        }catch(Exception $e){
+            return [
+                'error' => $e->getMessage()
+            ];
+        }
+    }
 }

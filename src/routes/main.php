@@ -19,6 +19,7 @@ use App\Controllers\WebhookController;
 use App\Middlewares\AuthPermission;
 
 Route::get('/', [HomeController::class, 'index']);
+Route::get('/teste', [HomeController::class, 'teste']);
 
 //admin
 Route::group([
@@ -167,14 +168,13 @@ Route::group([
 });
 
 //store
-
 Route::group([
     "prefix" => "store",
     "middlewares" => [AuthAdmin::class]
 ], function($prefix, $middlewares){
     Route::post("/$prefix/create", [StoreController::class, "createStore"], $middlewares);
     Route::post("/$prefix/{param}/onboarding", [StoreController::class, 'initiateOnboarding'], $middlewares);
-    Route::post("/$prefix/{param}/login", [StoreController::class, 'login'], $middlewares);
+    Route::get("/$prefix/{param}/login", [StoreController::class, 'login'], $middlewares);
 });
 
 Route::group([

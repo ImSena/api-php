@@ -65,4 +65,15 @@ class Admin extends Database
 
         return $stmt->rowCount() > 0;
     }
+
+    public function getInfoAdmin($permission){
+        $pdo = $this->getPdo();
+
+        $sql = "SELECT name, email FROM admins WHERE permission = :permission ORDER BY id_admin LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":permission", $permission, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
 }

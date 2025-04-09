@@ -92,15 +92,17 @@ class PaymentService
                 'customer' => $customer->id,
                 'payment_intent_data' => [
                     'metadata' => [
-                        'stripe_account_id' => $store['stripe_account_id'],
                         'id_order' => $data['id_order'],
-                        'domain' => 'http://localhost/api-php/'
+                        'domain' => 'http://localhost/api-php/',
+                        'email' => $user['email'],
+                        'stripe_account_id' => $store['stripe_account_id'],
                     ]
                 ],
                 'metadata' => [
-                    'stripe_account_id' => $store['stripe_account_id'],
                     'id_order' => $data['id_order'],
-                    'domain' => 'http://localhost/api-php/'
+                    'domain' => 'http://localhost/api-php/',
+                    'email' => $user['email'],
+                    'stripe_account_id' => $store['stripe_account_id'],
                 ]
             ];
 
@@ -128,7 +130,8 @@ class PaymentService
                 "status" => $data['status'] ?? '',
                 'amount' => $data['amount'] ?? '',
                 "payment_method" => $data['payment_method'] ?? '',
-                'payment_date' => $data['payment_date'] ?? ''
+                'payment_date' => $data['payment_date'] ?? '',
+                'send_email' => $data['send_email']
             ]);
 
             $Payment = new Payment();

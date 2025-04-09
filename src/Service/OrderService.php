@@ -41,7 +41,6 @@ class OrderService
             return ['error' => $e->getMessage()];
         }
     }
-
     public static function getAll(array $data)
     {
         try {
@@ -127,7 +126,6 @@ class OrderService
             return ['error' => $e->getMessage()];
         }
     }
-
     public static function getById(int $id)
     {
         try {
@@ -165,7 +163,6 @@ class OrderService
             return ['error' => $e->getMessage()];
         }
     }
-
     public static function changeStatus(string $status, int $id_order)
     {
         try{
@@ -199,7 +196,6 @@ class OrderService
             return ['error' => $e->getMessage()];
         }
     }
-
     public static function verifyOrder(int $id)
     {
         try{

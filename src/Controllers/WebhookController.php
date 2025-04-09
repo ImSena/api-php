@@ -16,7 +16,7 @@ class WebhookController
         $webHookService = WebhookService::processEvent($body, $headers);
 
 
-        error_log("pagamento confirmado: ".print_r($webHookService, true));
+        error_log("pagamento: ".print_r($webHookService, true));
 
         if(isset($webHookService['error'])){
             return $response::json([
