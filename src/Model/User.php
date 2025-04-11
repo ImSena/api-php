@@ -6,8 +6,18 @@ use App\Model\Database;
 use Exception;
 use PDO;
 
-class User extends Database
+class User
 {
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    private function getPdo(){
+        return $this->pdo;
+    }
     public function create(array $data)
     {
         $pdo = $this->getPdo();

@@ -2,17 +2,26 @@
 
 namespace App\Controllers;
 
+use App\Factory\ConnectionFactory;
 use App\Http\Request;
 use App\Http\Response;
 use App\Service\BrandService;
+use PDO;
 
 class BrandController
 {
+    private PDO $pdo;
+
+    public function __construct(){
+        $this->pdo = ConnectionFactory::getConnection();
+    }
+
     public function create(Request $request, Response $response)
     {
         $body = $request::body();
 
-        $brand = BrandService::create($body);
+        $brand = new BrandService($this->pdo);
+        $brand = $brand->create($body);
 
         if(isset($brand['error'])){
             return $response::json([
@@ -29,9 +38,8 @@ class BrandController
 
     public function getAll(Request $request, Response $response)
     {
-        $body = $request::body();
-
-        $brand = BrandService::getAll($body);
+        $brand = new BrandService($this->pdo);
+        $brand = $brand->getAll();
 
         if(isset($brand['error'])){
             return $response::json([
@@ -53,7 +61,8 @@ class BrandController
 
         $id = intval($id[0]);
 
-        $brand = BrandService::update($body, $id);
+        $brand = new BrandService($this->pdo);
+        $brand = $brand->update($body, $id);
 
         if(isset($brand['error'])){
             return $response::json([
@@ -72,7 +81,8 @@ class BrandController
     {
         $id = intval($id[0]);
 
-        $brand = BrandService::delete( $id);
+        $brand = new BrandService($this->pdo);
+        $brand = $brand->delete( $id);
 
         if(isset($brand['error'])){
             return $response::json([

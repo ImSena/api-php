@@ -63,7 +63,7 @@ class Core
                     $extendController = new $controller();
                     
                     if (!method_exists($extendController, $action)) {
-                        throw new \Exception("O método '$action' não existe no controlador '$controller'");
+                        throw new Exception("O método '$action' não existe no controlador '$controller'");
                     }
                     $extendController->$action(new Request, new Response, $matches);
                 }catch(Exception $e){

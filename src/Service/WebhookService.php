@@ -6,6 +6,7 @@ use App\Exceptions\RouteNotFoundException;
 use App\Helpers\DatabaseErrorHelpers;
 use App\Stripe\Keys;
 use Exception;
+use PDO;
 use PDOException;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\Stripe;
@@ -15,7 +16,13 @@ use UnexpectedValueException;
 class WebhookService
 {
 
-    public static function processEvent($payload, $headers)
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    public function processEvent($payload, $headers)
     {
         try {
             date_default_timezone_set("America/Sao_Paulo");
@@ -49,6 +56,10 @@ class WebhookService
             switch($event->event_type ?? $event->type){
                 case 'payment_intent.succeeded':
 
+                    $Notification = new NotificationsService($this->pdo);
+                    $Order = new OrderService($this->pdo);
+                    $Payment = new PaymentService($this->pdo);
+
                     $data = $event->data;
                     $id_order = $data['metadata']['id_order'];
                     $email = $data['metadata']['email'];
@@ -67,8 +78,8 @@ class WebhookService
                     $amount = floatval($data['amount'] / 100);
                     $payment_date = date("Y-m-d H:i:s",$data['created']);
 
-                    $notificationService = NotificationsService::sendNotificationsClient('PAYMENT_SUCCESS', $email);
-                    $notificationAdminService = NotificationsService::sendNotificationsAdmin('ORDER_PROCESSING', []);
+                    $notificationService = $Notification->sendNotificationsClient('PAYMENT_SUCCESS', $email);
+                    $notificationAdminService = $Notification->sendNotificationsAdmin('ORDER_PROCESSING', []);
 
                     $send_email = isset($notificationService['error']) || isset($notificationAdminService['error']) ? false : true;
 
@@ -83,13 +94,13 @@ class WebhookService
                         'send_email' => $send_email
                     ];
 
-                    $orderService = OrderService::changeStatus('PROCESSING', $id_order);
+                    $orderService = $Order->changeStatus('PROCESSING', $id_order);
 
                     if(isset($orderService['error'])){
                         throw new Exception($orderService['error']);
                     }
 
-                    $paymentRegistered = PaymentService::register($dataService);
+                    $paymentRegistered = $Payment->register($dataService);
 
                     if(isset($paymentRegistered['error'])){
                         throw new Exception($paymentRegistered['error']);

@@ -2,17 +2,26 @@
 
 namespace App\Controllers;
 
+use App\Factory\ConnectionFactory;
 use App\Http\Response;
 use App\Http\Request;
 use App\Service\VariationService;
+use PDO;
 
 class VariantsController
 {
+
+    private PDO $pdo;
+
+    public function __construct(){
+        $this->pdo = ConnectionFactory::getConnection();
+    }
     public function createVariant(Request $request, Response $response)
     {
         $body = $request::body();
 
-        $variationService = VariationService::createVariation($body);
+        $variationService = new VariationService($this->pdo);
+        $variationService = $variationService->createVariation($body);
 
         if (isset($variationService['error'])) {
             return $response::json([
@@ -29,7 +38,8 @@ class VariantsController
 
     public function getAllVariation(Request $request, Response $response)
     {
-        $variationService = VariationService::getAllVariations();
+        $variationService = new VariationService($this->pdo);
+        $variationService = $variationService->getAllVariations();
 
         if (isset($variationService['error'])) {
             return $response::json([
@@ -50,7 +60,8 @@ class VariantsController
         $body = $request::body();
         $id = intval($id[0]);
 
-        $variationService = VariationService::updateVariation($body, $id);
+        $variationService = new VariationService($this->pdo);
+        $variationService = $variationService->updateVariation($body, $id);
 
         if (isset($variationService['error'])) {
             return $response::json([
@@ -69,7 +80,8 @@ class VariantsController
     {
         $id = intval($id[0]);
 
-        $variationService = VariationService::deleteVariation($id);
+        $variationService = new VariationService($this->pdo);
+        $variationService = $variationService->deleteVariation($id);
 
         if (isset($variationService['error'])) {
             return $response::json([
@@ -88,7 +100,8 @@ class VariantsController
     {
         $body = $request::body();
 
-        $variationService = VariationService::createValue($body);
+        $variationService = new VariationService($this->pdo);
+        $variationService = $variationService->createValue($body);
 
         if (isset($variationService['error'])) {
             return $response::json([
@@ -107,7 +120,8 @@ class VariantsController
     {
         $id = intval($id[0]);
 
-        $variationService = VariationService::getValueVariation($id);
+        $variationService = new VariationService($this->pdo);
+        $variationService = $variationService->getValueVariation($id);
 
         if(isset($variationService['error'])){
             return $response::json([
@@ -128,7 +142,8 @@ class VariantsController
         $body = $request::body();
         $id = intval($id[0]);
 
-        $variationService = VariationService::updateValueVariation($body, $id);
+        $variationService = new VariationService($this->pdo);
+        $variationService = $variationService->updateValueVariation($body, $id);
 
         if(isset($variationService['error'])){
             return $response::json([
@@ -147,7 +162,8 @@ class VariantsController
     {
         $id = intval($id[0]);
 
-        $variationService = VariationService::deleteValue($id);
+        $variationService = new VariationService($this->pdo);
+        $variationService = $variationService->deleteValue($id);
 
         if(isset($variationService['error'])){
             return $response::json([

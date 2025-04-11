@@ -2,12 +2,21 @@
 
 namespace App\Controllers;
 
+use App\Factory\ConnectionFactory;
 use App\Http\Request;
 use App\Http\Response;
 use App\Service\AddressService;
+use PDO;
 
 class AddressController
 {
+
+    private PDO $pdo;
+
+    public function __construct(){
+        $this->pdo = ConnectionFactory::getConnection();
+    }
+
     public function create(Request $request, Response $response)
     {
 
@@ -16,7 +25,8 @@ class AddressController
         $body = $request::body();
         $body['id_user'] = $id;
 
-        $addressService = AddressService::create($body);
+        $addressService = new AddressService($this->pdo);
+        $addressService = $addressService->create($body);
 
         if(isset($addressService['error'])){
             return $response::json([
@@ -35,7 +45,8 @@ class AddressController
     {
         $id = $request::getUserId();
 
-        $addressService = AddressService::getAll($id);
+        $addressService = new AddressService($this->pdo);
+        $addressService = $addressService->getAll($id);
 
         if(isset($addressService['error'])){
             return $response::json([

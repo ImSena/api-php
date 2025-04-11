@@ -6,8 +6,19 @@ use Exception;
 use PDO;
 use PDOException;
 
-class Product extends Database
+class Product
 {
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    private function getPdo(){
+        return $this->pdo;
+    }
+
     public function create(array $data)
     {
         $pdo = $this->getPdo();

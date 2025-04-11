@@ -2,12 +2,22 @@
 
 namespace App\Controllers;
 
+use App\Factory\ConnectionFactory;
 use App\Http\Request;
 use App\Http\Response;
 use App\Service\PaymentService;
+use PDO;
 
-class PaymentsController{
-    public static function pay(Request $request, Response $response, $param)
+class PaymentsController
+{
+
+    private PDO $pdo;
+
+    public function __construct(){
+        $this->pdo = ConnectionFactory::getConnection();
+    }
+
+    public function pay(Request $request, Response $response, $param)
     {
         $params['id_order'] = isset($param[0]) ? (int) $param[0] : null;
         $body = $request::body();
@@ -21,7 +31,8 @@ class PaymentsController{
             ], 400);
         }
 
-        $paymentService = PaymentService::payOrder($body);
+        $paymentService = new PaymentService($this->pdo);
+        $paymentService = $paymentService->payOrder($body);
 
         if(isset($paymentService['error'])){
             return $response::json([
@@ -37,12 +48,12 @@ class PaymentsController{
         ]);
     }
 
-    public static function getPayments(Request $request, Response $response, $param)
+    public function getPayments(Request $request, Response $response, $param)
     {
 
     }
 
-    public static function getDetails(Request $request, Response $response, $param)
+    public function getDetails(Request $request, Response $response, $param)
     {
 
     }

@@ -2,10 +2,12 @@
 
 namespace App\Controllers;
 
+use App\Factory\ConnectionFactory;
 use App\Http\Request;
 use App\Http\Response;
 use App\Service\AccountUserService;
 use App\Service\UserService;
+use PDO;
 
 define('ROOT_PATH', realpath(__DIR__ .'/../..'));
 
@@ -13,11 +15,17 @@ require_once ROOT_PATH . '/config.php';
 
 class UserController
 {
+    private PDO $pdo;
+
+    public function __construct(){
+        $this->pdo = ConnectionFactory::getConnection();
+    }
     public function register(Request $request, Response $response)
     {
         $data = $request::body();
 
-        $userService = UserService::create($data);
+        $userService = new UserService($this->pdo);
+        $userService = $userService->create($data);
 
         if(isset($userService['error'])){
             return $response::json([
@@ -36,7 +44,8 @@ class UserController
     {
         $data = $request::body();
 
-        $userService = UserService::login($data);
+        $userService = new UserService($this->pdo);
+        $userService = $userService->login($data);
 
         if(isset($userService['error'])){
             return $response::json([
@@ -68,7 +77,8 @@ class UserController
     {
         $body = $request::body();
 
-        $userService = UserService::forgetPassword($body);
+        $userService = new UserService($this->pdo);
+        $userService = $userService->forgetPassword($body);
 
         if(isset($userService['error'])){
             return $response::json([
@@ -88,7 +98,8 @@ class UserController
     {
         $body = $request::body();
 
-        $accountService = AccountUserService::resetPassword($body);
+        $accountService = new AccountUserService($this->pdo);
+        $accountService = $accountService->resetPassword($body);
 
         if(isset($accountService['error'])){
             return $response::json([
@@ -108,7 +119,8 @@ class UserController
     {
         $body = $request::body();
 
-        $userService = UserService::activeAccountLink($body);
+        $userService = new UserService($this->pdo);
+        $userService = $userService->activeAccountLink($body);
 
         if(isset($userService['error'])){
             return $response::json([
@@ -128,7 +140,8 @@ class UserController
     {
         $body = $request::body();
 
-        $userAccount = AccountUserService::activeAccount($body);
+        $userAccount = new AccountUserService($this->pdo);
+        $userAccount = $userAccount->activeAccount($body);
 
         if(isset($userAccount['error'])){
             return $response::json([
@@ -149,7 +162,8 @@ class UserController
 
         $id = isset($id[0]) ? $id[0] : 1;
 
-        $userService = UserService::getAllUsers($id);
+        $userService = new UserService($this->pdo);
+        $userService = $userService->getAllUsers($id);
 
         if(isset($userService['error'])){
             return $response::json([

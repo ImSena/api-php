@@ -4,8 +4,19 @@ namespace App\Model;
 
 use PDO;
 
-class Variation extends Database
+class Variation
 {
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    private function getPdo(){
+        return $this->pdo;
+    }
+
     public function createVariation(array $data):bool
     {
         $pdo = $this->getPdo();

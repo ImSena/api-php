@@ -4,8 +4,18 @@ namespace App\Model;
 
 use PDO;
 
-class Brand extends Database
+class Brand
 {
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    private function getPdo(){
+        return $this->pdo;
+    }
+
     public function create(array $data):bool
     {
         $pdo = $this->getPdo();
@@ -23,7 +33,7 @@ class Brand extends Database
 
     public function getAll():array
     {
-        $pdo = $this->getConnection();
+        $pdo = $this->getPdo();
         $sql = "SELECT id_brand, name FROM brands";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();

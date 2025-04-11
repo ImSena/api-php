@@ -6,16 +6,23 @@ use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Brand;
 use App\Utils\Validator;
 use Exception;
+use PDO;
 use PDOException;
 
 class BrandService
 {
 
-    public static function create(array $data)
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    public function create(array $data)
     {
         try{
 
-            $Brand = new Brand();
+            $Brand = new Brand($this->pdo);
 
             $fields = Validator::validate([
                 "name" => $data['name'] ?? ''
@@ -36,10 +43,10 @@ class BrandService
         }
     }
 
-    public static function getAll()
+    public function getAll()
     {
         try{
-            $Brand = new Brand();
+            $Brand = new Brand($this->pdo);
             $Brand = $Brand->getAll();
 
             return [
@@ -53,10 +60,10 @@ class BrandService
         }
     }
 
-    public static function update(array $data, int $id)
+    public function update(array $data, int $id)
     {
         try{
-            $Brand = new Brand();
+            $Brand = new Brand($this->pdo);
             $fields = Validator::validate([
                 "name" => $data['name'] ?? ''
             ]);
@@ -78,11 +85,11 @@ class BrandService
         }
     }
 
-    public static function delete(int $id)
+    public function delete(int $id)
     {
         try{
 
-            $Brand = new Brand();
+            $Brand = new Brand($this->pdo);
             $Brand = $Brand->delete($id);
 
             if(!$Brand){

@@ -8,15 +8,22 @@ use App\Model\Admin;
 use App\Model\TokenAdmin;
 use App\Utils\Validator;
 use Exception;
+use PDO;
 use PDOException;
 
 class AccountAdminService
 {
-    public static function resetPasswordAdmin(array $data)
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+    public function resetPasswordAdmin(array $data)
     {
         try {
-            $TokenAdmin = new TokenAdmin();
-            $Admin = new Admin();
+            $TokenAdmin = new TokenAdmin($this->pdo);
+            $Admin = new Admin($this->pdo);
             $fields = Validator::validate([
                 "token" => $data['token'] ?? '',
                 "password" => $data['password'] ?? ''
@@ -50,11 +57,11 @@ class AccountAdminService
         }
     }
 
-    public static function activeAccountAdmin(array $data)
+    public function activeAccountAdmin(array $data)
     {
         try {
-            $TokenAdmin = new TokenAdmin();
-            $Admin = new Admin();
+            $TokenAdmin = new TokenAdmin($this->pdo);
+            $Admin = new Admin($this->pdo);
 
             $fields = Validator::validate([
                 'token' => $data['token'] ?? ''

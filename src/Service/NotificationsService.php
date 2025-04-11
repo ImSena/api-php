@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Helpers\DatabaseErrorHelpers;
 use App\Service\Stripe\StoreService;
 use Exception;
+use PDO;
 use PDOException;
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -12,7 +13,13 @@ require_once __DIR__ . '/../../config.php';
 
 class NotificationsService
 {
-    public static function sendNotificationsClient(string $subject, string $email)
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    public function sendNotificationsClient(string $subject, string $email)
     {
         try {
             $subjects = [
@@ -24,7 +31,7 @@ class NotificationsService
                 throw new Exception("Assunto não disponível para envio de email");
             }
 
-            $contentEmail = self::getContentEmail($subject);
+            $contentEmail = $this->getContentEmail($subject);
 
             $mail = new PHPMailer(true);
             $mail->isSMTP();
@@ -60,7 +67,7 @@ class NotificationsService
         }
     }
 
-    private static function getContentEmail($subject)
+    private function getContentEmail($subject)
     {
         switch ($subject) {
             case "PAYMENT_SUCCESS":
@@ -125,12 +132,15 @@ class NotificationsService
         ];
     }
 
-    public static function sendNotificationsAdmin(string $subject, array $info)
+    public function sendNotificationsAdmin(string $subject, array $info)
     {
         try {
 
-            $AdminResult = AdminService::getInfoAdmin();
-            $StoreResult = StoreService::getInfoStore();
+            $Admin = new AdminService($this->pdo);
+            $Store = new StoreService($this->pdo);
+
+            $AdminResult = $Admin->getInfoAdmin();
+            $StoreResult = $Store->getInfoStore();
 
             $subjects = [
                 'ORDER_PROCESSING',
@@ -140,7 +150,7 @@ class NotificationsService
                 throw new Exception("Assunto não disponível para envio de email");
             }
 
-            $contentEmail = self::getContentEmailAdmin($subject, $info);
+            $contentEmail = $this->getContentEmailAdmin($subject, $info);
 
             $mail = new PHPMailer(true);
             $mail->isSMTP();
@@ -176,7 +186,7 @@ class NotificationsService
         }
     }
 
-    private static function getContentEmailAdmin(string $subject, array $info)
+    private function getContentEmailAdmin(string $subject, array $info)
     {
         switch ($subject) {
             case "ORDER_PROCESSING":

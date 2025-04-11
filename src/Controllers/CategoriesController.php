@@ -2,18 +2,25 @@
 
 namespace App\Controllers;
 
+use App\Factory\ConnectionFactory;
 use App\Http\Request;
 use App\Http\Response;
 use App\Service\CategoryService;
+use PDO;
 
 class CategoriesController
 {
+    private PDO $pdo;
+
+    public function __construct(){
+        $this->pdo = ConnectionFactory::getConnection();
+    }
     public function createCategories(Request $request, Response $response)
     {
         $body = $request::body();
 
-
-        $category = CategoryService::createCategory($body);
+        $category = new CategoryService($this->pdo);
+        $category = $category->createCategory($body);
 
         if (isset($category['error'])) {
             return $response::json([
@@ -30,7 +37,8 @@ class CategoriesController
 
     public function getCategories(Request $request, Response $response)
     {
-        $category = CategoryService::getAllCategories();
+        $category = new CategoryService($this->pdo);
+        $category = $category->getAllCategories();
 
         if (isset($category['error'])) {
             return $response::json([
@@ -50,7 +58,8 @@ class CategoriesController
     public function updateCategory(Request $request, Response $response){
         $body = $request::body();
 
-        $category = CategoryService::update($body);
+        $category = new CategoryService($this->pdo);
+        $category = $category->update($body);
 
         if(isset($category['error'])){
             return $response::json([
@@ -68,7 +77,8 @@ class CategoriesController
     {
         $body = $request::body();
 
-        $category = CategoryService::delete($body);
+        $category = new CategoryService($this->pdo);
+        $category = $category->delete($body);
 
         if (isset($category['error'])) {
             return $response::json([

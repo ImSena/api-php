@@ -7,6 +7,7 @@ use App\Model\Stripe\Store;
 use App\Stripe\Keys;
 use App\Utils\Validator;
 use Exception;
+use PDO;
 use PDOException;
 use Stripe\Account;
 use Stripe\AccountLink;
@@ -14,7 +15,13 @@ use Stripe\Stripe;
 
 class StoreService{
     
-    public static function createStore(array $data){
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    public function createStore(array $data){
         try{
 
             $fields = Validator::validate([
@@ -23,7 +30,7 @@ class StoreService{
 
             $fields['domain'] = $_SERVER['SERVER_NAME'];
 
-            $Store = new Store();
+            $Store = new Store($this->pdo);
 
             $result = $Store->createStore($fields);
 
@@ -39,11 +46,11 @@ class StoreService{
         }
     }
 
-    public static function startOnboardingProcess(string $storeId){
+    public function startOnboardingProcess(string $storeId){
         try{
             Stripe::setApiKey(Keys::getSecretKey());
 
-            $storeModel = new Store();
+            $storeModel = new Store($this->pdo);
             $store = $storeModel->findById($storeId);
 
             if(!$store){
@@ -92,12 +99,12 @@ class StoreService{
         }
     }
 
-    public static function createLogin(string $storeId){
+    public function createLogin(string $storeId){
         try{
 
             Stripe::setApiKey(Keys::getSecretKey());
 
-            $storeModel = new Store();
+            $storeModel = new Store($this->pdo);
             $store = $storeModel->findById($storeId);
 
             if(!$store){
@@ -119,11 +126,11 @@ class StoreService{
         }
     }
 
-    public static function getInfoStore()
+    public function getInfoStore()
     {
         try{
 
-            $Store = new Store();
+            $Store = new Store($this->pdo);
 
             $result = $Store->getInfoStore();
 

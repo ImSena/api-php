@@ -2,19 +2,21 @@
 
 namespace App\Controllers;
 
+use App\Factory\ConnectionFactory;
 use App\Service\AdminService;
 use App\Service\NotificationsService;
+use PDO;
 
 class HomeController
 {
+    private PDO $pdo;
+
+    public function __construct(){
+        $this->pdo = ConnectionFactory::getConnection();
+    }
+
     public function index()
     {
         header("Location: documentation");
-    }
-
-    public function teste()
-    {
-        $result = NotificationsService::sendNotificationsAdmin("ORDER_PROCESSING", []);
-        var_dump($result);
     }
 }

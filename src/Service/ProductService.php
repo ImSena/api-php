@@ -8,14 +8,22 @@ use App\Model\Product;
 use App\Utils\Pagination;
 use App\Utils\Validator;
 use Exception;
+use PDO;
 use PDOException;
 
 class ProductService
 {
-    public static function create(array $data)
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    public function create(array $data)
     {
         try {
-            $Product = new Product();
+            $Product = new Product($this->pdo);
             $fields = Validator::validate([
                 "id_category" => $data['id_category'] ?? '',
                 "products" => $data['products'] ?? '',
@@ -39,12 +47,13 @@ class ProductService
      * @param int $page Aqui é o offset
      */
 
-    public static function getAll($page)
+    public function getAll($page)
     {
         try {
-            $Product = new Product();
+            $Product = new Product($this->pdo);
             $Products = $Product->getAll($page);
-            $Media = new Media();
+            $Media = new Media($this->pdo);
+            $MediaService = new MediaService($this->pdo);
 
             if (!$Products) {
                 throw new Exception("Não foi encontrado nenhum produto.");
@@ -69,7 +78,7 @@ class ProductService
                 }
 
                 $path = $Media->getPathToFile($product);
-                $extension = MediaService::getExtension($product['file_type']);
+                $extension = $MediaService->getExtension($product['file_type']);
                 $product['image_path'] = $path . '.' . $extension;
                 $result[$id_product]['variations'][] = [
                     'id_product_variant' => $product['id_product_variant'],
@@ -100,12 +109,13 @@ class ProductService
             return ['error' => $e->getMessage()];
         }
     }
-    public static function getAllCategory(array $params)
+    public function getAllCategory(array $params)
     {
         try {
-            $Product = new Product();
-            $Media = new Media();
+            $Product = new Product($this->pdo);
+            $Media = new Media($this->pdo);
             $Products = $Product->getAllCategory($params);
+            $MediaService = new MediaService($this->pdo);
 
             
             // var_dump($Products);exit;
@@ -127,7 +137,7 @@ class ProductService
                 }
 
                 $path = $Media->getPathToFile($product);
-                $extension = MediaService::getExtension($product['file_type']);
+                $extension = $MediaService->getExtension($product['file_type']);
                 $product['image_path'] = $path . '.' . $extension;
                 $result[$id_product]['variations'][] = [
                     'id_product_variant' => $product['id_product_variant'],
@@ -165,12 +175,13 @@ class ProductService
         }
     }
 
-    public static function getAllBrand(array $params)
+    public function getAllBrand(array $params)
     {
         try{
-            $Product = new Product();
-            $Media = new Media();
+            $Product = new Product($this->pdo);
+            $Media = new Media($this->pdo);
             $Products = $Product->getAllBrand($params);
+            $MediaService = new MediaService($this->pdo);
 
             if(!$Products){
                 throw new Exception("Não há produtos cadastrados nessa marca");
@@ -190,7 +201,7 @@ class ProductService
                 }
 
                 $path = $Media->getPathToFile($product);
-                $extension = MediaService::getExtension($product['file_type']);
+                $extension = $MediaService->getExtension($product['file_type']);
                 $product['image_path'] = $path . '.' . $extension;
                 $result[$id_product]['variations'][] = [
                     'id_product_variant' => $product['id_product_variant'],
@@ -232,11 +243,12 @@ class ProductService
         }
     }
 
-    public static function getProduct($id)
+    public function getProduct($id)
     {
         try {
-            $Product = new Product();
-            $Media = new Media();
+            $Product = new Product($this->pdo);
+            $Media = new Media($this->pdo);
+            $MediaService = new MediaService($this->pdo);
             $product = $Product->getById($id);
 
             if (!$product) {
@@ -244,7 +256,7 @@ class ProductService
             }
 
             $path = $Media->getPathToFile($product);
-            $extension = MediaService::getExtension($product['file_type']);
+            $extension = $MediaService->getExtension($product['file_type']);
             $product['image_path'] = $path . '.' . $extension; 
                 
             return ['message' => "Produto Resgatado", 'content' => $product];
@@ -255,7 +267,7 @@ class ProductService
         }
     }
 
-    public static function getAllBy(array $params)
+    public function getAllBy(array $params)
     {
         try{
             $params['type_by'] = strtoupper($params['type_by']);
@@ -277,13 +289,13 @@ class ProductService
                 case 'CATEGORY':
                     $paramsToBy['id_category'] = $params['id_by'];
                     $paramsToBy['page'] = $params['page'];
-                    $product = self::getAllCategory($paramsToBy);
+                    $product = $this->getAllCategory($paramsToBy);
                 break;
                 case "BRAND":
                     $paramsToBy['id_brand'] = $params['id_by'];
                     $paramsToBy['page'] = $params['page'];
 
-                    $product = self::getAllBrand($paramsToBy);
+                    $product = $this->getAllBrand($paramsToBy);
                 break;
             }
 
@@ -296,18 +308,19 @@ class ProductService
         }
     }
 
-    public static function getProductAndVariations(array $params)
+    public function getProductAndVariations(array $params)
     {
         try{
-            $Product = new Product();
-            $Media = new Media();
+            $Product = new Product($this->pdo);
+            $Media = new Media($this->pdo);
+            $MediaService = new MediaService($this->pdo);
             $ProductResult = $Product->getMain($params['id_product']);
             $ProductVariation = $Product->getVariations($params['id_product']);
             foreach ($ProductVariation as $prod) {
                 $prod['pictures'] = $Product->getPicturesProduct($prod['id_product_variant']);
                 foreach($prod['pictures'] as &$picture){
                     $path = $Media->getPathToFile($picture);
-                    $extension = MediaService::getExtension($picture['file_type']);
+                    $extension = $MediaService->getExtension($picture['file_type']);
                     $picture['image_path'] = $path.'.'. $extension;
                     unset($picture['id_media']);
                     unset($picture['file_type']);

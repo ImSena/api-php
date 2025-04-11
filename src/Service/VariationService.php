@@ -6,14 +6,20 @@ use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Variation;
 use App\Utils\Validator;
 use Exception;
+use PDO;
 use PDOException;
 
 class VariationService
 {
-    public static function createVariation(array $data)
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+    public function createVariation(array $data)
     {
         try {
-            $Variation = new Variation();
+            $Variation = new Variation($this->pdo);
             $fields = Validator::validate([
                 "name" => $data['name'] ?? ''
             ]);
@@ -32,10 +38,10 @@ class VariationService
         }
     }
 
-    public static function getAllVariations()
+    public function getAllVariations()
     {
         try {
-            $Variation = new Variation();
+            $Variation = new Variation($this->pdo);
 
             $Variations = $Variation->getAllVariants();
 
@@ -54,11 +60,11 @@ class VariationService
         }
     }
 
-    public static function updateVariation(array $data, int $id)
+    public function updateVariation(array $data, int $id)
     {
         try {
 
-            $Variation = new Variation();
+            $Variation = new Variation($this->pdo);
 
             $fields = Validator::validate([
                 "name" => $data['name']
@@ -80,10 +86,10 @@ class VariationService
         }
     }
 
-    public static function deleteVariation(int $id)
+    public function deleteVariation(int $id)
     {
         try {
-            $Variation = new Variation();
+            $Variation = new Variation($this->pdo);
 
             $Variation = $Variation->deleteVariation($id);
 
@@ -99,11 +105,11 @@ class VariationService
         }
     }
 
-    public static function createValue(array $data)
+    public function createValue(array $data)
     {
         try {
 
-            $Variation = new Variation();
+            $Variation = new Variation($this->pdo);
 
             $fields = Validator::validate([
                 "id_variant_attribute" => $data['id_variant_attribute'] ?? '',
@@ -125,10 +131,10 @@ class VariationService
         }
     }
 
-    public static function getValueVariation(int $id)
+    public function getValueVariation(int $id)
     {
         try{
-            $Variation = new Variation();
+            $Variation = new Variation($this->pdo);
 
             $fields = Validator::validate([
                 "id" => $id ?? ''
@@ -147,11 +153,11 @@ class VariationService
         }
     }
 
-    public static function updateValueVariation(array $data, int $id)
+    public function updateValueVariation(array $data, int $id)
     {
         try{
 
-            $Variation = new Variation();
+            $Variation = new Variation($this->pdo);
 
             $fields = Validator::validate([
                 "id" => $id ?? '',
@@ -172,10 +178,10 @@ class VariationService
         }
     }
 
-    public static function deleteValue(int $id)
+    public function deleteValue(int $id)
     {
         try{
-            $Variation = new Variation();
+            $Variation = new Variation($this->pdo);
 
             $fields = Validator::validate([
                 "id" => $id ?? ''

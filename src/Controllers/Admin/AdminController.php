@@ -2,19 +2,27 @@
 
 namespace App\Controllers\Admin;
 
+use App\Factory\ConnectionFactory;
 use App\Http\Request;
 use App\Http\Response;
 use App\Service\AccountAdminService;
 use App\Service\AdminService;
+use PDO;
 
 class AdminController
 {
+    private PDO $pdo;
+
+    public function __construct(){
+        $this->pdo = ConnectionFactory::getConnection();
+    }
 
     public function registerSuper(Request $request, Response $response)
     {
         $body = $request::body();
 
-        $adminService = AdminService::create($body, true);
+        $adminService = new AdminService($this->pdo);
+        $adminService = $adminService->create($body, true);
 
         if(isset($adminService['error'])){
             return $response::json([
@@ -33,7 +41,8 @@ class AdminController
     {
         $body = $request::body();
 
-        $adminService = AdminService::create($body, false);
+        $adminService = new AdminService($this->pdo);
+        $adminService = $adminService->create($body, false);
 
         if(isset($adminService['error'])){
             return $response::json([
@@ -51,8 +60,8 @@ class AdminController
 
     public function login(Request $request, Response $response){
         $body = $request::body();
-
-        $adminService = AdminService::login($body);
+        $adminService = new AdminService($this->pdo);
+        $adminService = $adminService->login($body);
 
 
         if(isset($adminService['error'])){
@@ -84,8 +93,8 @@ class AdminController
     public function forgetAccess(Request $request, Response $response)
     {
         $body = $request::body();
-
-        $adminService = AdminService::forgetPassword($body);
+        $adminService = new AdminService($this->pdo);
+        $adminService = $adminService->forgetPassword($body);
 
         if(isset($adminService['error'])){
             return $response::json([
@@ -105,7 +114,8 @@ class AdminController
     {
         $body = $request::body();
 
-        $accountService = AccountAdminService::resetPasswordAdmin($body);
+        $accountService = new AccountAdminService($this->pdo);
+        $accountService = $accountService->resetPasswordAdmin($body);
 
         if(isset($accountService['error'])){
             return $response::json([
@@ -125,7 +135,8 @@ class AdminController
     {
         $body = $request::body();
 
-        $adminService = AdminService::activeAccountLink($body);
+        $adminService = new AdminService($this->pdo);
+        $adminService = $adminService->activeAccountLink($body);
 
         if(isset($adminService['error'])){
             return $response::json([
@@ -145,7 +156,8 @@ class AdminController
     {
         $body = $request::body();
 
-        $adminAccount = AccountAdminService::activeAccountAdmin($body);
+        $adminAccount = new AccountAdminService($this->pdo);
+        $adminAccount = $adminAccount->activeAccountAdmin($body);
 
         if(isset($adminAccount['error'])){
             return $response::json([

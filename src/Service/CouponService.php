@@ -6,14 +6,21 @@ use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Coupon;
 use App\Utils\Validator;
 use Exception;
+use PDO;
 use PDOException;
 
 class CouponService{
-    public static function create(array $data)
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+    public function create(array $data)
     {
         try{
 
-            $Coupon = new Coupon();
+            $Coupon = new Coupon($this->pdo);
 
             $fields = Validator::validate([
                 "name" => $data['name'] ?? '',
@@ -29,16 +36,16 @@ class CouponService{
         }
     }
 
-    public static function getAll()
+    public function getAll()
     {
 
     }
 
-    public static function getById(int $id)
+    public function getById(int $id)
     {
         try{
 
-            $Coupon = new Coupon();
+            $Coupon = new Coupon($this->pdo);
 
             $Coupon = $Coupon->getCoupon($id);
 

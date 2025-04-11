@@ -4,8 +4,17 @@ namespace App\Model;
 
 use PDO;
 
-class Phone extends Database
+class Phone
 {
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    private function getPdo(){
+        return $this->pdo;
+    }
     public function getAllByIdUser(int $id){
         $pdo = $this->getPdo();
 

@@ -2,17 +2,25 @@
 
 namespace App\Controllers;
 
+use App\Factory\ConnectionFactory;
 use App\Http\Request;
 use App\Http\Response;
 use App\Service\ProductService;
+use PDO;
 
 class ProductController
 {
+    private PDO $pdo;
+
+    public function __construct(){
+        $this->pdo = ConnectionFactory::getConnection();
+    }
     public function create(Request $request, Response $response)
     {
         $body = $request::body();
 
-        $productService = ProductService::create($body);
+        $productService = new ProductService($this->pdo);
+        $productService = $productService->create($body);
 
         if (isset($productService['error'])) {
             return $response::json([
@@ -30,7 +38,8 @@ class ProductController
     {
         $params['page'] = isset($param[0]) ? intval($param[0]) : 1;
 
-        $productService = ProductService::getAll($params['page']);
+        $productService = new ProductService($this->pdo);
+        $productService = $productService->getAll($params['page']);
 
         if (isset($productService['error'])) {
             return $response::json([
@@ -52,7 +61,8 @@ class ProductController
         $params['id_category'] = isset($param[0]) ? $param[0] : 1;
         $params['page'] = isset($param[1]) ? intval($param[1]) : 1;
 
-        $productService = ProductService::getAllCategory($params);
+        $productService = new ProductService($this->pdo);
+        $productService = $productService->getAllCategory($params);
 
         if (isset($productService['error'])) {
             return $response::json([
@@ -76,7 +86,8 @@ class ProductController
         $params['id_by'] = isset($param[1]) ? (int)$param[1] : 1;
         $params['page'] = isset($param[2]) ? (int)$param[2] : 1;
 
-        $productService = ProductService::getAllBy($params);
+        $productService = new ProductService($this->pdo);
+        $productService = $productService->getAllBy($params);
 
         if(isset($productService['error'])){
             return $response::json([
@@ -97,7 +108,8 @@ class ProductController
         $params = [];
         $params['id_product'] = isset($param[0]) ? (int) $param[0] : 1;
 
-        $productService = ProductService::getProductAndVariations($params);
+        $productService = new ProductService($this->pdo);
+        $productService = $productService->getProductAndVariations($params);
 
         if(isset($productService['error'])){
             return $response::json([

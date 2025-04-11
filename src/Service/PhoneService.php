@@ -5,14 +5,20 @@ namespace App\Service;
 use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Phone;
 use Exception;
+use PDO;
 use PDOException;
 
 class PhoneService
 {
-    public static function getAllByIdUser(int $id){
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+    public function getAllByIdUser(int $id){
         try{
 
-            $Phone = new Phone();
+            $Phone = new Phone($this->pdo);
 
             $Phone = $Phone->getAllByIdUser($id);
 

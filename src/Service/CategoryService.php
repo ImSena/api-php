@@ -6,14 +6,22 @@ use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Category;
 use App\Utils\Validator;
 use Exception;
+use PDO;
 use PDOException;
 
 class CategoryService
 {
-    public static function createCategory(array $data)
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    public function createCategory(array $data)
     {
         try {
-            $Category = new Category();
+            $Category = new Category($this->pdo);
 
             $fields = Validator::validate([
                 "name" => $data['name'] ?? '',
@@ -47,10 +55,10 @@ class CategoryService
         }
     }
 
-    public static function getAllParent()
+    public function getAllParent()
     {
         try {
-            $Category = new Category();
+            $Category = new Category($this->pdo);
             $category = $Category->getAllParent();
 
             return $category;
@@ -61,11 +69,11 @@ class CategoryService
         }
     }
 
-    public static function getAllCategories(): array
+    public function getAllCategories(): array
     {
         try {
 
-            $Category = new Category();
+            $Category = new Category($this->pdo);
             $categoryParent = $Category->getAllParent();
             $category = $Category->getAllCategories();
 
@@ -102,10 +110,10 @@ class CategoryService
         }
     }
 
-    public static function update(array $data)
+    public function update(array $data)
     {
         try {
-            $Category = new Category();
+            $Category = new Category($this->pdo);
 
             $fields = Validator::validate([
                 "id_category" => $data['id_category'] ?? '',
@@ -137,10 +145,10 @@ class CategoryService
         }
     }
 
-    public static function delete(array $data)
+    public function delete(array $data)
     {
         try {
-            $Category = new Category();
+            $Category = new Category($this->pdo);
             $fields = Validator::validate([
                 "id_category" => $data['id_category'] ?? ''
             ]);

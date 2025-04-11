@@ -5,8 +5,18 @@ namespace App\Model;
 use App\Model\Database;
 use Pdo;
 
-class Admin extends Database
+class Admin
 {
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    private function getPdo(){
+        return $this->pdo;
+    }
 
     public function create(array $data)
     {

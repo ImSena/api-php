@@ -4,8 +4,19 @@ namespace App\Model;
 
 use PDO;
 
-class Coupon extends Database
+class Coupon
 {
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    private function getPdo(){
+        return $this->pdo;
+    }
+
     public function getCoupon(int $id)
     {
         $pdo = $this->getPdo();

@@ -8,6 +8,7 @@ use App\Model\Stripe\Store;
 use App\Stripe\Keys;
 use App\Utils\Validator;
 use Exception;
+use PDO;
 use PDOException;
 use Stripe\Checkout\Session;
 use Stripe\Customer;
@@ -17,11 +18,20 @@ require_once __DIR__ . '/../../config.php';
 
 class PaymentService
 {
-    public static function payOrder(array $data)
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    public function payOrder(array $data)
     {
         try{
+            $Order = new OrderService($this->pdo);
+            $UserService = new UserService($this->pdo);
+            $addressService = new AddressService($this->pdo);
 
-            $status = OrderService::verifyOrder($data['id_order']);
+            $status = $Order->verifyOrder($data['id_order']);
 
             $status = $status['status'];
 
@@ -32,14 +42,14 @@ class PaymentService
             Stripe::setApiKey(Keys::getSecretKey());
 
             $fields['id_order'] = $data['id_order'];
-            $orderService = OrderService::getById($fields['id_order']);
-            $user = UserService::getById($orderService['content']['id_user']);
+            $orderService = $Order->getById($fields['id_order']);
+            $user = $UserService->getById($orderService['content']['id_user']);
             $user = $user['content'];
             $phone = $user['contact'][0]['number'];
-            $address = AddressService::getById($orderService['content']['id_address']);
+            $address = $addressService->getById($orderService['content']['id_address']);
             $address = $address['content'];
 
-            $storeModel = new Store();
+            $storeModel = new Store($this->pdo);
             $store = $storeModel->findById(1);
 
             $options = [
@@ -119,7 +129,7 @@ class PaymentService
         }
     }
 
-    public static function register(array $data)
+    public function register(array $data)
     {
         try{
 
@@ -134,7 +144,7 @@ class PaymentService
                 'send_email' => $data['send_email']
             ]);
 
-            $Payment = new Payment();
+            $Payment = new Payment($this->pdo);
             $Payment->register($fields);
 
             if(!$Payment){

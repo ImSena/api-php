@@ -2,19 +2,26 @@
 
 namespace App\Controllers\Stripe;
 
+use App\Factory\ConnectionFactory;
 use App\Http\Request;
 use App\Http\Response;
 use App\Service\Stripe\StoreService;
+use PDO;
 
 class StoreController
 {
 
+    private PDO $pdo;
+
+    public function __construct(){
+        $this->pdo = ConnectionFactory::getConnection();
+    }
 
     public function createStore(Request $request, Response $response)
     {
         $data = $request::body();
-
-        $storeService = StoreService::createStore($data);
+        $storeService = new StoreService($this->pdo);
+        $storeService = $storeService->createStore($data);
 
         if (isset($storeService['error'])) {
             return $response::json([
@@ -32,8 +39,8 @@ class StoreController
     public function initiateOnboarding(Request $request, Response $response, $param)
     {
         $storeId = isset($param[0]) ? $param[0] : null;
-
-        $storeService = StoreService::startOnboardingProcess($storeId);
+        $storeService = new StoreService($this->pdo);
+        $storeService = $storeService->startOnboardingProcess($storeId);
 
         if (isset($storeService['error'])) {
             return $response::json([
@@ -53,8 +60,8 @@ class StoreController
     public function login(Request $request, Response $response, $param)
     {
         $storeId = isset($param[0]) ? $param[0] : null;
-
-        $storeService = StoreService::createLogin($storeId);
+        $storeService = new StoreService($this->pdo);
+        $storeService = $storeService->createLogin($storeId);
 
         if (isset($storeService['error'])) {
             return $response::json([

@@ -6,8 +6,19 @@ use App\Model\Database;
 use Exception;
 use Pdo;
 
-class TokenAdmin extends Database
+class TokenAdmin
 {
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    private function getPdo(){
+        return $this->pdo;
+    }
+
     public function create(array $data)
     {
 

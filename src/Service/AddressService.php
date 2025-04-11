@@ -6,14 +6,21 @@ use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Address;
 use App\Utils\Validator;
 use Exception;
+use PDO;
 use PDOException;
 
 class AddressService
 {
-    public static function create(array $data)
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+    public function create(array $data)
     {
         try{
-            $Address = new Address();
+            $Address = new Address($this->pdo);
             $fields = Validator::validate([
                 "id_user" => $data['id_user'] ?? '',
                 "public_area" => $data['public_area'] ?? '',
@@ -47,10 +54,10 @@ class AddressService
         }
     }   
     
-    public static function getAll(int $id)
+    public function getAll(int $id)
     {
         try{
-            $Address = new Address();
+            $Address = new Address($this->pdo);
             $Address = $Address->getAll($id);
 
             if(!$Address){
@@ -74,9 +81,9 @@ class AddressService
         }
     }
 
-    public static function getById(int $id){
+    public function getById(int $id){
         try{
-            $Address = new Address();
+            $Address = new Address($this->pdo);
             $Address = $Address->getById($id);
 
             if(!$Address){

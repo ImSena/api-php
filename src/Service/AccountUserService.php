@@ -9,14 +9,20 @@ use App\Utils\Validator;
 use Exception;
 use PDOException;
 use App\Model\User;
+use PDO;
 
 class AccountUserService
 {
-    public static function resetPassword(array $data)
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+    public function resetPassword(array $data)
     {
         try {
-            $TokenUser = new TokenUser();
-            $User = new User();
+            $TokenUser = new TokenUser($this->pdo);
+            $User = new User($this->pdo);
             $fields = Validator::validate([
                 "token" => $data['token'] ?? '',
                 "password" => $data['password'] ?? ''
@@ -50,12 +56,12 @@ class AccountUserService
         }
     }
 
-    public static function activeAccount(array $data)
+    public function activeAccount(array $data)
     {
         try {
 
-            $TokenUser = new TokenUser();
-            $User = new User();
+            $TokenUser = new TokenUser($this->pdo);
+            $User = new User($this->pdo);
 
             $fields = Validator::validate([
                 'token' => $data['token'] ?? ''

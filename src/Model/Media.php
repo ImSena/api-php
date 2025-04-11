@@ -5,8 +5,18 @@ namespace App\Model;
 use Exception;
 use PDO;
 
-class Media extends Database
+class Media
 {
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    private function getPdo(){
+        return $this->pdo;
+    }
 
     //para poder usar no service para begintransaction
     // public function getConnectionDatabase()
@@ -120,7 +130,7 @@ class Media extends Database
     }
     private function setFolderTrashStatus(int $id_folder, bool $is_trash): bool
     {
-        $pdo = $this->getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "UPDATE folders SET is_trash = :is_trash WHERE id_folder = :id_folder";
         $stmt = $pdo->prepare($sql);
@@ -315,7 +325,7 @@ class Media extends Database
 
     public function getPathToFolder(int $id_folder, bool $old = true, bool $delete = false): string
     {
-        $pdo = $this->getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT parent_id, folder_name FROM folders WHERE id_folder = :id_folder";
 

@@ -2,19 +2,27 @@
 
 namespace App\Controllers;
 
+use App\Factory\ConnectionFactory;
 use App\Http\Request;
 use App\Http\Response;
 use App\Service\OrderService;
+use PDO;
 
-class OrderController{
+class OrderController
+{
 
+    private PDO $pdo;
 
+    public function __construct(){
+        $this->pdo = ConnectionFactory::getConnection();
+    }
     public function create(Request $request, Response $response)
     {
         $body = $request::body();
         $body['id_user'] = $request::getUserId();
     
-        $orderService = OrderService::create($body);
+        $orderService = new OrderService($this->pdo);
+        $orderService = $orderService->create($body);
 
         if(isset($orderService['error'])){
             return $response::json([
@@ -46,7 +54,8 @@ class OrderController{
         $data['rule'] = $request::getRule();
         $data['params'] = $params;
 
-        $orderService = OrderService::getAll($data);
+        $orderService = new OrderService($this->pdo);
+        $orderService = $orderService->getAll($data);
 
         if(isset($orderService['error'])){
             return $response::json([
@@ -67,7 +76,8 @@ class OrderController{
     {
         $id = intval($id[0]);
 
-        $orderService = OrderService::getById($id);
+        $orderService = new OrderService($this->pdo);
+        $orderService = $orderService->getById($id);
 
         if(isset($orderService['error'])){
             return $response::json([

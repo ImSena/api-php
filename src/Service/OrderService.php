@@ -8,15 +8,23 @@ use App\Model\Product;
 use App\Utils\Pagination;
 use App\Utils\Validator;
 use Exception;
+use PDO;
 use PDOException;
 
 class OrderService
 {
-    public static function create(array $data)
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    public function create(array $data)
     {
         try {
 
-            $Order = new Order();
+            $Order = new Order($this->pdo);
 
             $fields = Validator::validate([
                 "id_address" => $data['id_address'] ?? '',
@@ -41,12 +49,14 @@ class OrderService
             return ['error' => $e->getMessage()];
         }
     }
-    public static function getAll(array $data)
+    public function getAll(array $data)
     {
         try {
 
-            $Order = new Order();
-            $Product = new Product();
+            $Order = new Order($this->pdo);
+            $Product = new Product($this->pdo);
+            $AddressService = new AddressService($this->pdo);
+            $UserService = new UserService($this->pdo);
             $statusOrder = [
                 'PENDING',
                 'PROCESSING',
@@ -91,7 +101,7 @@ class OrderService
             foreach($OrderResult as &$item){
                 $productItem = $Order->getOrderIdProductItems($item['id_order']);
                 
-                $address = AddressService::getById($item['id_address']);
+                $address = $AddressService->getById($item['id_address']);
                 unset($address['content']['id_user']);
                 $item['address_shipped'] = $address['content']; 
                 unset($item['id_address']);
@@ -101,7 +111,7 @@ class OrderService
                 }   
                 
                 if($data['rule'] == 'admin'){
-                    $User = UserService::getById(1);
+                    $User = $UserService->getById(1);
                     $item['user'] = $User['content'];
                 }
 
@@ -126,12 +136,12 @@ class OrderService
             return ['error' => $e->getMessage()];
         }
     }
-    public static function getById(int $id)
+    public function getById(int $id)
     {
         try {
-            $Order = new Order();
+            $Order = new Order($this->pdo);
             $OrderResult = $Order->getById($id);
-            $Product = new Product();
+            $Product = new Product($this->pdo);
 
             if (!$OrderResult) {
                 throw new Exception("Não foi possível buscar pedido");
@@ -163,7 +173,7 @@ class OrderService
             return ['error' => $e->getMessage()];
         }
     }
-    public static function changeStatus(string $status, int $id_order)
+    public function changeStatus(string $status, int $id_order)
     {
         try{
 
@@ -181,7 +191,7 @@ class OrderService
                 throw new Exception("Status inválido: $status");
             }
 
-            $Order = new Order();
+            $Order = new Order($this->pdo);
 
             $result = $Order->changeStatus($status, $id_order);
 
@@ -196,11 +206,11 @@ class OrderService
             return ['error' => $e->getMessage()];
         }
     }
-    public static function verifyOrder(int $id)
+    public function verifyOrder(int $id)
     {
         try{
             
-            $Order = new Order();
+            $Order = new Order($this->pdo);
 
             $result = $Order->verifyStatus($id);
 

@@ -10,14 +10,20 @@ use App\Utils\Validator;
 use Exception;
 use App\Model\User;
 use DateTime;
+use PDO;
 use PDOException;
 
 class UserService{
 
-    public static function create(array $data)
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+    public function create(array $data)
     {
         try{
-            $User = new User();
+            $User = new User($this->pdo);
 
             $fields = Validator::validate([
                 "type" => $data['type'] ?? '',
@@ -81,9 +87,9 @@ class UserService{
         }
     }
 
-    private static function isUserExists(array $user){
+    private function isUserExists(array $user){
         try{
-            $User = new User();
+            $User = new User($this->pdo);
 
             $fields = [];
 
@@ -118,11 +124,11 @@ class UserService{
         }
     }
 
-    public static function login(array $data)
+    public function login(array $data)
     {
         try{
 
-            $User = new User();
+            $User = new User($this->pdo);
 
             $fields = Validator::validate([
                 "login" => $data['login'] ?? '',
@@ -159,7 +165,7 @@ class UserService{
 
             if($firstAccess){
                 return [
-                    "message" => self::activeAccountLink($fields, true),
+                    "message" => $this->activeAccountLink($fields, true),
                     "firstAccess" => true
                 ];
             }else{
@@ -180,12 +186,12 @@ class UserService{
         }
     }
 
-    public static function activeAccountLink(array $data, bool $sendEmail = false)
+    public function activeAccountLink(array $data, bool $sendEmail = false)
     {
         try {
 
-            $User = new User();
-            $TokenUser = new TokenUser();
+            $User = new User($this->pdo);
+            $TokenUser = new TokenUser($this->pdo);
 
             $fields = Validator::validate([
                 "login" => $data['login'] ?? '',
@@ -252,12 +258,12 @@ class UserService{
         }
     }
 
-    public static function forgetPassword(array $data)
+    public function forgetPassword(array $data)
     {
 
         try {
-            $User = new User();
-            $TokenUser = new TokenUser();
+            $User = new User($this->pdo);
+            $TokenUser = new TokenUser($this->pdo);
 
             $fields = Validator::validate([
                 "login" => $data['login'] ?? ''
@@ -307,10 +313,10 @@ class UserService{
         }
     }
 
-    public static function getAllUsers($id)
+    public function getAllUsers($id)
     {
         try {
-            $User = new User();
+            $User = new User($this->pdo);
 
             $user = $User->selectAll($id);
     
@@ -347,16 +353,17 @@ class UserService{
         }
     }
 
-    public static function getById(int $id){
+    public function getById(int $id){
         try{
-            $user = new User();
+            $user = new User($this->pdo);
+            $PhoneService = new PhoneService($this->pdo);
             $User = $user->getById($id);
 
             if(!$User){
                 throw new Exception("Não foi possível resgatar usuário");
             }
 
-            $phoneService = PhoneService::getAllByIdUser($id);
+            $phoneService = $PhoneService->getAllByIdUser($id);
 
             if($User['person_type'] == "Física"){
                 unset($User['cnpj']);

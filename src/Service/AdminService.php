@@ -10,14 +10,21 @@ use App\Utils\SendEmail;
 use App\Utils\Validator;
 use DateTime;
 use Exception;
+use PDO;
 use PDOException;
 
 class AdminService
 {
-    public static function create(array $data, bool $isSuper)
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+    public function create(array $data, bool $isSuper)
     {
         try {
-            $Admin = new Admin();
+            $Admin = new Admin($this->pdo);
 
             $fields = Validator::validate([
                 "name" => $data['name'] ?? '',
@@ -47,11 +54,11 @@ class AdminService
         }
     }
 
-    public static function login(array $data)
+    public function login(array $data)
     {
         try {
 
-            $Admin = new Admin();
+            $Admin = new Admin($this->pdo);
 
             $fields = Validator::validate([
                 "email" => $data['email'] ?? '',
@@ -95,11 +102,11 @@ class AdminService
         }
     }
 
-    public static function activeAccountLink(array $data, bool $sendEmail = false)
+    public function activeAccountLink(array $data, bool $sendEmail = false)
     {
         try {
-            $Admin = new Admin();
-            $TokenAdmin = new TokenAdmin();
+            $Admin = new Admin($this->pdo);
+            $TokenAdmin = new TokenAdmin($this->pdo);
             $fields = Validator::validate([
                 "email" => $data['email'] ?? '',
             ]);
@@ -165,12 +172,12 @@ class AdminService
         }
     }
 
-    public static function forgetPassword(array $data)
+    public function forgetPassword(array $data)
     {
 
         try {
-            $Admin = new Admin();
-            $TokenAdmin = new TokenAdmin();
+            $Admin = new Admin($this->pdo);
+            $TokenAdmin = new TokenAdmin($this->pdo);
             
             $fields = Validator::validate([
                 "email" => $data['email'] ?? ''
@@ -221,7 +228,7 @@ class AdminService
         }
     }
 
-    public static function getInfoAdmin($permission = 'SUPER'){
+    public function getInfoAdmin($permission = 'SUPER'){
         
         try{
             $permissions = [
@@ -234,7 +241,7 @@ class AdminService
                 throw new Exception("Permissão inexistente");
             }
 
-            $Admin = new Admin();
+            $Admin = new Admin($this->pdo);
             $result = $Admin->getInfoAdmin($permission);
 
             return $result;

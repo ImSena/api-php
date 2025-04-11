@@ -4,8 +4,19 @@ namespace App\Model;
 use App\Model\Database;
 use PDO;
 
-class Category extends Database
+class Category
 {
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+
+    private function getPdo(){
+        return $this->pdo;
+    }
+
     public function create(array $data)
     {
         $pdo = $this->getPdo();
