@@ -2,21 +2,13 @@
 
 namespace App\Model;
 
+use App\Model\Base\BaseModel;
 use App\Model\Database;
 use Exception;
 use Pdo;
 
-class TokenUser
+class TokenUser extends BaseModel
 {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
-    private function getPdo(){
-        return $this->pdo;
-    }
     public function create(array $data)
     {
 

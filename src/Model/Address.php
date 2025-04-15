@@ -2,23 +2,13 @@
 
 namespace App\Model;
 
+use App\Model\Base\BaseModel;
 use Exception;
 use PDO;
 use PDOException;
 
-class Address
+class Address extends BaseModel
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
-    private function getPdo(){
-        return $this->pdo;
-    }
-
     public function create($data)
     {
         $pdo = $this->getPdo();

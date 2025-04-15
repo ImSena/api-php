@@ -2,22 +2,12 @@
 
 namespace App\Model;
 
+use App\Model\Base\BaseModel;
 use App\Model\Database;
 use Pdo;
 
-class Admin
+class Admin extends BaseModel
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
-    private function getPdo(){
-        return $this->pdo;
-    }
-
     public function create(array $data)
     {
         $pdo = $this->getPdo();

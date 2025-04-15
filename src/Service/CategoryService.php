@@ -166,4 +166,22 @@ class CategoryService
             return ['error' => $e->getMessage()];
         }
     }
+
+    public function getCategory(int $id){
+        try{
+
+            $Category = new Category($this->pdo);
+            $result = $Category->getCategory($id);
+
+            if(!$result){
+                throw new Exception("Não foi possível resgatar categoria");
+            }
+
+            return $result;
+        }catch(PDOException $e){
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        }catch(Exception $e){
+            return ['error' => $e->getMessage()];
+        }
+    }
 }

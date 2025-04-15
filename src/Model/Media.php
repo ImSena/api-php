@@ -2,21 +2,12 @@
 
 namespace App\Model;
 
+use App\Model\Base\BaseModel;
 use Exception;
 use PDO;
 
-class Media
+class Media extends BaseModel
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
-    private function getPdo(){
-        return $this->pdo;
-    }
 
     //para poder usar no service para begintransaction
     // public function getConnectionDatabase()

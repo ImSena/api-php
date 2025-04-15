@@ -2,21 +2,11 @@
 
 namespace App\Model;
 
+use App\Model\Base\BaseModel;
 use PDO;
 
-class Payment
-{
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
-    private function getPdo(){
-        return $this->pdo;
-    }
-    
+class Payment extends BaseModel
+{    
     public function register(array $data)
     {
         $pdo = $this->getPdo();

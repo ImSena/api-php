@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Media;
 use App\Model\Product;
+use App\Model\ProductCategory;
 use App\Utils\Pagination;
 use App\Utils\Validator;
 use Exception;
@@ -54,6 +55,8 @@ class ProductService
             $Products = $Product->getAll($page);
             $Media = new Media($this->pdo);
             $MediaService = new MediaService($this->pdo);
+            $ProductCategories = new ProductCategory($this->pdo);
+            $Category = new CategoryService($this->pdo);
 
             if (!$Products) {
                 throw new Exception("Não foi encontrado nenhum produto.");
@@ -68,11 +71,17 @@ class ProductService
             $result = [];
             foreach ($Products as $product) {
                 $id_product = $product['id_product'];
+                $id_category = $ProductCategories->getCategory($id_product);
+                $id_category = $id_category['id_category'];
+                $name_category = $Category->getCategory($id_category);
+                $name_category = $name_category['name'];
+
                 if (!isset($result[$id_product])) {
                     $result[$id_product] = [
                         'id_product' => $product['id_product'],
                         'brand' => $product['brand_name'],
                         'name' => $product['name'],
+                        'category' => $name_category,
                         'variations' => []
                     ];
                 }
@@ -116,9 +125,6 @@ class ProductService
             $Media = new Media($this->pdo);
             $Products = $Product->getAllCategory($params);
             $MediaService = new MediaService($this->pdo);
-
-            
-            // var_dump($Products);exit;
 
             if (!$Products) {
                 throw new Exception("Não há produtos cadastrados nessa categoria");

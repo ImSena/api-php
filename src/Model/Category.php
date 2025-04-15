@@ -1,22 +1,12 @@
 <?php
 
 namespace App\Model;
+use App\Model\Base\BaseModel;
 use App\Model\Database;
 use PDO;
 
-class Category
+class Category extends BaseModel
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
-    private function getPdo(){
-        return $this->pdo;
-    }
-
     public function create(array $data)
     {
         $pdo = $this->getPdo();
@@ -95,5 +85,15 @@ class Category
         $stmt->execute();
 
         return $stmt->rowCount() > 0;
+    }
+
+    public function getCategory(int $id){
+        $pdo = $this->getPdo();
+        $sql = "SELECT id_category, name FROM categories WHERE id_category = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch();
     }
 }

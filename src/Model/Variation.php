@@ -2,21 +2,11 @@
 
 namespace App\Model;
 
+use App\Model\Base\BaseModel;
 use PDO;
 
-class Variation
+class Variation extends BaseModel
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
-    private function getPdo(){
-        return $this->pdo;
-    }
-
     public function createVariation(array $data):bool
     {
         $pdo = $this->getPdo();

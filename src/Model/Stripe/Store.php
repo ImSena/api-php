@@ -2,19 +2,11 @@
 
 namespace App\Model\Stripe;
 
+use App\Model\Base\BaseModel;
 use PDO;
 
-class Store{
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
-    private function getPdo(){
-        return $this->pdo;
-    }
+class Store extends BaseModel
+{
 
     public function createStore(array $data){
         $pdo = $this->getPdo();

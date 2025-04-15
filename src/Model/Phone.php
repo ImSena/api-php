@@ -2,19 +2,11 @@
 
 namespace App\Model;
 
+use App\Model\Base\BaseModel;
 use PDO;
 
-class Phone
+class Phone extends BaseModel
 {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
-    private function getPdo(){
-        return $this->pdo;
-    }
     public function getAllByIdUser(int $id){
         $pdo = $this->getPdo();
 

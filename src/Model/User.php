@@ -2,22 +2,13 @@
 
 namespace App\Model;
 
+use App\Model\Base\BaseModel;
 use App\Model\Database;
 use Exception;
 use PDO;
 
-class User
+class User extends BaseModel
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
-    private function getPdo(){
-        return $this->pdo;
-    }
     public function create(array $data)
     {
         $pdo = $this->getPdo();
@@ -91,7 +82,6 @@ class User
             return ['error' => $e->getMessage()];
         }
     }
-
     public function registerAddress(array $data, int $user_id, ?PDO $pdo = null)
     {
         $pdo = $pdo ?? $this->getPdo();
@@ -105,7 +95,7 @@ class User
         $stmt->bindParam(":number", $data['number'], PDO::PARAM_STR);
         $stmt->bindParam(":complement", $data['complement'], PDO::PARAM_STR);
         $stmt->bindParam(":district", $data['district'], PDO::PARAM_STR);
-        $stmt->bindParam(":city", $data['district'], PDO::PARAM_STR);
+        $stmt->bindParam(":city", $data['city'], PDO::PARAM_STR);
         $stmt->bindParam(":state", $data['state'], PDO::PARAM_STR);
         $stmt->bindParam(":zip_code", $data['zip_code'], PDO::PARAM_STR);
 
