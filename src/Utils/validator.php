@@ -11,28 +11,50 @@ class Validator
     {
         $errors = [];
 
+        foreach ($fields as $field => &$value) {
+            if (is_string($value)) {
+                $value = trim($value);
+            }
+        }
+        unset($value);
+
         foreach ($fields as $field => $value) {
-            if (is_string($value) && trim($value) === "") {
+            if (is_string($value) && $value === "") {
                 $errors[] = $field;
             }
         }
 
         if (!empty($errors)) {
-
             $qtdErrors = count($errors);
-
-            if ($qtdErrors > 1) {
-                $message = "Os campos [" . implode(", ", $errors) . "] são obrigatórios";
-            } else {
-                $message = "O campo [" . implode(", ", $errors) . "] é obrigatório";
-            }
+            $message = ($qtdErrors > 1)
+                ? "Os campos [" . implode(", ", $errors) . "] são obrigatórios"
+                : "O campo [" . implode(", ", $errors) . "] é obrigatório";
 
             throw new Exception($message);
         }
 
+        return $fields;
+    }
+
+    public static function validatePermission(array $fields)
+    {
+        $errors = [];
+
+        foreach ($fields as $field => $value) {
+            if (empty(trim($value))) {
+                $errors[] = $field;
+            }
+        }
+
+        if (!empty($errors)) {
+            $message = "As permissões devem ser passadas";
+
+            throw new Exception($message);
+        }
 
         return $fields;
     }
+
 
     public static function validateEmail(string $email): string
     {

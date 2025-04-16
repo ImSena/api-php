@@ -32,6 +32,10 @@ class AuthAdmin
             return $this->denyAccess($response, 'Admin precisa estar ativo!', 401);
         }
 
+
+        $request::setUserId($data['id_user']);
+        $request::setRule($data['rule']);
+
         return true;
     }
 

@@ -2,34 +2,35 @@
 
 namespace App\Model;
 
+use App\Model\Base\BaseModel;
 use App\Model\Database;
 use Exception;
 use PDO;
 
-class User extends Database
+class User extends BaseModel
 {
-    public static function create(array $data)
+    public function create(array $data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
         $pdo->beginTransaction();
 
-        try{
+        try {
             $person_type = $data['type'];
             $person = $data['person'];
             $address = $data['address'];
             $phone = $data['phone'];
 
-            $sql = $person_type == "LEGAL" 
-                ? "INSERT INTO LEGAL_PEOPLE (cnpj, corporate_name, trade_name, state_registration) VALUES (:cnpj, :corporate_name, :trade_name, :state_registration)"
-                : "INSERT INTO NATURAL_PEOPLE (cpf, dt_birth, gender) VALUES(:cpf, :dt_birth, :gender)";
-               
-            $stmt = $pdo->prepare($sql);    
-            if($person_type == 'LEGAL'){
+            $sql = $person_type == "LEGAL"
+                ? "INSERT INTO legal_people (cnpj, corporate_name, trade_name, state_registration) VALUES (:cnpj, :corporate_name, :trade_name, :state_registration)"
+                : "INSERT INTO natural_people (cpf, dt_birth, gender) VALUES(:cpf, :dt_birth, :gender)";
+
+            $stmt = $pdo->prepare($sql);
+            if ($person_type == 'LEGAL') {
                 $stmt->bindParam(":cnpj", $person['cnpj'], PDO::PARAM_STR);
                 $stmt->bindParam(":corporate_name", $person['corporate_name'], PDO::PARAM_STR);
                 $stmt->bindParam(":trade_name", $person['trade_name'], PDO::PARAM_STR);
                 $stmt->bindParam(":state_registration", $person['state_registration'], PDO::PARAM_STR);
-            }else{
+            } else {
                 $stmt->bindParam(":cpf", $person['cpf'], PDO::PARAM_STR);
                 $stmt->bindParam(":dt_birth", $person['dt_birth'], PDO::PARAM_STR);
                 $stmt->bindParam(":gender", $person['gender'], PDO::PARAM_STR);
@@ -39,13 +40,13 @@ class User extends Database
 
             $person_id = $pdo->lastInsertId();
 
-            if(!$person_id){
+            if (!$person_id) {
                 throw new Exception("Não foi possível criar a conta pois não foi possível cadastrar pessoa. Tente novamente mais tarde");
             }
 
             $sql = $person_type == 'LEGAL'
-            ? "INSERT INTO USERS (username, email, password, id_legal_person) VALUES (:username, :email, :password, :id_person)"
-            : "INSERT INTO USERS (username, email, password, id_natural_person) VALUES (:username, :email, :password, :id_person)";
+                ? "INSERT INTO users (username, email, password, id_legal_person) VALUES (:username, :email, :password, :id_person)"
+                : "INSERT INTO users (username, email, password, id_natural_person) VALUES (:username, :email, :password, :id_person)";
 
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(":username", $data['username'], PDO::PARAM_STR);
@@ -57,36 +58,35 @@ class User extends Database
 
             $user_id = $pdo->lastInsertId();
 
-            if(!$user_id){
+            if (!$user_id) {
                 throw new Exception("Não foi possível criar a conta pois não foi possível cadastrar usuário. Tente novamente mais tarde");
             }
 
-            $address = self::registerAddress($address, $user_id, $pdo);
+            $address = $this->registerAddress($address, $user_id, $pdo);
 
-            if(!$address){
+            if (!$address) {
                 throw new Exception("Não foi possível criar uma conta, pois o endereço está com erro. Tente novamente mais tarde");
             }
 
-            $phone = self::registerPhone($phone, $user_id, $pdo);
+            $phone = $this->registerPhone($phone, $user_id, $pdo);
 
-            if(!$phone){
+            if (!$phone) {
                 throw new Exception("Não foi possível criar a conta, pois telefone está com erro. Tente novamente mais tarde.");
             }
 
             $pdo->commit();
 
             return $user_id;
-        }catch(Exception $e){
+        } catch (Exception $e) {
             $pdo->rollBack();
             return ['error' => $e->getMessage()];
         }
     }
-
-    public static function registerAddress(array $data, int $user_id, ?PDO $pdo = null)
+    public function registerAddress(array $data, int $user_id, ?PDO $pdo = null)
     {
-        $pdo = $pdo ?? self::getConnection();
+        $pdo = $pdo ?? $this->getPdo();
 
-        $sql = "INSERT INTO ADDRESSES (id_user, public_area, number, complement, district, city, state, zip_code) VALUES (:id_user, :public_area, :number, :complement,:district, :city, :state, :zip_code)";
+        $sql = "INSERT INTO addresses (id_user, public_area, number, complement, district, city, state, zip_code) VALUES (:id_user, :public_area, :number, :complement,:district, :city, :state, :zip_code)";
 
         $stmt = $pdo->prepare($sql);
 
@@ -95,21 +95,20 @@ class User extends Database
         $stmt->bindParam(":number", $data['number'], PDO::PARAM_STR);
         $stmt->bindParam(":complement", $data['complement'], PDO::PARAM_STR);
         $stmt->bindParam(":district", $data['district'], PDO::PARAM_STR);
-        $stmt->bindParam(":city", $data['district'], PDO::PARAM_STR);
+        $stmt->bindParam(":city", $data['city'], PDO::PARAM_STR);
         $stmt->bindParam(":state", $data['state'], PDO::PARAM_STR);
         $stmt->bindParam(":zip_code", $data['zip_code'], PDO::PARAM_STR);
 
         $stmt->execute();
 
         return $stmt->rowCount() > 0;
-    
     }
 
-    public static function registerPhone(array $data, int $user_id, ?PDO $pdo = null)
-    {   
-        $pdo = $pdo ?? self::getConnection();
+    public function registerPhone(array $data, int $user_id, ?PDO $pdo = null)
+    {
+        $pdo = $pdo ?? $this->getPdo();
 
-        $sql = "INSERT INTO PHONES (id_user, type, number) VALUES (:id_user, :type, :number)";
+        $sql = "INSERT INTO phones (id_user, type, number) VALUES (:id_user, :type, :number)";
 
         $stmt = $pdo->prepare($sql);
 
@@ -122,9 +121,9 @@ class User extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function select(array $data)
+    public function select(array $data)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
         $sql = "SELECT 
                 u.*, 
@@ -146,10 +145,10 @@ class User extends Database
         return $stmt->fetch();
     }
 
-    public static function updateAccess($data, $id)
+    public function updateAccess($data, $id)
     {
-        $pdo = self::getConnection();
-        $sql = "UPDATE USERS SET password = :password WHERE id_user = :id";
+        $pdo = $this->getPdo();
+        $sql = "UPDATE users SET password = :password WHERE id_user = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":password", $data['password'], PDO::PARAM_STR);
@@ -160,11 +159,11 @@ class User extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function activeUser($status, $id)
+    public function activeUser($status, $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
-        $sql = "UPDATE USERS SET status = :status WHERE id_user = :id";
+        $sql = "UPDATE users SET status = :status WHERE id_user = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":status", $status, PDO::PARAM_STR);
@@ -175,4 +174,111 @@ class User extends Database
         return $stmt->rowCount() > 0;
     }
 
+    public function selectAll($page)
+    {
+
+        $limit = 25;
+        $page = isset($page) ? (int) $page : 1;
+        $offset = ($page - 1) * $limit;
+
+        $pdo = $this->getPdo();
+
+        $sql = "SELECT 
+                u.username,
+                u.email, 
+                u.created_at,
+                u.status,
+                GROUP_CONCAT(DISTINCT CONCAT(p.type, ': ', p.number) SEPARATOR ' | ') AS phones,
+                GROUP_CONCAT(DISTINCT CONCAT(a.public_area, ', ', a.number, ' - ', a.city, ' - ', a.state) SEPARATOR ' | ') AS addresses,
+                CASE 
+                    WHEN np.id_natural_person IS NOT NULL THEN 'Física' 
+                    WHEN lp.id_legal_person IS NOT NULL THEN 'Jurídica' 
+                    ELSE NULL 
+                END AS person_type,
+                np.dt_birth,
+                np.gender,
+                lp.corporate_name,
+                lp.trade_name
+            FROM ecommerce.users u
+            LEFT JOIN ecommerce.natural_people np ON u.id_natural_person = np.id_natural_person
+            LEFT JOIN ecommerce.legal_people lp ON u.id_legal_person = lp.id_legal_person
+            LEFT JOIN ecommerce.phones p ON u.id_user = p.id_user
+            LEFT JOIN ecommerce.addresses a ON u.id_user = a.id_user
+            GROUP BY u.id_user
+            ORDER BY u.created_at DESC
+            LIMIT :limit OFFSET :offset;
+            ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
+        $stmt->bindParam(":offset", $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    public function getTotalUsers()
+    {
+        $pdo = $this->getPdo();
+
+        $sql = "SELECT COUNT(id_user) AS total FROM users";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
+    public function getById(int $id)
+    {
+        $pdo = $this->getPdo();
+
+        $sql = "SELECT 
+                u.id_user,
+                u.username,
+                u.email,
+                CASE
+                    WHEN np.id_natural_person IS NOT NULL THEN 'Física' 
+                    WHEN lp.id_legal_person IS NOT NULL THEN 'Jurídica' 
+                    ELSE NULL 
+                END AS person_type,
+                CASE
+                    WHEN np.id_natural_person IS NOT NULL THEN np.cpf
+                    ELSE NULL
+                END AS cpf,
+                CASE
+                    WHEN np.id_natural_person IS NOT NULL THEN np.dt_birth
+                    ELSE NULL
+                END AS dt_birth,
+                CASE
+                    WHEN np.id_natural_person IS NOT NULL THEN np.gender
+                    ELSE NULL
+                END AS gender,
+                CASE
+                    WHEN lp.id_legal_person IS NOT NULL THEN lp.cnpj
+                    ELSE NULL
+                END AS cnpj,
+                CASE
+                    WHEN lp.id_legal_person IS NOT NULL THEN lp.corporate_name
+                    ELSE NULL
+                END AS corporate_name,
+                CASE
+                    WHEN lp.id_legal_person IS NOT NULL THEN lp.trade_name
+                    ELSE NULL
+                END AS trade_name,
+                CASE
+                    WHEN lp.id_legal_person IS NOT NULL THEN lp.state_registration
+                    ELSE NULL
+                END AS state_registration
+            FROM users u
+            LEFT JOIN ecommerce.natural_people np ON u.id_natural_person = np.id_natural_person
+            LEFT JOIN ecommerce.legal_people lp ON u.id_legal_person = lp.id_legal_person
+            WHERE u.id_user = :id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+    
+        return  $stmt->fetch();
+    }
 }

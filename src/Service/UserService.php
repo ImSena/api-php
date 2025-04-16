@@ -4,19 +4,27 @@ namespace App\Service;
 
 use App\Helpers\DatabaseErrorHelpers;
 use App\Jwt\JwtAuth;
-use App\Model\Token_user;
+use App\Model\TokenUser;
 use App\Utils\SendEmail;
 use App\Utils\Validator;
 use Exception;
 use App\Model\User;
 use DateTime;
+use PDO;
 use PDOException;
 
 class UserService{
 
-    public static function create(array $data)
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+    public function create(array $data)
     {
         try{
+            $User = new User($this->pdo);
+
             $fields = Validator::validate([
                 "type" => $data['type'] ?? '',
                 "username" => $data['username'] ?? '',
@@ -46,12 +54,15 @@ class UserService{
             $fields['address'] = Validator::validateAddress([
                 "public_area" => $address['public_area'] ?? '',
                 "number" => $address['number'] ?? '',
-                "complement" => $address['complement'] ?? '',
                 "district" => $address['district'] ?? '',
                 "city" => $address['city'] ?? '',
                 "state" => $address['state'] ?? '',
                 "zip_code" => $address['zip_code'] ?? ''
             ]);
+
+            if(isset($data['address']['complement'])){
+                $fields["complement"] = $address['complement'];
+            }
 
             $phone = $data['phone'];
 
@@ -62,7 +73,7 @@ class UserService{
 
             self::isUserExists($fields);
 
-            $user = User::create($fields);
+            $user = $User->create($fields);
 
             if(!$user){
                 throw new Exception("Não foi possível criar a conta. Tente novamente mais tarde");
@@ -76,14 +87,15 @@ class UserService{
         }
     }
 
-    private static function isUserExists(array $user){
+    private function isUserExists(array $user){
         try{
+            $User = new User($this->pdo);
 
             $fields = [];
 
             $fields['login'] = $user['email'];
 
-            $userModel = User::select($fields);
+            $userModel = $User->select($fields);
 
             if($userModel){
                 throw new Exception("Usuário já cadastrado! Realize seu login");
@@ -100,7 +112,7 @@ class UserService{
                     throw new Exception("Não foi possível criar a conta, pois verificação de conta falhou. Tente novamente mais tarde");
             }
 
-            $userModel = User::select($fields);
+            $userModel = $User->select($fields);
 
             if($userModel){
                 throw new Exception("Usuário já cadastrado! Realize seu login");
@@ -112,9 +124,11 @@ class UserService{
         }
     }
 
-    public static function login(array $data)
+    public function login(array $data)
     {
         try{
+
+            $User = new User($this->pdo);
 
             $fields = Validator::validate([
                 "login" => $data['login'] ?? '',
@@ -135,7 +149,7 @@ class UserService{
                 break;
             }
 
-            $user = User::select($fields);
+            $user = $User->select($fields);
 
             if(!$user)
             {
@@ -151,7 +165,7 @@ class UserService{
 
             if($firstAccess){
                 return [
-                    "message" => self::activeAccountLink($fields, true),
+                    "message" => $this->activeAccountLink($fields, true),
                     "firstAccess" => true
                 ];
             }else{
@@ -172,15 +186,18 @@ class UserService{
         }
     }
 
-    public static function activeAccountLink(array $data, bool $sendEmail = false)
+    public function activeAccountLink(array $data, bool $sendEmail = false)
     {
         try {
+
+            $User = new User($this->pdo);
+            $TokenUser = new TokenUser($this->pdo);
 
             $fields = Validator::validate([
                 "login" => $data['login'] ?? '',
             ]);
 
-            $user = User::select($fields);
+            $user = $User->select($fields);
 
             if (!$user) {
                 throw new Exception("Usuário não encontrado!");
@@ -191,7 +208,7 @@ class UserService{
             }
 
             if ($sendEmail) {
-                $tokenStatus = Token_user::selectLastToken($user);
+                $tokenStatus = $TokenUser->selectLastToken($user);
 
                 if ($tokenStatus) {
                     $dateCreated = new DateTime($tokenStatus['created_at']);
@@ -214,9 +231,9 @@ class UserService{
                 'type' => 'ACTIVE'
             ];
 
-            $token_user = Token_user::inactiveAll($user['id_user'], $fields['type']);
+            $token_user = $TokenUser->inactiveAll($user['id_user'], $fields['type']);
 
-            $token_user = Token_user::create($fields);
+            $token_user = $TokenUser->create($fields);
 
             if (!$token_user) {
                 throw new Exception("Não foi possível gerar link de ativação de conta");
@@ -241,10 +258,13 @@ class UserService{
         }
     }
 
-    public static function forgetPassword(array $data)
+    public function forgetPassword(array $data)
     {
 
         try {
+            $User = new User($this->pdo);
+            $TokenUser = new TokenUser($this->pdo);
+
             $fields = Validator::validate([
                 "login" => $data['login'] ?? ''
             ]);
@@ -252,7 +272,7 @@ class UserService{
             $fields['email'] = Validator::validateEmail($fields['login']);
             $fields['type'] = "FORGET";
 
-            $user = User::select($fields);
+            $user = $User->select($fields);
 
             if (!$user) {
                 throw new Exception("Usuário não encontrado.");
@@ -271,9 +291,9 @@ class UserService{
 
             $fields['token'] = $token;
 
-            Token_user::inactiveAll($fields['id_user'], $fields['type']);
+            $TokenUser->inactiveAll($fields['id_user'], $fields['type']);
 
-            $token = Token_user::create($fields);
+            $token = $TokenUser->create($fields);
 
             if (!$token) {
                 throw new Exception("Não foi possível gerar o link. Tente novamente mais tarde");
@@ -290,6 +310,90 @@ class UserService{
             return ['error' => DatabaseErrorHelpers::error($e)];
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function getAllUsers($id)
+    {
+        try {
+            $User = new User($this->pdo);
+
+            $user = $User->selectAll($id);
+    
+            if (!$user) {
+                throw new Exception("Usuários não encontrados.");
+            }
+    
+            foreach ($user as $key => &$value) {
+                if ($value['person_type'] === 'Física') {
+                    unset($value['corporate_name']);
+                    unset($value['trade_name']);
+                } else {
+                    unset($value['dt_birth']);
+                    unset($value['gender']);
+                }
+            }
+
+            $totalUser = $User->getTotalUsers();
+
+            if(!$totalUser){
+                throw new Exception("Valor total não resgatado");
+            }
+
+            $pages = [
+                "limit" => 25,
+                "total" => $totalUser['total']
+            ];
+    
+            return ['message'=> "Users resgatados", "content" => $user, "pages"=>$pages];
+        } catch (PDOException $e) {
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function getById(int $id){
+        try{
+            $user = new User($this->pdo);
+            $PhoneService = new PhoneService($this->pdo);
+            $User = $user->getById($id);
+
+            if(!$User){
+                throw new Exception("Não foi possível resgatar usuário");
+            }
+
+            $phoneService = $PhoneService->getAllByIdUser($id);
+
+            if($User['person_type'] == "Física"){
+                unset($User['cnpj']);
+                unset($User['corporate_name']);
+                unset($User['trade_name']);
+                unset($User['state_registration']);
+            }else{
+                unset($User['cpf']);
+                unset($User['dt_birth']);
+                unset($User['gender']);
+            }
+
+            foreach($phoneService['content'] as $phone){
+                unset($phone['id_user']);
+                $User['contact'][] = $phone;
+            }
+
+            return [
+                "message" => "Usuário resgatado com sucesso",
+                "content" => $User
+            ];
+        }catch(PDOException $e){
+            return[
+                'error' => DatabaseErrorHelpers::error($e)
+            ];
+        }
+        catch(Exception $e){
+            return [
+                'error' => $e->getMessage()
+            ];
         }
     }
 }

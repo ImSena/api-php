@@ -2,17 +2,25 @@
 
 namespace App\Controllers;
 
+use App\Factory\ConnectionFactory;
 use App\Http\Request;
 use App\Http\Response;
 use App\Service\MediaService;
+use PDO;
 
 class MediaController{
 
+    private PDO $pdo;
+
+    public function __construct(){
+        $this->pdo = ConnectionFactory::getConnection();
+    }
     public function getContentFolder(Request $request, Response $response)
     {
         $body = $request::body();
 
-        $MediaService = MediaService::getAllInFolder($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->getAllInFolder($body);
 
         if(isset($MediaService['error'])){
             return $response::json([
@@ -23,14 +31,16 @@ class MediaController{
 
         $response::json([
             "success" => true,
-            "message" => $MediaService
+            "content" => $MediaService
         ]);
     }
+    
     // Folders
     public function createFolder(Request $request, Response $response){
         $body = $request::body();
 
-        $MediaService = MediaService::createFolder($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->createFolder($body);
 
         if(isset($MediaService['error'])){
             return $response::json([
@@ -48,7 +58,8 @@ class MediaController{
     {
         $body = $request::body();
 
-        $MediaService = MediaService::editFolder($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->editFolder($body);
 
         if(isset($MediaService['error'])){
             return $response::json([
@@ -66,7 +77,8 @@ class MediaController{
     {
         $body = $request::body();
 
-        $MediaService = MediaService::moveFolder($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->moveFolder($body);
 
         if(isset($MediaService['error'])){
             return $response::json([
@@ -84,7 +96,8 @@ class MediaController{
     {
         $body = $request::body();
 
-        $MediaService = MediaService::moveFolderToTrash($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->moveFolderToTrash($body);
 
         if(isset($MediaService['error'])){
             return $response::json([
@@ -103,7 +116,8 @@ class MediaController{
     {
         $body = $request::body();
 
-        $MediaService = MediaService::restoreFolder($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->restoreFolder($body);
 
         if(isset($MediaService['error'])){
             return $response::json([
@@ -122,7 +136,8 @@ class MediaController{
     {
         $body = $request::body();
 
-        $MediaService = MediaService::deleteFolder($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->deleteFolder($body);
 
         if(isset($MediaService['error'])){
             return $response::json([
@@ -140,8 +155,10 @@ class MediaController{
     public function uploadFile(Request $request, Response $response)
     {
         $body = $request::body();
+        $files = $request::files();
 
-        $MediaService = MediaService::uploadFile($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->uploadFile($body, $files);
 
         if(isset($MediaService['error'])){
             return $response::json([
@@ -159,7 +176,8 @@ class MediaController{
     {
         $body = $request::body();
 
-        $MediaService = MediaService::editFile($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->editFile($body);
 
         if(isset($MediaService['error'])){
             return $response::json([
@@ -177,7 +195,8 @@ class MediaController{
     {
         $body = $request::body();
 
-        $MediaService = MediaService::moveFile($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->moveFile($body);
 
         if(isset($MediaService['error'])){
             return $response::json( [
@@ -195,7 +214,8 @@ class MediaController{
     {
         $body = $request::body();
 
-        $MediaService = MediaService::moveFileToTrash($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->moveFileToTrash($body);
 
         if(isset($MediaService['error'])){
             return $response::json([
@@ -213,7 +233,8 @@ class MediaController{
     {
         $body = $request::body();
 
-        $MediaService = MediaService::restoreFile($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->restoreFile($body);
 
         if(isset($MediaService['error'])){
             return $response::json([
@@ -231,7 +252,8 @@ class MediaController{
     {
         $body = $request::body();
 
-        $MediaService = MediaService::deleteFile($body);
+        $MediaService = new MediaService($this->pdo);
+        $MediaService = $MediaService->deleteFile($body);
 
         if(isset($MediaService['error'])){
             return $response::json([

@@ -1,16 +1,25 @@
 <?php
 
+use App\Controllers\AddressController;
 use App\Http\Route;
 use App\Middlewares\AuthAdmin;
 use App\Middlewares\AuthUser;
 use App\Controllers\Admin\AdminController;
+use App\Controllers\BrandController;
 use App\Controllers\CategoriesController;
 use App\Controllers\ProductController;
 use App\Controllers\UserController;
 use App\Controllers\HomeController;
 use App\Controllers\MediaController;
+use App\Controllers\OrderController;
+use App\Controllers\PaymentsController;
+use App\Controllers\Stripe\StoreController;
+use App\Controllers\VariantsController;
+use App\Controllers\WebhookController;
+use App\Middlewares\AuthPermission;
 
 Route::get('/', [HomeController::class, 'index']);
+Route::get('/teste', [HomeController::class, 'teste']);
 
 //admin
 Route::group([
@@ -42,7 +51,21 @@ Route::group([
 
     Route::post("/$prefix/send-active-account", [UserController::class, 'sendActiveUser']);
     Route::put("/$prefix/active-account", [UserController::class, 'activeAccount']);
+    Route::get("/$prefix/{param}", [UserController::class, 'getAll'], [AuthAdmin::class]);
+    Route::get("/$prefix/inactive/{param}", [UserController::class, 'getAllInactive'], [AuthAdmin::class]);
 });
+
+//address
+
+Route::group([
+    'prefix' => 'address',
+    'middlewares' => [AuthUser::class]
+], function($prefix, $middlewares){
+    Route::post("/$prefix/create", [AddressController::class, 'create'], $middlewares);
+    Route::put("/$prefix/update", [AddressController::class, 'update'], $middlewares);
+    Route::get("/$prefix", [AddressController::class, 'getAll'], $middlewares);
+});
+
 
 //categories
 Route::group([
@@ -52,7 +75,7 @@ Route::group([
     Route::post("/$prefix/create", [CategoriesController::class, 'createCategories'], $middlewares);
     Route::delete("/$prefix/delete", [CategoriesController::class, 'deleteCategory'], $middlewares);
     Route::put("/$prefix/update-category", [CategoriesController::class, "updateCategory"], $middlewares);
-    Route::get("/$prefix/get-parents", [CategoriesController::class, "getAllParent"]);
+    // Route::get("/$prefix/get-parents", [CategoriesController::class, "getAllParent"]);
     Route::get("/$prefix/get-categories", [CategoriesController::class, "getCategories"]);
 });
 
@@ -79,20 +102,84 @@ Route::group([
     Route::put("/$prefix/restore-file", [MediaController::class, "restoreFile"], $middlewares);
     Route::delete("/$prefix/file", [MediaController::class, "deleteFile"], $middlewares);
 
-    // Route::get("/$prefix/get-folder/{id}", [MediaController::class], $middlewares);
+    // Route::get("/$prefix/get-folder/{param}", [MediaController::class], $middlewares);
 });
 
-//pro
+//products
 Route::group([
     'prefix' => 'products',
     'middlewares' => [AuthAdmin::class]
 ], function($prefix, $middlewares){
-    Route::get(strval($prefix), [ProductController::class, 'getAll']);
     Route::post("/$prefix/create", [ProductController::class, 'create'], $middlewares);
-    Route::delete("/$prefix", [ProductController::class, 'delete'] , $middlewares);
-    Route::get("/$prefix/{id}", [ProductController::class, 'getProduct']);
+    // Route::delete("/$prefix", [ProductController::class, 'delete'] , $middlewares);
+    // Route::get("/$prefix/{param}", [ProductController::class, 'getProduct']);
+    //primeiro parâmetro seria o que gostaria de buscar (por categoria, marca...), segundo é o id e o terceiro a pagina para o offset
+    Route::get("/$prefix/get-all-by/{param}/{param}/{param}", [ProductController::class, 'getAllBy']);
+    Route::get("/$prefix/get-by-id/{param}", [ProductController::class, 'getById']);
+    Route::get("/$prefix/{param}", [ProductController::class, 'getAll']);
 });
 
+//brands
+Route::group([
+    "prefix" => "brands",
+    'middlewares' => [AuthAdmin::class]
+], function($prefix, $middlewares){
+    Route::post("/$prefix/create", [BrandController::class, 'create'], $middlewares);
+    Route::delete("/$prefix/{param}", [BrandController::class, 'delete'], $middlewares);
+    Route::put("/$prefix/{param}", [BrandController::class, "update"], $middlewares);
+    Route::get("/$prefix", [BrandController::class, "getAll"]);
+});
 
+//variations
+Route::group([
+    "prefix" => "variations",
+    "middlewares" => [AuthAdmin::class]
+], function($prefix, $middlewares){
+    //variações
+    Route::post("/$prefix/create-variation", [VariantsController::class, "createVariant"], $middlewares);
+    Route::get("/$prefix/get-variations", [VariantsController::class, "getAllVariation"], $middlewares);
+    Route::put("/$prefix/variation/{param}", [VariantsController::class, "updateVariation"], $middlewares);
+    Route::delete("/$prefix/variation/{param}", [VariantsController::class, "deleteVariation"], $middlewares);
+    //valores das variações
+    Route::post("/$prefix/create-value", [VariantsController::class, "addValueVariation"], $middlewares);
+    Route::get("/$prefix/get-values/{param}", [VariantsController::class, "getValueVariation"], $middlewares);
+    Route::put("/$prefix/value/{param}", [VariantsController::class, "updateValueVariation"], $middlewares);
+    Route::delete("/$prefix/delete-value/{param}", [VariantsController::class, "deleteValueVariation"], $middlewares);
+});
 
+//order
+Route::group([
+    "prefix" => "order",
+    "middlewares" => [AuthPermission::class]
+], function($prefix, $middlewares){
+    Route::post("/$prefix", [OrderController::class, "create"], [AuthUser::class]);
+    Route::get("/$prefix/{param}", [OrderController::class, "getById"], $middlewares);
+    Route::get("/$prefix/{param}/{param}", [OrderController::class, "getAll"], $middlewares);
+});
 
+//payments
+Route::group([
+    "prefix" => "payments",
+    "middlewares" => [AuthUser::class]
+], function($prefix, $middlewares){
+    Route::get("/$prefix/pay/{param}", [PaymentsController::class, "pay"], $middlewares);
+    Route::get("/$prefix", [PaymentsController::class, 'getPayments'], $middlewares);
+    Route::get("/$prefix/{param}", [PaymentsController::class, 'getDetails'], $middlewares);
+});
+
+//store
+Route::group([
+    "prefix" => "store",
+    "middlewares" => [AuthAdmin::class]
+], function($prefix, $middlewares){
+    Route::post("/$prefix/create", [StoreController::class, "createStore"], $middlewares);
+    Route::post("/$prefix/{param}/onboarding", [StoreController::class, 'initiateOnboarding'], $middlewares);
+    Route::get("/$prefix/{param}/login", [StoreController::class, 'login'], $middlewares);
+});
+
+Route::group([
+    "prefix" => "webhook",
+    "middlewares" => []
+], function($prefix, $middlewares){
+    Route::post("/$prefix", [WebhookController::class, 'getEvent']);
+});

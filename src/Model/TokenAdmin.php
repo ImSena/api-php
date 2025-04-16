@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Model;
+
+use App\Model\Base\BaseModel;
+use App\Model\Database;
+use Exception;
+use Pdo;
+
+class TokenAdmin extends BaseModel
+{
+    public function create(array $data)
+    {
+
+        $pdo = $this->getPdo();
+
+        $sql = "INSERT INTO tokens_admins (id_admin, type, token) VALUES (:id_admin, :type, :token)";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":id_admin", $data['id_admin'], PDO::PARAM_STR);
+        $stmt->bindParam(":type", $data['type'], PDO::PARAM_STR);
+        $stmt->bindParam(":token", $data['token'], PDO::PARAM_STR);
+
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function select(string $token)
+    {
+        $pdo = $this->getPdo();
+
+        $sql = "SELECT status FROM tokens_admins WHERE token = :token";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":token", $token, PDO::PARAM_STR);
+
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
+    public function selectLastToken(array $data)
+    {
+        $pdo = $this->getPdo();
+        $sql = "SELECT created_at FROM tokens_admins WHERE id_admin = :id_admin AND status = 'ACTIVE'";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":id_admin", $data['id_admin'], PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
+    public function inactiveAll(string $id_admin, string $type)
+    {
+        $pdo = $this->getPdo();
+
+        $sql = "UPDATE tokens_admins SET status = 'INACTIVE' WHERE id_admin = :id_admin AND type = :type";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":id_admin", $id_admin, PDO::PARAM_INT);
+        $stmt->bindParam(":type", $type, PDO::PARAM_STR);
+
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function inactiveToken(string $token)
+    {
+        $pdo = $this->getPdo();
+
+        $sql = "UPDATE tokens_admins SET status = 'INACTIVE' WHERE token = :token";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindParam(":token", $token, PDO::PARAM_STR);
+
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
+    }
+}

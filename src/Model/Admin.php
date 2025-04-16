@@ -2,17 +2,16 @@
 
 namespace App\Model;
 
+use App\Model\Base\BaseModel;
 use App\Model\Database;
 use Pdo;
 
-class Admin extends Database
+class Admin extends BaseModel
 {
-
-    public static function create(array $data)
+    public function create(array $data)
     {
-
-        $pdo = self::getConnection();
-        $sql = "INSERT INTO ADMINS (name, email, password, permission) VALUES (:name, :email, :password, :permission)";
+        $pdo = $this->getPdo();
+        $sql = "INSERT INTO admins (name, email, password, permission) VALUES (:name, :email, :password, :permission)";
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
@@ -25,9 +24,9 @@ class Admin extends Database
         return $pdo->lastInsertId() > 0 ? true : false;
     }
 
-    public static function select(array $data){
-        $pdo = self::getConnection();
-        $sql = "SELECT * FROM ADMINS WHERE email = :email";
+    public function select(array $data){
+        $pdo = $this->getPdo();
+        $sql = "SELECT name, id_admin, permission, email, status, password FROM admins WHERE email = :email";
 
         $stmt = $pdo->prepare($sql);
 
@@ -38,10 +37,10 @@ class Admin extends Database
         return $stmt->fetch();
     }
 
-    public static function updateAccess($data, $id)
+    public function updateAccess($data, $id)
     {
-        $pdo = self::getConnection();
-        $sql = "UPDATE ADMINS SET password = :password WHERE id_admin = :id";
+        $pdo = $this->getPdo();
+        $sql = "UPDATE admins SET password = :password WHERE id_admin = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":password", $data['password'], PDO::PARAM_STR);
@@ -52,11 +51,11 @@ class Admin extends Database
         return $stmt->rowCount() > 0;
     }
 
-    public static function activeAdmin($status, $id)
+    public function activeAdmin($status, $id)
     {
-        $pdo = self::getConnection();
+        $pdo = $this->getPdo();
 
-        $sql = "UPDATE ADMINS SET status = :status WHERE id_admin = :id";
+        $sql = "UPDATE admins SET status = :status WHERE id_admin = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":status", $status, PDO::PARAM_STR);
@@ -65,5 +64,16 @@ class Admin extends Database
         $stmt->execute();
 
         return $stmt->rowCount() > 0;
+    }
+
+    public function getInfoAdmin($permission){
+        $pdo = $this->getPdo();
+
+        $sql = "SELECT name, email FROM admins WHERE permission = :permission ORDER BY id_admin LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":permission", $permission, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetch();
     }
 }

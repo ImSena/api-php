@@ -1,72 +1,117 @@
 <?php
 
 namespace App\Http;
+
 class Request
 {
+
+    private static $userId = null;
+    private static $rule = null;
+
+
+    public static function setRule($rule)
+    {
+        self::$rule = $rule;
+    }
+
+    public static function getRule()
+    {
+        return self::$rule;
+    }
+
+    public static function setUserId($userId)
+    {
+        self::$userId = $userId;
+    }
+
+    public static function getUserId()
+    {
+        return self::$userId;
+    }
+
     public static function method()
     {
         return $_SERVER['REQUEST_METHOD'];
     }
 
-    private static function isMultipart():bool
+    private static function isMultipart(): bool
     {
         return strpos($_SERVER['CONTENT_TYPE'] ?? '', 'multipart/form-data') !== false;
     }
-    public static function body():array
+    public static function body(): array
     {
         $method = self::method();
 
-        if($method != 'GET'){
-            if(self::isMultipart()){
+        if ($method != 'GET') {
+            if (self::isMultipart()) {
                 return $_POST;
-            }else{
+            } else {
                 $json = json_decode(file_get_contents('php://input'), true) ?? [];
                 return $json;
             }
-        }         
+        }
         return $method === 'GET' ? $_GET : [];
     }
     public static function header()
     {
         $headers = getallheaders();
 
-        if(isset($headers['Authorization'])){
+        if (isset($headers['Authorization'])) {
             $authorizationHeader = $headers['Authorization'];
             return $authorizationHeader;
-        }else{
+        } else {
             return false;
         }
     }
+
+    public static function getHeaders()
+    {
+        $headers = [];
+
+        if (function_exists('getallheaders')) {
+            $headers = getallheaders();
+        }
+
+        if (empty($headers)) {
+            foreach ($_SERVER as $key => $value) {
+                if (substr($key, 0, 5) == 'HTTP_') {
+                    $header = str_replace('_', '-', strtolower(substr($key, 5)));
+                    $headers[$header] = $value;
+                }
+            }
+        }
+
+        return array_change_key_case($headers, CASE_LOWER);
+    }
+
     public static function getToken()
     {
         $header = self::header();
 
-        if(preg_match('/Bearer\s(\S+)/', $header, $matches)){
+        if (preg_match('/Bearer\s(\S+)/', $header, $matches)) {
             $token = $matches[1];
             return $token;
-        }else{
+        } else {
             return false;
         }
     }
 
-    public static function files():array
+    public static function files(): array
     {
-
         $files = [];
 
-
-        foreach($_FILES as $key => $file){
-            if(!is_array($file['name'])){
-                $files[$key] = [
+        foreach ($_FILES as $key => $file) {
+            if (!is_array($file['name'])) {
+                $files[] = [
                     'name' => $file['name'],
                     'type' => $file['type'],
                     'tmp_name' => $file['tmp_name'],
                     'error' => $file['error'],
                     'size' => $file['size']
                 ];
-            }else{
-                foreach($file['name'] as $index => $name){
-                    $files[$key][$index] = [
+            } else {
+                foreach ($file['name'] as $index => $name) {
+                    $files[] = [
                         'name' => $name,
                         'type' => $file['type'][$index],
                         'tmp_name' => $file['tmp_name'][$index],
@@ -77,6 +122,6 @@ class Request
             }
         }
 
-       return $files;
+        return $files;
     }
 }

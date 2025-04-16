@@ -29,19 +29,24 @@ class Core
         $routeFound = false;
 
         foreach ($routes as $route) {
-            $pattern = '#^' . preg_replace("/{id}/", '([\w-]+)', $route['path']) . '$#';
-            
+
+            if($route['method'] !== Request::method()){
+                continue;
+            }
+
+            $pattern = '#^' . str_replace('{param}', '([\w-]+)', $route['path']) . '$#';
+
             if (preg_match($pattern, $url, $matches)) {
                 $routeFound = true;
                 array_shift($matches);
-
-                if ($route['method'] !== Request::method()) {
-                    Response::json([
-                        'success' => false,
-                        'message' => 'Desculpe, método não encontrado!'
-                    ], 405);
-                    exit;
-                }
+                
+                // if ($route['method'] !== Request::method()) {
+                //     Response::json([
+                //         'success' => false,
+                //         'message' => 'Desculpe, método não encontrado!'
+                //     ], 405);
+                //     exit;
+                // }
 
                 if(isset($route['middlewares']) && !empty($route['middlewares'])){
                     foreach($route['middlewares'] as $middleware);
@@ -58,7 +63,7 @@ class Core
                     $extendController = new $controller();
                     
                     if (!method_exists($extendController, $action)) {
-                        throw new \Exception("O método '$action' não existe no controlador '$controller'");
+                        throw new Exception("O método '$action' não existe no controlador '$controller'");
                     }
                     $extendController->$action(new Request, new Response, $matches);
                 }catch(Exception $e){

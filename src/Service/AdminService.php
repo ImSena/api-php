@@ -5,19 +5,27 @@ namespace App\Service;
 use App\Helpers\DatabaseErrorHelpers;
 use App\Jwt\JwtAuth;
 use App\Model\Admin;
-use App\Model\Token;
-use App\Model\Token_admin;
+use App\Model\TokenAdmin;
 use App\Utils\SendEmail;
 use App\Utils\Validator;
 use DateTime;
 use Exception;
+use PDO;
 use PDOException;
 
 class AdminService
 {
-    public static function create(array $data, bool $isSuper)
+
+    private PDO $pdo;
+
+    public function __construct(PDO $pdo){
+        $this->pdo = $pdo;
+    }
+    public function create(array $data, bool $isSuper)
     {
         try {
+            $Admin = new Admin($this->pdo);
+
             $fields = Validator::validate([
                 "name" => $data['name'] ?? '',
                 "email" => $data['email'] ?? '',
@@ -32,7 +40,7 @@ class AdminService
                 $fields['permission'] = "SUPER";
             }
 
-            $admin = Admin::create($fields);
+            $admin = $Admin->create($fields);
 
             if (!$admin) {
                 throw new Exception("Não foi possível criar um administrador");
@@ -46,9 +54,12 @@ class AdminService
         }
     }
 
-    public static function login(array $data)
+    public function login(array $data)
     {
         try {
+
+            $Admin = new Admin($this->pdo);
+
             $fields = Validator::validate([
                 "email" => $data['email'] ?? '',
                 'password' => $data['password'] ?? ''
@@ -56,7 +67,7 @@ class AdminService
 
             $fields['email'] = Validator::validateEmail($fields['email']);
 
-            $admin = Admin::select($fields);
+            $admin = $Admin->select($fields);
 
             if (!$admin) {
                 throw new Exception("Usuário ou senha incorretas");
@@ -91,15 +102,16 @@ class AdminService
         }
     }
 
-    public static function activeAccountLink(array $data, bool $sendEmail = false)
+    public function activeAccountLink(array $data, bool $sendEmail = false)
     {
         try {
-
+            $Admin = new Admin($this->pdo);
+            $TokenAdmin = new TokenAdmin($this->pdo);
             $fields = Validator::validate([
                 "email" => $data['email'] ?? '',
             ]);
 
-            $admin = Admin::select($fields);
+            $admin = $Admin->select($fields);
 
             if (!$admin) {
                 throw new Exception("Usuário não encontrado!");
@@ -110,7 +122,7 @@ class AdminService
             }
 
             if ($sendEmail) {
-                $tokenStatus = Token_admin::selectLastToken($admin);
+                $tokenStatus = $TokenAdmin->selectLastToken($admin);
 
                 if ($tokenStatus) {
                     $dateCreated = new DateTime($tokenStatus['created_at']);
@@ -133,9 +145,9 @@ class AdminService
                 'type' => 'ACTIVE'
             ];
 
-            $token_admin = Token_admin::inactiveAll($admin['id_admin'], $fields['type']);
+            $token_admin = $TokenAdmin->inactiveAll($admin['id_admin'], $fields['type']);
 
-            $token_admin = Token_admin::create($fields);
+            $token_admin = $TokenAdmin->create($fields);
 
             if (!$token_admin) {
                 throw new Exception("Não foi possível gerar link de ativação de conta");
@@ -160,10 +172,13 @@ class AdminService
         }
     }
 
-    public static function forgetPassword(array $data)
+    public function forgetPassword(array $data)
     {
 
         try {
+            $Admin = new Admin($this->pdo);
+            $TokenAdmin = new TokenAdmin($this->pdo);
+            
             $fields = Validator::validate([
                 "email" => $data['email'] ?? ''
             ]);
@@ -171,7 +186,7 @@ class AdminService
             $fields['email'] = Validator::validateEmail($fields['email']);
             $fields['type'] = "FORGET";
 
-            $admin = Admin::select($fields);
+            $admin = $Admin->select($fields);
 
             if (!$admin) {
                 throw new Exception("Usuário não encontrado.");
@@ -190,9 +205,9 @@ class AdminService
 
             $fields['token'] = $token;
 
-            Token_admin::inactiveAll($fields['id_admin'], $fields['type']);
+            $TokenAdmin->inactiveAll($fields['id_admin'], $fields['type']);
 
-            $token = Token_admin::create($fields);
+            $token = $TokenAdmin->create($fields);
 
             if (!$token) {
                 throw new Exception("Não foi possível gerar o link. Tente novamente mais tarde");
@@ -210,6 +225,34 @@ class AdminService
             return ['error' => DatabaseErrorHelpers::error($e)];
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
+        }
+    }
+
+    public function getInfoAdmin($permission = 'SUPER'){
+        
+        try{
+            $permissions = [
+                'SUPER',
+                'FINANCE',
+                'COMMON',
+            ];
+    
+            if(!in_array($permission, $permissions)){
+                throw new Exception("Permissão inexistente");
+            }
+
+            $Admin = new Admin($this->pdo);
+            $result = $Admin->getInfoAdmin($permission);
+
+            return $result;
+        }catch(PDOException $e){
+            return [
+                'error' => DatabaseErrorHelpers::error($e)
+            ];
+        }catch(Exception $e){
+            return [
+                'error' => $e->getMessage()
+            ];
         }
     }
 }
