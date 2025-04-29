@@ -56,11 +56,12 @@ class TokenUser extends BaseModel
     {
         $pdo = $this->getPdo();
 
-        $sql = "UPDATE tokens_users SET status = 'INACTIVE' WHERE id_user = :id_user AND type = :type";
+        $sql = "UPDATE tokens_users SET status = 'INACTIVE', updated_at = :updated_at WHERE id_user = :id_user AND type = :type";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(":id_user", $id_user, PDO::PARAM_INT);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":type", $type, PDO::PARAM_STR);
 
         $stmt->execute();
@@ -71,10 +72,11 @@ class TokenUser extends BaseModel
     {
         $pdo = $this->getPdo();
 
-        $sql = "UPDATE tokens_users SET status = 'INACTIVE' WHERE token = :token";
+        $sql = "UPDATE tokens_users SET status = 'INACTIVE', updated_at = :updated_at WHERE token = :token";
 
         $stmt = $pdo->prepare($sql);
 
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":token", $token, PDO::PARAM_STR);
 
         $stmt->execute();

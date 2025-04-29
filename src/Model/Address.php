@@ -53,7 +53,7 @@ class Address extends BaseModel
 
     private function setDefault(PDO $pdo, int $id_user, bool $is_default = false, $id = false)
     {
-        $sql = "UPDATE addresses SET is_default = :is_default WHERE id_user = :id";
+        $sql = "UPDATE addresses SET is_default = :is_default, updated_at = :updated_at WHERE id_user = :id";
 
         if ($id) {
             $sql .= " AND id = :id";
@@ -62,6 +62,7 @@ class Address extends BaseModel
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":is_default", $is_default, PDO::PARAM_BOOL);
         $stmt->bindParam(":id", $id_user, PDO::PARAM_INT);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         if ($id) {
             $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         }

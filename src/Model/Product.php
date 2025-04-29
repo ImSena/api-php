@@ -18,13 +18,17 @@ class Product extends BaseModel
         try {
 
             $products = $data['products'];
-            $sql = "INSERT INTO products (name, description, id_brand) VALUES (:name, :description, :id_brand)";
+            $sql = "INSERT INTO products (name, description, id_brand, weight, length, width, height) VALUES (:name, :description, :id_brand, :weight, :length, :width, :height)";
 
             $stmt = $pdo->prepare($sql);
 
             $stmt->bindParam(":name", $products['name'], PDO::PARAM_STR);
             $stmt->bindParam(":description", $products['description'], PDO::PARAM_STR);
             $stmt->bindParam(":id_brand", $products['id_brand'], PDO::PARAM_INT);
+            $stmt->bindParam(":weight", $products['weight'], PDO::PARAM_STR);
+            $stmt->bindParam(":length", $products['length'], PDO::PARAM_STR);
+            $stmt->bindParam(":width", $products['width'], PDO::PARAM_STR);
+            $stmt->bindParam(":height", $products['height'], PDO::PARAM_STR);
 
             $stmt->execute();
 
@@ -451,5 +455,18 @@ class Product extends BaseModel
         $stmt->execute();
 
         return $stmt->fetchAll();
+    }
+
+    public function insertQuantity(array $data)
+    {
+        $pdo = $this->getPdo();
+        $sql = "UPDATE product_variants SET qtd_stock = qtd_stock + :quantity, updated_at = :updated_at WHERE id_product_variant = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":quantity", $data['quantity'], PDO::PARAM_INT);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
+        $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
     }
 }

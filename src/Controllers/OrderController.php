@@ -43,7 +43,7 @@ class OrderController
 
         $params = [];
         if(count($param) > 1){
-            $params['status'] = isset($param[0]) ? $param[0] : "DELIVERED";
+            $params['status'] = isset($param[0]) ? $param[0] : "all";
             $params['page'] = isset($param[1]) ? intval($param[1]) : 1;
         }else{
             $params['page'] = isset($param[0]) ? intval($param[0]) : 1;

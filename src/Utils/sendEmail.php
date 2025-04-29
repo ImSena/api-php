@@ -45,7 +45,7 @@ class SendEmail
     {
 
         if ($subject == 'forget') {
-            $link = "http://localhost:5173/reset-password?token=".$info_user['token'];
+            $link = URL_EMAIL."reset-password?token=".$info_user['token'];
             return [
                 "title" => "Recuperar Acesso - Escala Web",
                 "message" => "
@@ -57,7 +57,7 @@ class SendEmail
         }
 
         if($subject == 'active'){
-            $link = "http://localhost:5173/active-account?token=".$info_user['token'];
+            $link = URL_EMAIL."active-account?token=".$info_user['token'];
 
             return [
                 "title" => "Ative sua Conta - Escala Web",

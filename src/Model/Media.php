@@ -69,7 +69,7 @@ class Media extends BaseModel
                 m.file_type
             FROM media m
             WHERE 
-                (:parent_id = 'UPLOADS' AND m.id_folder IN (SELECT id_folder FROM FOLDERS WHERE parent_id IS NULL)) 
+                (:parent_id = 'UPLOADS' AND m.id_folder IN (SELECT id_folder FROM folders WHERE parent_id IS NULL)) 
                 OR (m.id_folder = :parent_id AND m.is_trash = :is_trash);";
 
         $stmt = $pdo->prepare($sql);
@@ -95,12 +95,13 @@ class Media extends BaseModel
     }
     public function editFolder(array $data, PDO $pdo): bool
     {
-        $sql = "UPDATE folders SET folder_name = :folder_name WHERE id_folder = :id_folder";
+        $sql = "UPDATE folders SET folder_name = :folder_name, updated_at = :updated_at WHERE id_folder = :id_folder";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(":folder_name", $data['folder_name'], PDO::PARAM_STR);
         $stmt->bindParam(":id_folder", $data['id_folder'], PDO::PARAM_INT);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
 
         $stmt->execute();
 
@@ -108,12 +109,13 @@ class Media extends BaseModel
     }
     public function moveFolder(array $data, $pdo): bool
     {
-        $sql = "UPDATE folders SET parent_id = :parent_id WHERE id_folder = :id_folder";
+        $sql = "UPDATE folders SET parent_id = :parent_id, updated_at = :updated_at WHERE id_folder = :id_folder";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(":parent_id", $data['parent_id'], PDO::PARAM_INT);
         $stmt->bindParam(":id_folder", $data['id_folder'], PDO::PARAM_INT);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
 
         $stmt->execute();
 
@@ -123,10 +125,11 @@ class Media extends BaseModel
     {
         $pdo = $this->getPdo();
 
-        $sql = "UPDATE folders SET is_trash = :is_trash WHERE id_folder = :id_folder";
+        $sql = "UPDATE folders SET is_trash = :is_trash, updated_at = :updated_at WHERE id_folder = :id_folder";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":is_trash", $is_trash, PDO::PARAM_BOOL);
         $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
+        $stmt->bindParam(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->execute();
 
         self::updateSubfoldersAndFiles($pdo, $id_folder, $is_trash);
@@ -136,16 +139,18 @@ class Media extends BaseModel
     private function updateSubfoldersAndFiles(PDO $pdo, int $id_folder, bool $is_trash): void
     {
 
-        $sql = "UPDATE folders SET is_trash = :is_trash WHERE id_folder = :id_folder";
+        $sql = "UPDATE folders SET is_trash = :is_trash, updated_at = :updated_at WHERE id_folder = :id_folder";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
         $stmt->bindParam(":is_trash", $is_trash, PDO::PARAM_BOOL);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->execute();
 
-        $sql = "UPDATE media SET is_trash = :is_trash WHERE id_folder = :id_folder";
+        $sql = "UPDATE media SET is_trash = :is_trash, updated_at = :updated_at WHERE id_folder = :id_folder";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
         $stmt->bindParam(":is_trash", $is_trash, PDO::PARAM_BOOL);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->execute();
 
         $parent_id = self::getSubFolder($id_folder);
@@ -370,12 +375,13 @@ class Media extends BaseModel
     {
         $pdo = $this->getPdo();
 
-        $sql = "UPDATE media SET alias = :file_name WHERE id_media = :id_media";
+        $sql = "UPDATE media SET alias = :file_name, updated_at = :updated_at WHERE id_media = :id_media";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(":file_name", $data['file_name'], PDO::PARAM_STR);
         $stmt->bindParam(":id_media", $data['id_file'], PDO::PARAM_INT);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
 
         $stmt->execute();
 
@@ -450,7 +456,7 @@ class Media extends BaseModel
         $pdo = $this->getPdo();
 
         $sql = "SELECT m.file_name, f.parent_id, f.id_folder, m.file_type FROM media m
-                JOIN FOLDERS f ON m.id_folder = f.id_folder
+                JOIN folders f ON m.id_folder = f.id_folder
                 WHERE m.id_media = :id_media";
 
         $stmt = $pdo->prepare($sql);
@@ -466,12 +472,13 @@ class Media extends BaseModel
     }
     public function moveFile(array $data, PDO $pdo): bool
     {
-        $sql = "UPDATE media SET id_folder = :id_folder WHERE id_media = :id_media";
+        $sql = "UPDATE media SET id_folder = :id_folder, updated_at = :updated_at WHERE id_media = :id_media";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(":id_folder", $data['id_folder'], PDO::PARAM_INT);
         $stmt->bindParam(":id_media", $data['id_media'], PDO::PARAM_INT);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
 
         $stmt->execute();
 
@@ -481,12 +488,13 @@ class Media extends BaseModel
     {
         $pdo = $this->getPdo();
 
-        $sql = "UPDATE media SET is_trash = :is_trash WHERE id_media = :id_media";
+        $sql = "UPDATE media SET is_trash = :is_trash, updated_at = :updated_at WHERE id_media = :id_media";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(":is_trash", $is_trash, PDO::PARAM_BOOL);
         $stmt->bindParam(":id_media", $id_media, PDO::PARAM_INT);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
 
         $stmt->execute();
 

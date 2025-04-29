@@ -40,11 +40,12 @@ class Admin extends BaseModel
     public function updateAccess($data, $id)
     {
         $pdo = $this->getPdo();
-        $sql = "UPDATE admins SET password = :password WHERE id_admin = :id";
+        $sql = "UPDATE admins SET password = :password, updated_at = :updated_at WHERE id_admin = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":password", $data['password'], PDO::PARAM_STR);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
 
         $stmt->execute();
 
@@ -55,11 +56,12 @@ class Admin extends BaseModel
     {
         $pdo = $this->getPdo();
 
-        $sql = "UPDATE admins SET status = :status WHERE id_admin = :id";
+        $sql = "UPDATE admins SET status = :status, updated_at = :updated_at WHERE id_admin = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":status", $status, PDO::PARAM_STR);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
 
         $stmt->execute();
 

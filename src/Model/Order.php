@@ -102,12 +102,13 @@ class Order extends BaseModel
     }
     private function updateProductStock(array $orderItems, $pdo)
     {
-        $sql = "UPDATE product_variants SET qtd_stock = qtd_stock - :quantity WHERE id_product_variant = :id_product_variant";
+        $sql = "UPDATE product_variants SET qtd_stock = qtd_stock - :quantity, updated_at = :updated_at WHERE id_product_variant = :id_product_variant";
         $stmt = $pdo->prepare($sql);
 
         foreach ($orderItems as $item) {
             $stmt->bindParam(":quantity", $item['quantity'], PDO::PARAM_INT);
             $stmt->bindParam(":id_product_variant", $item['id_product_variant'], PDO::PARAM_INT);
+            $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
             $stmt->execute();
 
             if ($stmt->rowCount() === 0) {
@@ -283,7 +284,6 @@ class Order extends BaseModel
 
         return $stmt->fetchAll();
     }
-
     public function getTotalStatus(array $data)
     {
         $pdo = $this->getPdo();
@@ -385,6 +385,31 @@ class Order extends BaseModel
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    public function insertPayment(array $data)
+    {
+        $pdo = $this->getPdo();
+        $sql = "UPDATE orders SET payment_url = :payment_url, payment_expires_at = :payment_expires_at, updated_at = :updated_at WHERE id_order = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":payment_url", $data['payment_url'], PDO::PARAM_STR);
+        $stmt->bindParam(":payment_expires_at", $data['payment_expires_at'], PDO::PARAM_STR);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
+        $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function getLinkPayment(int $id)
+    {
+        $pdo = $this->getPdo();
+        $sql = "SELECT payment_url, payment_expires_at FROM orders WHERE id_order = :id LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+        
         return $stmt->fetch();
     }
 }

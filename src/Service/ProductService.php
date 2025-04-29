@@ -95,6 +95,7 @@ class ProductService
                     'price' => $product['price'],
                     'qtd_stock' => $product['qtd_stock'],
                     'discount' => $product['discount'],
+                    'price_discount' => '0.00',
                     'image_path' => $product['image_path'] ?? null,
                     "is_default" => $product['is_default'] ?? null
                 ];
@@ -151,6 +152,7 @@ class ProductService
                     'price' => $product['price'],
                     'qtd_stock' => $product['qtd_stock'],
                     'discount' => $product['discount'],
+                    'price_discount' => '0.00',
                     'image_path' => $product['image_path'] ?? null,
                     "is_default" => $product['is_default'] ?? null
                 ];
@@ -215,6 +217,7 @@ class ProductService
                     'price' => $product['price'],
                     'qtd_stock' => $product['qtd_stock'],
                     'discount' => $product['discount'],
+                    'price_discount' => '0.00',
                     'image_path' => $product['image_path'] ?? null,
                     "is_default" => $product['is_default'] ?? null
                 ];
@@ -324,6 +327,7 @@ class ProductService
             $ProductVariation = $Product->getVariations($params['id_product']);
             foreach ($ProductVariation as $prod) {
                 $prod['pictures'] = $Product->getPicturesProduct($prod['id_product_variant']);
+                $prod['price_discount'] = '0.00';
                 foreach($prod['pictures'] as &$picture){
                     $path = $Media->getPathToFile($picture);
                     $extension = $MediaService->getExtension($picture['file_type']);
@@ -347,4 +351,28 @@ class ProductService
             return ['error' => $e->getMessage()];
         }
     }
+
+    public function insertQuantity(array $data)
+    {
+        try{
+
+            $fields = Validator::validate([
+                "id" => $data['id'],
+                "quantity" => $data['quantity']
+            ]);
+
+            $Product = new Product($this->pdo);
+
+            if(!$Product->insertQuantity($fields)){
+                throw new Exception("Não foi possível atualizar pedido");
+            }
+
+            return "Quantidade inserida com sucesso!";
+        }catch(PDOException $e){
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        }catch(Exception $e){
+            return ['error' => $e->getMessage()];
+        }
+    }
+
 }

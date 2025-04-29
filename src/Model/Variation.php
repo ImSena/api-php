@@ -37,11 +37,12 @@ class Variation extends BaseModel
     {
         $pdo = $this->getPdo();
 
-        $sql = "UPDATE variant_attributes SET name = :name WHERE id_variant_attribute = :id";
+        $sql = "UPDATE variant_attributes SET name = :name, updated_at = :updated_at WHERE id_variant_attribute = :id";
 
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
 
         $stmt->execute();
@@ -98,10 +99,11 @@ class Variation extends BaseModel
     {
         $pdo = $this->getPdo();
 
-        $sql = "UPDATE variant_attributes_values SET value = :value WHERE id_variant_attribute_value = :id";
+        $sql = "UPDATE variant_attributes_values SET value = :value, updated_at = :updated_at WHERE id_variant_attribute_value = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":value", $data['value'], PDO::PARAM_STR);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
 
         $stmt->execute();

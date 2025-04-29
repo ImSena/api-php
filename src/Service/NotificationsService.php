@@ -81,13 +81,6 @@ class NotificationsService
                 $title = "Ops, algo deu errado!";
                 $message = "Não conseguimos processar seu pagamento. Verifique seus dados ou tente novamente mais tarde.";
                 break;
-
-            case "SUBSCRIPTION_EXPIRED":
-                $subject_email = "Sua assinatura expirou";
-                $title = "Sua assinatura chegou ao fim";
-                $message = "Sua assinatura expirou. Para continuar aproveitando nossos serviços, renove agora mesmo.";
-                break;
-
             case "NEW_ORDER":
                 $subject_email = "Novo pedido recebido";
                 $title = "Você tem um novo pedido!";
@@ -200,13 +193,6 @@ class NotificationsService
                 $title = "Ops, algo deu errado!";
                 $message = "Não conseguimos processar seu pagamento. Verifique seus dados ou tente novamente mais tarde.";
                 break;
-
-            case "SUBSCRIPTION_EXPIRED":
-                $subject_email = "Sua assinatura expirou";
-                $title = "Sua assinatura chegou ao fim";
-                $message = "Sua assinatura expirou. Para continuar aproveitando nossos serviços, renove agora mesmo.";
-                break;
-
             case "NEW_ORDER":
                 $subject_email = "Novo pedido recebido";
                 $title = "Você tem um novo pedido!";

@@ -132,9 +132,9 @@ class User extends BaseModel
                     WHEN lp.id_legal_person IS NOT NULL THEN 'Jurídica' 
                     ELSE NULL 
                 END AS person_type
-            FROM ecommerce.users u
-            LEFT JOIN ecommerce.natural_people np ON u.id_natural_person = np.id_natural_person
-            LEFT JOIN ecommerce.legal_people lp ON u.id_legal_person = lp.id_legal_person
+            FROM ".$this->database.".users u
+            LEFT JOIN ".$this->database.".natural_people np ON u.id_natural_person = np.id_natural_person
+            LEFT JOIN ".$this->database.".legal_people lp ON u.id_legal_person = lp.id_legal_person
             WHERE (np.cpf = :login OR lp.cnpj = :login OR u.email = :login)
             LIMIT 1";
 
@@ -148,10 +148,11 @@ class User extends BaseModel
     public function updateAccess($data, $id)
     {
         $pdo = $this->getPdo();
-        $sql = "UPDATE users SET password = :password WHERE id_user = :id";
+        $sql = "UPDATE users SET password = :password, updated_at = :updated_at WHERE id_user = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":password", $data['password'], PDO::PARAM_STR);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
 
         $stmt->execute();
@@ -163,10 +164,11 @@ class User extends BaseModel
     {
         $pdo = $this->getPdo();
 
-        $sql = "UPDATE users SET status = :status WHERE id_user = :id";
+        $sql = "UPDATE users SET status = :status, updated_at = :updated_at WHERE id_user = :id";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":status", $status, PDO::PARAM_STR);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
 
         $stmt->execute();
@@ -199,11 +201,11 @@ class User extends BaseModel
                 np.gender,
                 lp.corporate_name,
                 lp.trade_name
-            FROM ecommerce.users u
-            LEFT JOIN ecommerce.natural_people np ON u.id_natural_person = np.id_natural_person
-            LEFT JOIN ecommerce.legal_people lp ON u.id_legal_person = lp.id_legal_person
-            LEFT JOIN ecommerce.phones p ON u.id_user = p.id_user
-            LEFT JOIN ecommerce.addresses a ON u.id_user = a.id_user
+            FROM ".$this->database.".users u
+            LEFT JOIN ".$this->database.".natural_people np ON u.id_natural_person = np.id_natural_person
+            LEFT JOIN ".$this->database.".legal_people lp ON u.id_legal_person = lp.id_legal_person
+            LEFT JOIN ".$this->database.".phones p ON u.id_user = p.id_user
+            LEFT JOIN ".$this->database.".addresses a ON u.id_user = a.id_user
             GROUP BY u.id_user
             ORDER BY u.created_at DESC
             LIMIT :limit OFFSET :offset;
@@ -271,8 +273,8 @@ class User extends BaseModel
                     ELSE NULL
                 END AS state_registration
             FROM users u
-            LEFT JOIN ecommerce.natural_people np ON u.id_natural_person = np.id_natural_person
-            LEFT JOIN ecommerce.legal_people lp ON u.id_legal_person = lp.id_legal_person
+            LEFT JOIN ".$this->database.".natural_people np ON u.id_natural_person = np.id_natural_person
+            LEFT JOIN ".$this->database.".legal_people lp ON u.id_legal_person = lp.id_legal_person
             WHERE u.id_user = :id";
 
         $stmt = $pdo->prepare($sql);

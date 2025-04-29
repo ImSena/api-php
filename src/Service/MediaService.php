@@ -18,7 +18,8 @@ class MediaService
 {
     private PDO $pdo;
 
-    public function __construct(PDO $pdo){
+    public function __construct(PDO $pdo)
+    {
         $this->pdo = $pdo;
     }
 
@@ -55,6 +56,17 @@ class MediaService
             return ['error' => $e->getMessage()];
         }
     }
+
+    private function sanitizeFolderName(string $name): string
+    {
+        $name = strtolower($name);
+        $name = str_replace(' ', '_', $name);
+        if (!preg_match('/[a-z0-9_-]/i', $name)) {
+            throw new Exception("O nome da pasta deve conter ao menos um caractere válido (letra, número, underline ou hífen).");
+        }
+        return $name;
+    }
+
     public function createFolder(array $data): array | string
     {
         $Media = new Media($this->pdo);
@@ -64,9 +76,11 @@ class MediaService
             $path  = PATH . $Media->getFullFolderPath($data['parent_id']) . '/' . $data['folder_name'];
 
             $fields = Validator::validate([
-                "folder_name" => strtolower($data['folder_name']) ?? '',
+                "folder_name" => $data['folder_name'] ?? '',
                 "parent_id" => $data['parent_id'] ?? '',
             ]);
+
+            $fields['folder_name'] = $this->sanitizeFolderName($fields['folder_name']);
 
             $folderId = $Media->createFolder($fields, $this->pdo);
 

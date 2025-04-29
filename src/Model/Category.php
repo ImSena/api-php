@@ -60,7 +60,7 @@ class Category extends BaseModel
     public function update(array $data){
         $pdo = $this->getPdo();
 
-        $sql = "UPDATE categories SET parent_category_id = :parent_category_id, name = :name WHERE id_category = :id";
+        $sql = "UPDATE categories SET parent_category_id = :parent_category_id, name = :name, updated_at = :updated_at WHERE id_category = :id";
 
         $stmt = $pdo->prepare($sql);
 
@@ -70,6 +70,7 @@ class Category extends BaseModel
         $stmt->bindValue(":parent_category_id", $parentCategory, is_null($parentCategory) ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
         $stmt->bindParam(":description", $data['description'], PDO::PARAM_STR);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
 
         $stmt->execute();
 
