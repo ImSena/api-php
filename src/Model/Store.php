@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Model\Stripe;
+namespace App\Model;
 
 use App\Model\Base\BaseModel;
 use PDO;
@@ -70,6 +70,16 @@ class Store extends BaseModel
         $stmt->execute();
 
         return $stmt->fetch();
+    }
+
+    public function getAddress()
+    {
+        $pdo = $this->getPdo();
+        $sql = "SELECT id_address_store, public_area, number, complement, district, city, state, zip_code, is_default FROM address_store WHERE is_active > 0";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
     }
 
 

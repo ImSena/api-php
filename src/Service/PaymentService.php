@@ -5,7 +5,7 @@ namespace App\Service;
 use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Order;
 use App\Model\Payment;
-use App\Model\Stripe\Store;
+use App\Model\Store;
 use App\Stripe\Keys;
 use App\Utils\Validator;
 use DateTime;

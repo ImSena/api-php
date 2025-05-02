@@ -9,4 +9,6 @@ Route::group([
     "middlewares" => [AuthAdmin::class]
 ], function($prefix, $middlewares){
     Route::post("/$prefix", [StoreMediaController::class, 'create'], $middlewares);
+    Route::get("/$prefix", [StoreMediaController::class, 'getAssets']);
+
 });

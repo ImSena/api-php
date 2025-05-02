@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Service\Stripe;
+namespace App\Service;
 
 use App\Helpers\DatabaseErrorHelpers;
-use App\Model\Stripe\Store;
+use App\Model\Store;
 use App\Stripe\Keys;
 use App\Utils\Validator;
 use Exception;

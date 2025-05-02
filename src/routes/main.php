@@ -45,6 +45,10 @@ require_once __DIR__ . "/Order.route.php";
 
 require_once __DIR__ . "/Payments.route.php";
 
+//shipping
+
+require_once __DIR__ . "/Shipping.route.php";
+
 //store
 
 require_once __DIR__ . "/Store.route.php";

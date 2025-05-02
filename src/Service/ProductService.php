@@ -375,4 +375,21 @@ class ProductService
         }
     }
 
+    public function getProductQuote(int $id_product){
+        try{
+            $Product = new Product($this->pdo);
+
+            $result = $Product->getProductQuote($id_product);
+
+            if(!$result){
+                throw new Exception("Não foi possível encontrar produto");
+            }
+
+            return $result;
+        }catch(PDOException $e){
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        }catch(Exception $e){
+            return ['error' => $e->getMessage()];
+        }
+    }
 }

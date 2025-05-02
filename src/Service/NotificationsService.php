@@ -3,7 +3,7 @@
 namespace App\Service;
 
 use App\Helpers\DatabaseErrorHelpers;
-use App\Service\Stripe\StoreService;
+use App\Service\StoreService;
 use Exception;
 use PDO;
 use PDOException;

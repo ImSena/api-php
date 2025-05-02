@@ -36,4 +36,24 @@ class StoreMediaController{
         ]);
     }
 
+    public function getAssets(Request $request, Response $response, $param)
+    {
+
+        $StoreMediaService = new StoreMediaService($this->pdo);
+        $result = $StoreMediaService->getMedias();
+
+        if(isset($result['error'])){
+            return $response::json([
+                "success" => false,
+                "message" => $result['error']
+            ], 400);
+        }
+
+        $response::json([
+            "success" => true,
+            "message" => "Midia resgatada com sucesso",
+            "content" => $result
+        ]);
+    }
+
 }

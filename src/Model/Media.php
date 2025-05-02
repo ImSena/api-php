@@ -522,4 +522,13 @@ class Media extends BaseModel
 
         return $stmt->rowCount() > 0;
     }
+
+    public function getFile(int $id){
+        $pdo = $this->getPdo();
+        $sql = "SELECT file_name, alias, file_type, file_size FROM media WHERE is_trash < 1 AND id_media = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
 }

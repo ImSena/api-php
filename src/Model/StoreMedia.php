@@ -40,4 +40,15 @@ class StoreMedia extends BaseModel
         $stmt->execute();
 
     }
+
+    public function getMedia(string $media){
+        $pdo = $this->getPdo();
+        $sql = "SELECT id_media, type FROM store_media WHERE type = :type AND is_active > 0 LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(":type", $media, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
 }

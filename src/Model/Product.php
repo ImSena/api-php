@@ -469,4 +469,25 @@ class Product extends BaseModel
 
         return $stmt->rowCount() > 0;
     }
+
+    public function getProductQuote(int $id_product){
+        $pdo = $this->getPdo();
+
+        $sql = "SELECT 
+                pv.id_product_variant, 
+                p.weight, 
+                p.width, 
+                p.length, 
+                p.height, 
+                (pv.price - pv.discount) AS price 
+                FROM product_variants AS pv 
+                INNER JOIN products AS p ON pv.id_product = p.id_product
+                WHERE pv.id_product_variant = :id LIMIT 1";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":id", $id_product, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return $stmt->fetch();
+    }
 }

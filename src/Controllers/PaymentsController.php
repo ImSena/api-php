@@ -23,7 +23,6 @@ class PaymentsController
         $body = $request::body();
         $body['id_order'] = $params['id_order'];
 
-
         if(!isset($params['id_order'])){
             return $response::json([
                 'success' => false,
