@@ -2,30 +2,20 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Store;
+use App\Service\Base\BaseService;
 use App\Stripe\Keys;
 use App\Utils\Validator;
 use Exception;
-use PDO;
-use PDOException;
 use Stripe\Account;
 use Stripe\AccountLink;
 use Stripe\Stripe;
 
-class StoreService
+class StoreService extends BaseService
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo)
-    {
-        $this->pdo = $pdo;
-    }
-
     public function createStore(array $data)
     {
-        try {
+        return $this->execute(function () use ($data) {
             $fields = Validator::validate([
                 "store_name" => $data['store_name'] ?? ''
             ]);
@@ -41,15 +31,7 @@ class StoreService
             }
 
             return "Loja cadastrada com sucesso";
-        } catch (PDOException $e) {
-            return [
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        } catch (Exception $e) {
-            return [
-                'error' => $e->getMessage()
-            ];
-        }
+        });
     }
 
     private function getDomain(string $host): string
@@ -60,7 +42,7 @@ class StoreService
 
     public function startOnboardingProcess(string $storeId)
     {
-        try {
+        return $this->execute(function () use ($storeId) {
             Stripe::setApiKey(Keys::getSecretKey());
 
             $storeModel = new Store($this->pdo);
@@ -100,21 +82,12 @@ class StoreService
             ]);
 
             return ['url' => $accountLink->url, 'message' => "Processo onboarding iniciado."];
-        } catch (PDOException $e) {
-            return [
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        } catch (Exception $e) {
-            return [
-                'error' => $e->getMessage()
-            ];
-        }
+        });
     }
 
     public function createLogin(string $storeId)
     {
-        try {
-
+        return $this->execute(function () use ($storeId) {
             Stripe::setApiKey(Keys::getSecretKey());
 
             $storeModel = new Store($this->pdo);
@@ -127,39 +100,22 @@ class StoreService
             $loginLink = Account::createLoginLink($store['stripe_account_id']);
 
             return ['url' => $loginLink->url, 'message' => "Link gerado com sucesso"];
-        } catch (PDOException $e) {
-            return [
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        } catch (Exception $e) {
-            return [
-                'error' => $e->getMessage()
-            ];
-        }
+        });
     }
 
     public function getInfoStore()
     {
-        try {
-
+        return $this->execute(function(){
             $Store = new Store($this->pdo);
-
+    
             $result = $Store->getInfoStore();
-
+    
             if (!$result) {
                 throw new Exception("Não foi possível resgatar informações da loja");
             }
-
-
+    
+    
             return $result;
-        } catch (PDOException $e) {
-            return [
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        } catch (Exception $e) {
-            return [
-                'error' => $e->getMessage()
-            ];
-        }
+        });
     }
 }

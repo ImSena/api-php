@@ -2,28 +2,20 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Jwt\JwtAuth;
 use App\Model\Admin;
 use App\Model\TokenAdmin;
+use App\Service\Base\BaseService;
 use App\Utils\SendEmail;
 use App\Utils\Validator;
 use DateTime;
 use Exception;
-use PDO;
-use PDOException;
 
-class AdminService
+class AdminService extends BaseService
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
     public function create(array $data, bool $isSuper)
     {
-        try {
+        return $this->execute(function () use ($data, $isSuper) {
             $Admin = new Admin($this->pdo);
 
             $fields = Validator::validate([
@@ -47,17 +39,12 @@ class AdminService
             }
 
             return "Administrador cadastrado com sucesso";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function login(array $data)
     {
-        try {
-
+        return $this->execute(function () use ($data) {
             $Admin = new Admin($this->pdo);
 
             $fields = Validator::validate([
@@ -95,16 +82,12 @@ class AdminService
                     'status' => $admin['status'] === "ACTIVE" ? true : false,
                 ];
             }
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function activeAccountLink(array $data, bool $sendEmail = false)
     {
-        try {
+        return $this->execute(function () use ($data, $sendEmail) {
             $Admin = new Admin($this->pdo);
             $TokenAdmin = new TokenAdmin($this->pdo);
             $fields = Validator::validate([
@@ -165,20 +148,15 @@ class AdminService
             }
 
             return "Foi enviado um link para ativar sua conta!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function forgetPassword(array $data)
     {
-
-        try {
+        return $this->execute(function() use ($data){
             $Admin = new Admin($this->pdo);
             $TokenAdmin = new TokenAdmin($this->pdo);
-            
+
             $fields = Validator::validate([
                 "email" => $data['email'] ?? ''
             ]);
@@ -221,23 +199,20 @@ class AdminService
 
 
             return "Foi enviado um link de recuperação para o email.";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
-    public function getInfoAdmin($permission = 'SUPER'){
-        
-        try{
+    public function getInfoAdmin($permission = 'SUPER')
+    {
+
+        return $this->execute(function() use ($permission){
             $permissions = [
                 'SUPER',
                 'FINANCE',
                 'COMMON',
             ];
-    
-            if(!in_array($permission, $permissions)){
+
+            if (!in_array($permission, $permissions)) {
                 throw new Exception("Permissão inexistente");
             }
 
@@ -245,14 +220,6 @@ class AdminService
             $result = $Admin->getInfoAdmin($permission);
 
             return $result;
-        }catch(PDOException $e){
-            return [
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        }catch(Exception $e){
-            return [
-                'error' => $e->getMessage()
-            ];
-        }
+        });
     }
 }

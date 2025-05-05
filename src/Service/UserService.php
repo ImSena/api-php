@@ -2,27 +2,20 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Jwt\JwtAuth;
 use App\Model\TokenUser;
+use App\Service\Base\BaseService;
 use App\Utils\SendEmail;
 use App\Utils\Validator;
 use Exception;
 use App\Model\User;
 use DateTime;
-use PDO;
-use PDOException;
 
-class UserService{
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
+class UserService extends BaseService
+{
     public function create(array $data)
     {
-        try{
+        return $this->execute(function () use ($data) {
             $User = new User($this->pdo);
 
             $fields = Validator::validate([
@@ -35,14 +28,14 @@ class UserService{
             $fields['password'] = password_hash($fields['password'], PASSWORD_DEFAULT);
 
             $person = $data['person'];
-            if($fields['type'] == "LEGAL"){
+            if ($fields['type'] == "LEGAL") {
                 $fields['person'] = Validator::validateLegalPerson([
                     "cnpj" => $person['cnpj'] ?? '',
                     "corporate_name" => $person['corporate_name'] ?? '',
                     "trade_name" => $person['trade_name'] ?? '',
                     "state_registration" => $person['state_registration'] ?? 'ISENTO'
                 ]);
-            }else{
+            } else {
                 $fields['person'] = Validator::validateNaturalPerson([
                     "cpf" => $person['cpf'] ?? '',
                     'dt_birth' => $person['dt_birth'] ?? '',
@@ -60,7 +53,7 @@ class UserService{
                 "zip_code" => $address['zip_code'] ?? ''
             ]);
 
-            if(isset($data['address']['complement'])){
+            if (isset($data['address']['complement'])) {
                 $fields["complement"] = $address['complement'];
             }
 
@@ -75,20 +68,17 @@ class UserService{
 
             $user = $User->create($fields);
 
-            if(!$user){
+            if (!$user) {
                 throw new Exception("Não foi possível criar a conta. Tente novamente mais tarde");
             }
 
             return "Conta criada com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
-    private function isUserExists(array $user){
-        try{
+    private function isUserExists(array $user)
+    {
+        return $this->execute(function () use ($user) {
             $User = new User($this->pdo);
 
             $fields = [];
@@ -97,37 +87,32 @@ class UserService{
 
             $userModel = $User->select($fields);
 
-            if($userModel){
+            if ($userModel) {
                 throw new Exception("Usuário já cadastrado! Realize seu login");
             }
 
-            switch($user['type']){
+            switch ($user['type']) {
                 case 'LEGAL':
                     $fields['login'] = $user['person']['cnpj'];
-                break;
+                    break;
                 case 'NATURAL':
                     $fields['login'] = $user['person']['cpf'];
-                break;
+                    break;
                 default:
                     throw new Exception("Não foi possível criar a conta, pois verificação de conta falhou. Tente novamente mais tarde");
             }
 
             $userModel = $User->select($fields);
 
-            if($userModel){
+            if ($userModel) {
                 throw new Exception("Usuário já cadastrado! Realize seu login");
             }
-        }catch(PDOException $e){
-            throw new Exception($e->getMessage());
-        }catch(Exception $e){
-            throw new Exception($e->getMessage());
-        }
+        });
     }
 
     public function login(array $data)
     {
-        try{
-
+        return $this->execute(function () use ($data) {
             $User = new User($this->pdo);
 
             $fields = Validator::validate([
@@ -136,39 +121,36 @@ class UserService{
                 "type" => $data['type'] ?? 'EMAIL'
             ]);
 
-            switch($fields['type'])
-            {
-                case "EMAIL": 
+            switch ($fields['type']) {
+                case "EMAIL":
                     $fields['login'] = Validator::validateEmail($fields['login']);
-                break;
+                    break;
                 case "CPF":
                     $fields['login'] = Validator::validateCPF($fields['login']);
-                break;
+                    break;
                 case "CNPJ":
                     $fields['login'] = Validator::validateCNPJ($fields['login']);
-                break;
+                    break;
             }
 
             $user = $User->select($fields);
 
-            if(!$user)
-            {
+            if (!$user) {
                 throw new Exception("Usuário ou senha incorretos.");
             }
 
-            if(!password_verify($fields['password'], $user['password']))
-            {
+            if (!password_verify($fields['password'], $user['password'])) {
                 throw new Exception("Usuário ou senha incorretos.");
             }
 
             $firstAccess = $user['status'] === "INACTIVE" ? true : false;
 
-            if($firstAccess){
+            if ($firstAccess) {
                 return [
                     "message" => $this->activeAccountLink($fields, true),
                     "firstAccess" => true
                 ];
-            }else{
+            } else {
                 $token = JwtAuth::renderToken($user['username'], $user['id_user'], 'user', $user['status'], '7 days');
                 return [
                     "message" => "login efetuado com sucesso!",
@@ -177,19 +159,12 @@ class UserService{
                     "token" => $token,
                 ];
             }
-
-
-        }catch(PDOException $e){
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        }catch(Exception $e){
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function activeAccountLink(array $data, bool $sendEmail = false)
     {
-        try {
-
+        return $this->execute(function () use ($data, $sendEmail) {
             $User = new User($this->pdo);
             $TokenUser = new TokenUser($this->pdo);
 
@@ -251,17 +226,12 @@ class UserService{
             }
 
             return "Foi enviado um link para ativar sua conta!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function forgetPassword(array $data)
     {
-
-        try {
+        return $this->execute(function () use ($data) {
             $User = new User($this->pdo);
             $TokenUser = new TokenUser($this->pdo);
 
@@ -306,24 +276,20 @@ class UserService{
             }
 
             return "Foi enviado um link de recuperação para o email.";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function getAllUsers($id)
     {
-        try {
+        return $this->execute(function () use ($id) {
             $User = new User($this->pdo);
 
             $user = $User->selectAll($id);
-    
+
             if (!$user) {
                 throw new Exception("Usuários não encontrados.");
             }
-    
+
             foreach ($user as $key => &$value) {
                 if ($value['person_type'] === 'Física') {
                     unset($value['corporate_name']);
@@ -336,7 +302,7 @@ class UserService{
 
             $totalUser = $User->getTotalUsers();
 
-            if(!$totalUser){
+            if (!$totalUser) {
                 throw new Exception("Valor total não resgatado");
             }
 
@@ -344,39 +310,36 @@ class UserService{
                 "limit" => 25,
                 "total" => $totalUser['total']
             ];
-    
-            return ['message'=> "Users resgatados", "content" => $user, "pages"=>$pages];
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+
+            return ['message' => "Users resgatados", "content" => $user, "pages" => $pages];
+        });
     }
 
-    public function getById(int $id){
-        try{
+    public function getById(int $id)
+    {
+        return $this->execute(function () use ($id) {
             $user = new User($this->pdo);
             $PhoneService = new PhoneService($this->pdo);
             $User = $user->getById($id);
 
-            if(!$User){
+            if (!$User) {
                 throw new Exception("Não foi possível resgatar usuário");
             }
 
             $phoneService = $PhoneService->getAllByIdUser($id);
 
-            if($User['person_type'] == "Física"){
+            if ($User['person_type'] == "Física") {
                 unset($User['cnpj']);
                 unset($User['corporate_name']);
                 unset($User['trade_name']);
                 unset($User['state_registration']);
-            }else{
+            } else {
                 unset($User['cpf']);
                 unset($User['dt_birth']);
                 unset($User['gender']);
             }
 
-            foreach($phoneService['content'] as $phone){
+            foreach ($phoneService['content'] as $phone) {
                 unset($phone['id_user']);
                 $User['contact'][] = $phone;
             }
@@ -385,15 +348,6 @@ class UserService{
                 "message" => "Usuário resgatado com sucesso",
                 "content" => $User
             ];
-        }catch(PDOException $e){
-            return[
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        }
-        catch(Exception $e){
-            return [
-                'error' => $e->getMessage()
-            ];
-        }
+        });
     }
 }

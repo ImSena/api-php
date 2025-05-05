@@ -2,43 +2,31 @@
 
 namespace App\Controllers;
 
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
+use App\Controllers\Base\BaseController;
 use App\Service\OrderService;
-use PDO;
 
-class OrderController
+class OrderController extends BaseController
 {
-
-    private PDO $pdo;
-
-    public function __construct(){
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-    public function create(Request $request, Response $response)
+    public function create()
     {
-        $body = $request::body();
-        $body['id_user'] = $request::getUserId();
+        $body = $this->request::body();
+        $body['id_user'] = $this->request::getUserId();
     
         $orderService = new OrderService($this->pdo);
         $orderService = $orderService->create($body);
 
         if(isset($orderService['error'])){
-            return $response::json([
-                'success' => false,
-                "message" => $orderService['error']
-            ], 400);
+            return $this->errorResponse($orderService['error']);
         }
 
-        $response::json([
+        $this->response::json([
             "success" => true,
             "message" => $orderService['message'],
             "id_order" => $orderService['id_order']
         ]);
     }
 
-    public function getAll(Request $request, Response $response, $param)
+    public function getAll($param)
     {
 
         $params = [];
@@ -50,21 +38,18 @@ class OrderController
         }
 
         $data = [];
-        $data['id_user'] = $request::getUserId();
-        $data['rule'] = $request::getRule();
+        $data['id_user'] = $this->request::getUserId();
+        $data['rule'] = $this->request::getRule();
         $data['params'] = $params;
 
         $orderService = new OrderService($this->pdo);
         $orderService = $orderService->getAll($data);
 
         if(isset($orderService['error'])){
-            return $response::json([
-                'success' => false,
-                "message" => $orderService['error']
-            ], 400);
+            return $this->errorResponse($orderService['error']);
         }
 
-        $response::json([
+        $this->response::json([
             "success" => true,
             "message" => $orderService['message'],
             "content" => $orderService['content'],
@@ -72,7 +57,7 @@ class OrderController
         ]);
     }
 
-    public function getById(Request $request, Response $response, $id)
+    public function getById($id)
     {
         $id = intval($id[0]);
 
@@ -80,17 +65,10 @@ class OrderController
         $orderService = $orderService->getById($id);
 
         if(isset($orderService['error'])){
-            return $response::json([
-                'success' => false,
-                "message" => $orderService['error']
-            ], 400);
+            return $this->errorResponse($orderService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $orderService['message'],
-            "content" => $orderService['content']
-        ]);
+        return $this->successResponse($orderService['message'], $orderService['content']);
     }
 
 }

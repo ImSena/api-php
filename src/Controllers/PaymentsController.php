@@ -2,57 +2,41 @@
 
 namespace App\Controllers;
 
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
+use App\Controllers\Base\BaseController;
 use App\Service\PaymentService;
-use PDO;
 
-class PaymentsController
+class PaymentsController extends BaseController
 {
-
-    private PDO $pdo;
-
-    public function __construct(){
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-
-    public function pay(Request $request, Response $response, $param)
+    public function pay($param)
     {
         $params['id_order'] = isset($param[0]) ? (int) $param[0] : null;
-        $body = $request::body();
+        $body = $this->request::body();
         $body['id_order'] = $params['id_order'];
 
         if(!isset($params['id_order'])){
-            return $response::json([
-                'success' => false,
-                'message' => "Por favor, informe o id do pagamento"
-            ], 400);
+            return $this->errorResponse("Por favor, informe o id do pagamento.");
         }
 
         $paymentService = new PaymentService($this->pdo);
         $paymentService = $paymentService->payOrder($body);
 
         if(isset($paymentService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $paymentService['error']
-            ], 400);
+            return $this->errorResponse($paymentService['error']);
         }
 
-        $response::json([
+        $this->response::json([
             "success" => true,
             "message" => $paymentService['message'],
             "session_url" => $paymentService['session_url']
         ]);
     }
 
-    public function getPayments(Request $request, Response $response, $param)
+    public function getPayments($param)
     {
 
     }
 
-    public function getDetails(Request $request, Response $response, $param)
+    public function getDetails($param)
     {
 
     }

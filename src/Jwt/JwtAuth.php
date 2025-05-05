@@ -15,6 +15,21 @@ class JwtAuth
 {
     private static $secretKey = SECRET_KEY;
 
+    public static function renderSignatureShipping(string $shipping, string $expTime = '2 hours')
+    {
+        $expTimeInSeconds = self::parseExpiration($expTime);
+        $issuedAt = time();
+        $expirationTime = $issuedAt + $expTimeInSeconds;
+
+        $payload = [
+            'iat' => $issuedAt,
+            'exp' => $expirationTime,
+            'shipping' => $shipping
+        ];
+
+        return JWT::encode($payload, trim(self::$secretKey), 'HS256');
+    }
+
     public static function renderToken(string $name, $id, string $rule, string $status, string $expTime = '1 day'): string
     {
         $expTimeInSeconds = self::parseExpiration($expTime);

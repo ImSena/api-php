@@ -2,269 +2,184 @@
 
 namespace App\Controllers;
 
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
+use App\Controllers\Base\BaseController;
 use App\Service\MediaService;
-use PDO;
 
-class MediaController{
+class MediaController extends BaseController{
 
-    private PDO $pdo;
-
-    public function __construct(){
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-    public function getContentFolder(Request $request, Response $response)
+    public function getContentFolder()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->getAllInFolder($body);
 
         if(isset($MediaService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "content" => $MediaService
-        ]);
+        return $this->successResponse("Operação realizada com sucesso.", $MediaService);
+
     }
     
     // Folders
-    public function createFolder(Request $request, Response $response){
-        $body = $request::body();
+    public function createFolder(){
+        $body = $this->request::body();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->createFolder($body);
 
         if(isset($MediaService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $MediaService
-        ]);
+        $this->successResponse($MediaService);
     }
-    public function renameFolder(Request $request, Response $response)
+    public function renameFolder()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->editFolder($body);
 
         if(isset($MediaService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $MediaService
-        ]);
+        return $this->successResponse($MediaService);
     }
-    public function moveFolder(Request $request, Response $response)
+    public function moveFolder()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->moveFolder($body);
 
         if(isset($MediaService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $MediaService
-        ]);
+        return $this->successResponse($MediaService);
     }
-    public function moveFolderTrash(Request $request, Response $response)
+    public function moveFolderTrash()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->moveFolderToTrash($body);
 
         if(isset($MediaService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json([
-            "success" => false,
-            "message" => $MediaService
-        ]);
+        return $this->successResponse($MediaService);
     }
 
-    public function restoreFolder(Request $request, Response $response)
+    public function restoreFolder()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->restoreFolder($body);
 
         if(isset($MediaService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $MediaService
-        ]);
+        return $this->successResponse($MediaService);
     }
 
-    public function deleteFolder(Request $request, Response $response)
+    public function deleteFolder()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->deleteFolder($body);
 
         if(isset($MediaService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $MediaService
-        ]);
+        return $this->successResponse($MediaService);
     }
     // Files
-    public function uploadFile(Request $request, Response $response)
+    public function uploadFile()
     {
-        $body = $request::body();
-        $files = $request::files();
+        $body = $this->request::body();
+        $files = $this->request::files();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->uploadFile($body, $files);
 
         if(isset($MediaService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $MediaService
-        ]);
+        return $this->successResponse($MediaService);
     }
-    public function renameFile(Request $request, Response $response)
+    public function renameFile()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->editFile($body);
 
         if(isset($MediaService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json(data: [
-            "success" => true,
-            "message" => $MediaService
-        ]);
+        return $this->successResponse($MediaService);
     }
-    public function moveFile(Request $request, Response $response)
+    public function moveFile()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->moveFile($body);
 
         if(isset($MediaService['error'])){
-            return $response::json( [
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json( [
-            "success" => true,
-            "message" => $MediaService
-        ]);
+        return $this->successResponse($MediaService);
     }
-    public function moveFileTrash(Request $request, Response $response)
+    public function moveFileTrash()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->moveFileToTrash($body);
 
         if(isset($MediaService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $MediaService
-        ]);
+        return $this->successResponse($MediaService);
     }
-    public function restoreFile(Request $request, Response $response)
+    public function restoreFile()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->restoreFile($body);
 
         if(isset($MediaService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $MediaService
-        ]);
+        return $this->successResponse($MediaService);
     }
-    public function deleteFile(Request $request, Response $response)
+    public function deleteFile()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $MediaService = new MediaService($this->pdo);
         $MediaService = $MediaService->deleteFile($body);
 
         if(isset($MediaService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $MediaService['error']
-            ], 400);
+            return $this->errorResponse($MediaService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $MediaService
-        ]);
+        return $this->successResponse($MediaService);
     }
 }

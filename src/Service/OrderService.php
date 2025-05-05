@@ -2,35 +2,26 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Media;
 use App\Model\Order;
 use App\Model\Product;
+use App\Service\Base\BaseService;
 use App\Utils\Pagination;
 use App\Utils\Validator;
-use Exception;
-use PDO;
-use PDOException;
+use Exception;;
 
-class OrderService
+class OrderService extends BaseService
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo)
-    {
-        $this->pdo = $pdo;
-    }
-
     public function create(array $data)
     {
-        try {
-
+        return $this->execute(function () use ($data) {
             $Order = new Order($this->pdo);
+            $OrderShippingService = new OrderShippingService($this->pdo);
 
             $fields = Validator::validate([
                 "id_address" => $data['id_address'] ?? '',
-                "order_items" => $data['order_items'] ?? ''
+                "order_items" => $data['order_items'] ?? '',
+                "shipping_signature" => $data['shipping_signature'] ?? ''
             ]);
             $fields['id_user'] = $data['id_user'];
             $fields['id_coupon'] = $data['id_coupon'] ?? null;
@@ -41,20 +32,26 @@ class OrderService
                 throw new Exception("Não foi possível realizar pedidos");
             }
 
+            $dataShipping = [
+                "shipping_signature" => $fields['shipping_signature'],
+                "id_order" => $Order
+            ];
+            $shippingSignature = $OrderShippingService->createShipping($dataShipping);
+
+            if (isset($shippingSignature['error'])) {
+                throw new Exception("Assinatura de cotação inválida");
+            }
+
             return [
                 'message' => "Pedido realizado com sucesso",
                 'id_order' => $Order
             ];
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        }, true);
     }
+
     public function getAll(array $data)
     {
-        try {
-
+        return $this->execute(function () use ($data) {
             $Order = new Order($this->pdo);
             $Product = new Product($this->pdo);
             $Media = new Media($this->pdo);
@@ -145,28 +142,12 @@ class OrderService
                 'content' => $OrderResult,
                 "page" => $pages,
             ];
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
-    }
-
-    public function getAllOrder(array $data)
-    {
-        try {
-
-            $Order = new Order($this->pdo);
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function getById(int $id)
     {
-        try {
+        return $this->execute(function () use ($id) {
             $Order = new Order($this->pdo);
             $Media = new Media($this->pdo);
             $OrderResult = $Order->getById($id);
@@ -184,7 +165,7 @@ class OrderService
                 $product = $Product->getById($productItem['id_product_variant']);
                 $path = $Media->getPathToFile($product);
                 $extension = $MediaService->getExtension($product['file_type']);
-                $product['image_path'] = $path.'.'.$extension;
+                $product['image_path'] = $path . '.' . $extension;
                 unset($product['qtd_stock']);
                 unset($product['id_media']);
                 $OrderResult['products'][] = $product;
@@ -200,16 +181,11 @@ class OrderService
                 'message' => 'Pedido encontrado com sucesso',
                 'content' => $OrderResult
             ];
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
     public function changeStatus(string $status, int $id_order)
     {
-        try {
-
+        return $this->execute(function () use ($status, $id_order) {
             $statusExisting = [
                 'PENDING',
                 'PROCESSING',
@@ -233,16 +209,11 @@ class OrderService
             }
 
             return "Status do pedido alterado com sucesso.";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
     public function verifyOrder(int $id)
     {
-        try {
-
+        return $this->execute(function () use ($id) {
             $Order = new Order($this->pdo);
 
             $result = $Order->verifyStatus($id);
@@ -252,21 +223,12 @@ class OrderService
             }
 
             return $result;
-        } catch (PDOException $e) {
-            return [
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        } catch (Exception $e) {
-            return [
-                'error' => $e->getMessage()
-            ];
-        }
+        });
     }
 
     public function insertPayment(array $data)
     {
-        try{
-
+        return $this->execute(function () use ($data) {
             $fields = Validator::validate([
                 "id" => $data['id'],
                 "payment_url" => $data['payment_url'],
@@ -275,31 +237,23 @@ class OrderService
 
             $Order = new Order($this->pdo);
 
-            if(!$Order->insertPayment($fields)){
+            if (!$Order->insertPayment($fields)) {
                 throw new Exception("Não foi possível inserir link de pagamento");
             }
 
             return "Pagamento inserido com sucesso";
-
-        }catch(PDOException $e){
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        }
-        catch(Exception $e){
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function cancellPayment(int $id)
     {
-        try{
-            $this->pdo->beginTransaction();
-
+        return $this->execute(function () use ($id) {
             $Order = new Order($this->pdo);
             $ProductService = new ProductService($this->pdo);
 
             $items = $Order->getOrderIdProductItems($id);
 
-            foreach($items as $item){
+            foreach ($items as $item) {
                 $data = [
                     "id" => $item['id_product_variant'],
                     "quantity" => $item['quantity']
@@ -307,29 +261,18 @@ class OrderService
 
                 $result = $ProductService->insertQuantity($data);
 
-                if(isset($result['error'])){
+                if (isset($result['error'])) {
                     throw new Exception("Não foi possível cancelar pedido.");
                 }
             }
 
             $result = $this->changeStatus("CANCELLED", $id);
 
-            if(isset($result['error'])){
+            if (isset($result['error'])) {
                 throw new Exception("Não foi possível cancelar pedido.");
             }
 
             $this->pdo->commit();
-
-        }catch(PDOException $e){
-            $this->pdo->rollBack();
-            return [
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        }catch(Exception $e){
-            $this->pdo->rollBack();
-            return [
-                'error' => $e->getMessage()
-            ];
-        }
+        }, true);
     }
 }

@@ -2,23 +2,15 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Variation;
+use App\Service\Base\BaseService;
 use App\Utils\Validator;
 use Exception;
-use PDO;
-use PDOException;
-
-class VariationService
+class VariationService extends BaseService
 {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
     public function createVariation(array $data)
     {
-        try {
+        return $this->execute(function () use ($data) {
             $Variation = new Variation($this->pdo);
             $fields = Validator::validate([
                 "name" => $data['name'] ?? ''
@@ -31,21 +23,17 @@ class VariationService
             }
 
             return "Atributo criado com sucesso";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function getAllVariations()
     {
-        try {
+        return $this->execute(function () {
             $Variation = new Variation($this->pdo);
 
             $Variations = $Variation->getAllVariants();
 
-            foreach($Variations as &$variation){
+            foreach ($Variations as &$variation) {
                 $variation['values'] = $Variation->getValuesVariation($variation['id_variant_attribute']);
             }
 
@@ -53,17 +41,12 @@ class VariationService
                 'message' => "Resgatado com sucesso",
                 'content' => $Variations
             ];
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function updateVariation(array $data, int $id)
     {
-        try {
-
+        return $this->execute(function () use ($data, $id) {
             $Variation = new Variation($this->pdo);
 
             $fields = Validator::validate([
@@ -79,16 +62,12 @@ class VariationService
             }
 
             return "Variação atualizada com sucesso";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function deleteVariation(int $id)
     {
-        try {
+        return $this->execute(function () use ($id) {
             $Variation = new Variation($this->pdo);
 
             $Variation = $Variation->deleteVariation($id);
@@ -98,17 +77,12 @@ class VariationService
             }
 
             return "Atributo deletado com sucesso";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function createValue(array $data)
     {
-        try {
-
+        return $this->execute(function () use ($data) {
             $Variation = new Variation($this->pdo);
 
             $fields = Validator::validate([
@@ -119,21 +93,17 @@ class VariationService
 
             $Variation = $Variation->createValue($fields);
 
-            if(!$Variation){
+            if (!$Variation) {
                 throw new Exception("Não foi possível adicionar valor a variação");
             }
 
             return "Variação criada com sucesso";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function getValueVariation(int $id)
     {
-        try{
+        return $this->execute(function () use ($id) {
             $Variation = new Variation($this->pdo);
 
             $fields = Validator::validate([
@@ -146,17 +116,12 @@ class VariationService
                 "message" => "Valores dos atributos resgatados",
                 "content" => $Variation
             ];
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function updateValueVariation(array $data, int $id)
     {
-        try{
-
+        return $this->execute(function () use ($data) {
             $Variation = new Variation($this->pdo);
 
             $fields = Validator::validate([
@@ -166,21 +131,17 @@ class VariationService
 
             $Variation = $Variation->updateValue($fields);
 
-            if(!$Variation){
+            if (!$Variation) {
                 throw new Exception("Não foi possível atualizar valor");
             }
 
             return "Valor atualizado com sucesso";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function deleteValue(int $id)
     {
-        try{
+        return $this->execute(function () use ($id) {
             $Variation = new Variation($this->pdo);
 
             $fields = Validator::validate([
@@ -189,15 +150,11 @@ class VariationService
 
             $Variation = $Variation->deleteValue($fields['id']);
 
-            if(!$Variation){
+            if (!$Variation) {
                 throw new Exception("Não foi possível deletar o valor");
             }
 
             return "Valor deletado com sucesso";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 }

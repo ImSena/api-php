@@ -2,44 +2,24 @@
 
 namespace App\Controllers\Frete;
 
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
+use App\Controllers\Base\BaseController;
 use App\Service\Frete\ShippingService;
-use PDO;
 
-class ShippingController
+class ShippingController extends BaseController
 {
-
-    private PDO $pdo;
-
-    public function __construct()
-    {
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-
-    public function getQuote(Request $request, Response $response)
+    public function getQuote()
     {
 
-        $body = $request::body();
+        $body = $this->request::body();
 
         $shippingService = new ShippingService($this->pdo);
 
         $result = $shippingService->getQuote($body);
 
         if (isset($result['error'])) {
-            return [
-                $response::json([
-                    "success" => false,
-                    "message" => $result['error']
-                ], 400)
-            ];
+            return $this->errorResponse($result['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => "Cotação de frete resgatada com sucesso",
-            "content" => $result
-        ]);
+        return $this->successResponse("Cotação de frete resgatada com sucesso", $result);
     }
 }

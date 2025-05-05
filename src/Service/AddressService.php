@@ -4,19 +4,14 @@ namespace App\Service;
 
 use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Address;
+use App\Service\Base\BaseService;
 use App\Utils\Validator;
 use Exception;
 use PDO;
 use PDOException;
 
-class AddressService
+class AddressService extends BaseService
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
     public function create(array $data)
     {
         try{

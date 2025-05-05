@@ -2,94 +2,62 @@
 
 namespace App\Controllers;
 
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
+use App\Controllers\Base\BaseController;
 use App\Service\CategoryService;
-use PDO;
 
-class CategoriesController
+class CategoriesController extends BaseController
 {
-    private PDO $pdo;
-
-    public function __construct(){
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-    public function createCategories(Request $request, Response $response)
+    public function createCategories()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $category = new CategoryService($this->pdo);
         $category = $category->createCategory($body);
 
         if (isset($category['error'])) {
-            return $response::json([
-                'success' => false,
-                'message' => $category['error']
-            ], 400);
+            return $this->errorResponse($category['error']);
         }
 
-        $response::json([
-            'success' => true,
-            'message' => $category
-        ], 200);
+        return $this->successResponse($category);
     }
 
-    public function getCategories(Request $request, Response $response)
+    public function getCategories()
     {
         $category = new CategoryService($this->pdo);
         $category = $category->getAllCategories();
 
         if (isset($category['error'])) {
-            return $response::json([
-                'success' => false,
-                'message' => $category['error']
-            ], 400);
+            return $this->errorResponse($category['error']);
         }
         
-        $response::json([
-            'success' => true,
-            'message' => "Categorias resgatadas com sucesso!",
-            'content' => $category
-        ]);
+        return $this->successResponse("Categorias resgatadas com sucesso!", $category);
     }
 
 
-    public function updateCategory(Request $request, Response $response){
-        $body = $request::body();
+    public function updateCategory(){
+        $body = $this->request::body();
 
         $category = new CategoryService($this->pdo);
         $category = $category->update($body);
 
         if(isset($category['error'])){
-            return $response::json([
-                'success' => false,
-                "message" => $category['error']
-            ], 400);
+            return $this->errorResponse($category['error']);
         }
 
-        $response::json([
-            'success' => true,
-        ], 204);
+        return $this->successResponse();
     }
 
-    public function deleteCategory(Request $request, Response $response)
+    public function deleteCategory()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $category = new CategoryService($this->pdo);
         $category = $category->delete($body);
 
         if (isset($category['error'])) {
-            return $response::json([
-                'success' => false,
-                'message' => $category['error']
-            ], 400);
+            return $this->errorResponse($category['error']);
         }
 
-        $response::json([
-            'success' => true,
-            'message' => "Categoria deletada com sucesso!",
-        ]);
+        return $this->successResponse("Categoria deletada com sucesso!");
     }
 }

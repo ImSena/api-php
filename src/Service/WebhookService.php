@@ -4,24 +4,17 @@ namespace App\Service;
 
 use App\Exceptions\RouteNotFoundException;
 use App\Helpers\DatabaseErrorHelpers;
+use App\Service\Base\BaseService;
 use App\Stripe\Keys;
 use Exception;
-use PDO;
 use PDOException;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\Stripe;
 use Stripe\Webhook;
 use UnexpectedValueException;
 
-class WebhookService
+class WebhookService extends BaseService
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
     public function processEvent($payload, $headers)
     {
         try {

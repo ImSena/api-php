@@ -12,7 +12,6 @@ class Order extends BaseModel
     public function create(array $data)
     {
         $pdo = $this->getPdo();
-        $pdo->beginTransaction();
         try {
 
             $sql = "INSERT INTO orders (id_user, id_address";
@@ -50,14 +49,11 @@ class Order extends BaseModel
                 throw new Exception("Erro ao criar status do pedido");
             }
 
-            $pdo->commit();
             return $orderId;
         } catch (PDOException $e) {
-            $pdo->rollBack();
-            return false;
+            throw new Exception("Erro PDO na criação do pedido: " . $e->getMessage());
         } catch (Exception $e) {
-            $pdo->rollBack();
-            return false;
+            throw new Exception("Erro geral na criação do pedido: " . $e->getMessage());
         }
     }
     private function createOrderItems(array $orderItems, int $orderId, $pdo)
@@ -90,9 +86,10 @@ class Order extends BaseModel
         $stmt = $pdo->prepare($sql);
 
         foreach ($orderItems as $item) {
-            $stmt->bindParam(":id_product_variant", $item['id_product_variant'], PDO::PARAM_INT);
+            $stmt->bindValue(":id_product_variant", $item['id_product_variant'], PDO::PARAM_INT);
             $stmt->execute();
             $stock = $stmt->fetchColumn();
+
 
             if ($stock === false || $stock < $item['quantity']) {
                 return false;

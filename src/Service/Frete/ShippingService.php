@@ -2,20 +2,19 @@
 
 namespace App\Service\Frete;
 
-use App\Helpers\DatabaseErrorHelpers;
+use App\Jwt\JwtAuth;
 use App\Model\Frete\Shipping;
 use App\Model\Store;
+use App\Service\Base\BaseService;
 use App\Service\ProductService;
 use App\Utils\Validator;
 use Exception;
 use PDO;
-use PDOException;
 
 require_once __DIR__ . "/../../../config.php";
 
-class ShippingService
+class ShippingService extends BaseService
 {
-    private PDO $pdo;
     private bool $production;
     private string $url;
 
@@ -23,7 +22,7 @@ class ShippingService
 
     public function __construct(PDO $pdo)
     {
-        $this->pdo = $pdo;
+        parent::__construct($pdo);
         $this->production = IS_PRODUCTION;
         $this->url = $this->production ?
             'https://melhorenvio.com.br/api/v2/me/'
@@ -33,22 +32,18 @@ class ShippingService
 
     private function getTokenShipping()
     {
-        try {
+        return $this->execute(function () {
             $Shipping = new Shipping($this->pdo);
 
             $result = $Shipping->getTokenShipping();
 
             return $result['token_shipping'];
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     private function getPostalCodeStore()
     {
-        try {
+        return $this->execute(function () {
             $Store = new Store($this->pdo);
             $addresses = $Store->getAddress();
 
@@ -57,42 +52,38 @@ class ShippingService
             });
 
             return $address[0]['zip_code'];
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function getQuote(array $data)
     {
-        try {
+        return $this->execute(function () use ($data) {
             $fields = Validator::validate([
                 "zip_code" => $data['zip_code'] ?? '',
                 "products" => $data['products'] ?? ''
             ]);
-    
-            if(!is_array($fields['products'])){
+
+            if (!is_array($fields['products'])) {
                 throw new Exception("Os campos [id_product, quantity] são obrigatórios");
             }
-    
-            foreach($fields['products'] as $produ){
+
+            foreach ($fields['products'] as $produ) {
                 Validator::validate([
                     "id_product" => $produ['id_product'] ?? '',
                     "quantity" => $produ['quantity'] ?? ''
                 ]);
             }
-    
-    
+
+
             $client = new \GuzzleHttp\Client();
             $postalCodeStore = $this->getPostalCodeStore();
             $ProductService = new ProductService($this->pdo);
-    
+
             $products = [];
-    
+
             foreach ($data['products'] as $prod) {
                 $product = $ProductService->getProductQuote($prod['id_product']);
-    
+
                 $products = [
                     "id" => $product['id_product_variant'],
                     "width" => $product['weight'],
@@ -103,7 +94,7 @@ class ShippingService
                     "quantity" => $prod['quantity']
                 ];
             }
-    
+
             $body = [
                 "from" => [
                     "postal_code" => $postalCodeStore,
@@ -115,7 +106,7 @@ class ShippingService
                     $products
                 ]
             ];
-    
+
             $response = $client->request('POST', $this->url . 'shipment/calculate', [
                 'json' => $body,
                 'headers' => [
@@ -126,12 +117,15 @@ class ShippingService
                 ],
                 'verify' => $this->production
             ]);
-    
-            return json_decode($response->getBody()->getContents(), true);
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+
+            $shippings = json_decode($response->getBody()->getContents(), true);
+
+            foreach ($shippings as &$shipping) {
+                $service = json_encode($shipping);
+                $shipping['signature_eccomerce'] = JwtAuth::renderSignatureShipping($service);
+            }
+
+            return $shippings;
+        });
     }
 }

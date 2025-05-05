@@ -2,26 +2,18 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
+use App\Service\Base\BaseService;
 use App\Service\StoreService;
 use Exception;
-use PDO;
-use PDOException;
 use PHPMailer\PHPMailer\PHPMailer;
 
 require_once __DIR__ . '/../../config.php';
 
-class NotificationsService
+class NotificationsService extends BaseService
 {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
     public function sendNotificationsClient(string $subject, string $email)
     {
-        try {
+        return $this->execute(function() use ($subject, $email){
             $subjects = [
                 'PAYMENT_SUCCESS',
                 'PAYMENT_CANCELED',
@@ -56,15 +48,7 @@ class NotificationsService
             $mail->Body = $contentEmail['html'];
 
             return $mail->Send();
-        } catch (Exception $e) {
-            return [
-                'error' => $e->getMessage()
-            ];
-        } catch (PDOException $e) {
-            return [
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        }
+        });
     }
 
     private function getContentEmail($subject)
@@ -127,8 +111,7 @@ class NotificationsService
 
     public function sendNotificationsAdmin(string $subject, array $info)
     {
-        try {
-
+        return $this->execute(function() use ($subject, $info){
             $Admin = new AdminService($this->pdo);
             $Store = new StoreService($this->pdo);
 
@@ -168,15 +151,7 @@ class NotificationsService
             $mail->Body = $contentEmail['html'];
 
             return $mail->Send();
-        } catch (Exception $e) {
-            return [
-                'error' => $e->getMessage()
-            ];
-        } catch (PDOException $e) {
-            return [
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        }
+        });
     }
 
     private function getContentEmailAdmin(string $subject, array $info)

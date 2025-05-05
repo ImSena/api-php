@@ -60,12 +60,12 @@ class Core
                 [$controller, $action] = $route['action'];
 
                 try{
-                    $extendController = new $controller();
+                    $extendController = new $controller(new Request, new Response);
                     
                     if (!method_exists($extendController, $action)) {
                         throw new Exception("O método '$action' não existe no controlador '$controller'");
                     }
-                    $extendController->$action(new Request, new Response, $matches);
+                    $extendController->$action($matches);
                 }catch(Exception $e){
                     $message = $e->getMessage();
                     Response::json([
@@ -80,8 +80,8 @@ class Core
         
         if (!$routeFound) {
             $controller = $prefixController . "NotFoundController";
-            $notFoundController = new $controller();
-            $notFoundController->index(new Request, new Response);
+            $notFoundController = new $controller(new Request, new Response);
+            $notFoundController->index();
         }
     }
 }

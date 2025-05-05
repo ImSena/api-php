@@ -2,23 +2,15 @@
 
 namespace App\Controllers;
 
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
+use App\Controllers\Base\BaseController;
 use App\Service\WebhookService;
-use PDO;
 
-class WebhookController
+class WebhookController extends BaseController
 {
-    private PDO $pdo;
-
-    public function __construct(){
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-    public function getEvent(Request $request, Response $response)
+    public function getEvent()
     {
-        $body = $request::body();
-        $headers = $request::getHeaders();
+        $body = $this->request::body();
+        $headers = $this->request::getHeaders();
 
         $webHookService = new WebhookService($this->pdo);
         $webHookService = $webHookService->processEvent($body, $headers);
@@ -27,15 +19,9 @@ class WebhookController
         error_log("pagamento: ".print_r($webHookService, true));
 
         if(isset($webHookService['error'])){
-            return $response::json([
-                'success' => false,
-                "message" => $webHookService['error']
-            ], 400);
+            return $this->errorResponse($webHookService['error']);
         }
 
-        $response::json([
-            'success' => true,
-            'message' => $webHookService
-        ]);
+        return $this->successResponse($webHookService);
     }
 }

@@ -2,29 +2,17 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Media;
 use App\Model\StoreMedia;
+use App\Service\Base\BaseService;
 use App\Utils\Validator;
 use Exception;
-use PDO;
-use PDOException;
 
-class StoreMediaService
+class StoreMediaService extends BaseService
 {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo)
-    {
-        $this->pdo = $pdo;
-    }
-
     public function createMedia(array $data)
     {
-        try {
-
-            $this->pdo->beginTransaction();
-
+        return $this->execute(function () use ($data) {
             $types = [
                 'LOGO',
                 'LOGO_FOOTER',
@@ -48,25 +36,16 @@ class StoreMediaService
                 throw new Exception("Não foi possível inserir a mídia.");
             }
 
-            $this->pdo->commit();
-
             return "Media criada com sucesso";
-        } catch (PDOException $e) {
-            $this->pdo->rollBack();
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            $this->pdo->rollBack();
-            return ['error' => $e->getMessage()];
-        }
+        }, true);
     }
 
     public function getMedias()
     {
-        try {
-            
+        return $this->execute(function(){
             $medias = $this->getIdentity();
             $config = $this->getConfig();
-
+    
             return [
                 "LOGO" => isset($medias['LOGO']) ? $medias['LOGO'] : null,
                 "LOGO_FOOTER" => isset($medias['LOGO_FOOTER']) ? $medias['LOGO_FOOTER'] : null,
@@ -74,86 +53,73 @@ class StoreMediaService
                 "THEME" => isset($config['THEME']) ? $config['THEME'] : null,
                 'LAYOUT' => isset($config['LAYOUT']) ? $config['LAYOUT'] : null
             ];
-
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     private function getConfig()
     {
-        try{
-
+        return $this->execute(function(){
             return [
                 "THEME" => "blue",
                 "LAYOUT" => "layout_teste"
             ];
-        }catch(PDOException $e){
-            throw new PDOException($e);
-        }catch(Exception $e){
-            throw new Exception($e);
-        }
+        });
     }
 
-    private function getIdentity(){
-        try{
+    private function getIdentity()
+    {
+        return $this->execute(function(){
             $StoreMedia = new StoreMedia($this->pdo);
             $Media = new Media($this->pdo);
             $MediaService = new MediaService($this->pdo);
-    
+
             $types = [
                 'LOGO',
                 'LOGO_FOOTER',
                 'FAVICON',
             ];
-    
+
             $medias = [];
-    
-            foreach($types as $type){
+
+            foreach ($types as $type) {
                 $mediaStore = $StoreMedia->getMedia($type);
-                if(!$mediaStore){
+                if (!$mediaStore) {
                     continue;
                 }
-                
+
                 $file = $Media->getFile($mediaStore['id_media']);
-                
-                if(!$file){
+
+                if (!$file) {
                     throw new Exception("Não foi possível resgatar midia");
                 }
-    
+
                 $path = $Media->getPathToFile($mediaStore);
                 $extension = $MediaService->getExtension($file['file_type']);
                 $picture = $path . '.' . $extension;
-    
-                switch($mediaStore['type']){
+
+                switch ($mediaStore['type']) {
                     case "LOGO":
                         $medias["LOGO"] = [
                             "type" => $mediaStore['type'],
                             "path" => $picture
                         ];
-                    break;
-                    case "LOGO_FOOTER" :
+                        break;
+                    case "LOGO_FOOTER":
                         $medias['LOGO_FOOTER'] = [
-                        "type" => $mediaStore['type'],
-                        "path" => $picture
-                    ];
-                    break;
-                    case "FAVICON": 
+                            "type" => $mediaStore['type'],
+                            "path" => $picture
+                        ];
+                        break;
+                    case "FAVICON":
                         $medias['FAVICON'] = [
                             "type" => $mediaStore['type'],
                             "path" => $picture
                         ];
-                    break;
+                        break;
                 }
             }
-    
+
             return $medias;
-        }catch(PDOException $e){
-            throw $e;
-        }catch(Exception $e){
-            throw $e;
-        }
+        });
     }
 }

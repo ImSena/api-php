@@ -2,76 +2,53 @@
 
 namespace App\Controllers\Stripe;
 
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
-use App\Service\Stripe\StoreService;
-use PDO;
+use App\Controllers\Base\BaseController;
+use App\Service\StoreService;
 
-class StoreController
+class StoreController extends BaseController
 {
-
-    private PDO $pdo;
-
-    public function __construct(){
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-
-    public function createStore(Request $request, Response $response)
+    public function createStore()
     {
-        $data = $request::body();
+        $data = $this->request::body();
         $storeService = new StoreService($this->pdo);
         $storeService = $storeService->createStore($data);
 
         if (isset($storeService['error'])) {
-            return $response::json([
-                "success" => false,
-                "message" => $storeService['error']
-            ], 400);
+            return $this->errorResponse($storeService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $storeService
-        ]);
+        $this->successResponse($storeService);
     }
 
-    public function initiateOnboarding(Request $request, Response $response, $param)
+    public function initiateOnboarding($param)
     {
         $storeId = isset($param[0]) ? $param[0] : null;
         $storeService = new StoreService($this->pdo);
         $storeService = $storeService->startOnboardingProcess($storeId);
 
         if (isset($storeService['error'])) {
-            return $response::json([
-                "success" => false,
-                "message" => $storeService['error']
-            ], 400);
+            return $this->errorResponse($storeService['error']);
         }
 
-
-        $response::json([
+        $this->response::json([
             "success" => true,
             "message" => $storeService['message'],
             "redirect_url" => $storeService['url'],
         ]);
     }
 
-    public function login(Request $request, Response $response, $param)
+    public function login($param)
     {
         $storeId = isset($param[0]) ? $param[0] : null;
         $storeService = new StoreService($this->pdo);
         $storeService = $storeService->createLogin($storeId);
 
         if (isset($storeService['error'])) {
-            return $response::json([
-                "success" => false,
-                "message" => $storeService['error']
-            ], 400);
+            return $this->errorResponse($storeService['error']);
         }
 
 
-        $response::json([
+        $this->response::json([
             "success" => true,
             "message" => $storeService['message'],
             "redirect_url" => $storeService['url'],

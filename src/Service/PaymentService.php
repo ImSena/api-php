@@ -2,42 +2,34 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Order;
 use App\Model\Payment;
 use App\Model\Store;
+use App\Service\Base\BaseService;
 use App\Stripe\Keys;
 use App\Utils\Validator;
 use DateTime;
 use DateTimeZone;
 use Exception;
-use PDO;
-use PDOException;
 use Stripe\Checkout\Session;
 use Stripe\Customer;
 use Stripe\Stripe;
 
 require_once __DIR__ . '/../../config.php';
 
-class PaymentService
+class PaymentService extends BaseService
 {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo)
-    {
-        $this->pdo = $pdo;
-    }
-
     public function payOrder(array $data)
     {
-        try {
+        return $this->execute(function () use ($data) {
             $Order = new OrderService($this->pdo);
             $UserService = new UserService($this->pdo);
             $addressService = new AddressService($this->pdo);
+            $shippingService = new OrderShippingService($this->pdo);
 
             $status = $Order->verifyOrder($data['id_order']);
 
-            if(isset($status['error'])){
+            if (isset($status['error'])) {
                 throw new Exception("Não foi possível encontrar pedido");
             }
 
@@ -53,6 +45,7 @@ class PaymentService
 
             if (!$payment_url) {
                 Stripe::setApiKey(Keys::getSecretKey());
+                $shippingResult = $shippingService->getOrderShipping($data['id_order']);
 
                 $fields['id_order'] = $data['id_order'];
                 $orderService = $Order->getById($fields['id_order']);
@@ -91,9 +84,12 @@ class PaymentService
                     ]
                 ], $options);
 
+
+                $shippingCost = floatval($shippingResult['shipping_cost']);
                 $totalPrice = $orderService['content']['total_price'];
                 $totalPrice = str_replace(['.', ','], ['', '.'], $totalPrice);
                 $totalPrice = floatval($totalPrice);
+                $totalPrice += $shippingCost;
 
                 $sessionParams = [
                     "payment_method_types" => ['card', 'boleto'],
@@ -137,12 +133,12 @@ class PaymentService
                 $dataPayment = [
                     "id" => $data['id_order'],
                     "payment_url" => $session->url,
-                    "payment_expires_at" => date("Y-m-d H:i:s",$expiresAt)
+                    "payment_expires_at" => date("Y-m-d H:i:s", $expiresAt)
                 ];
 
                 $result = $Order->insertPayment($dataPayment);
 
-                if(isset($result['error'])){
+                if (isset($result['error'])) {
                     throw new Exception("Não foi possível gerar pagamento");
                 }
 
@@ -155,10 +151,9 @@ class PaymentService
                 $now = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
                 $expiration = DateTime::createFromFormat('Y-m-d H:i:s', $payment_expired, new DateTimeZone('America/Sao_Paulo'));
 
-                if($expiration < $now)
-                {
+                if ($expiration < $now) {
                     $result = $Order->cancellPayment($data['id_order']);
-                    if(isset($result['error'])){
+                    if (isset($result['error'])) {
                         throw new Exception("Ocorreu um erro inesperado. Por favor, tente mais tarde.");
                     }
 
@@ -167,7 +162,7 @@ class PaymentService
 
                 $result = $this->getPayment($data['id_order']);
 
-                if(isset($result['error'])){
+                if (isset($result['error'])) {
                     throw new Exception("Não foi possível recuperar link de pagamento.");
                 }
 
@@ -176,35 +171,25 @@ class PaymentService
                     'message' => "Pagamento recuperado com sucesso."
                 ];
             }
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function getPayment(int $id)
     {
-        try{
-
+        return $this->execute(function() use ($id){
             $Order = new Order($this->pdo);
-
+    
             $result = $Order->getLinkPayment($id);
-
-            if(!$result){
+    
+            if (!$result) {
                 throw new Exception("Não foi possível recuperar link de pagamento!");
             }
-
+    
             return $result;
-
-        }catch(PDOException $e){
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        }catch(Exception $e){
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
-    private function getTime():int
+    private function getTime(): int
     {
         $now = time();
 
@@ -213,7 +198,7 @@ class PaymentService
 
     public function register(array $data)
     {
-        try {
+        return $this->execute(function() use ($data){
             $fields = Validator::validate([
                 "id_order" => $data['id_order'] ?? '',
                 "id_transaction" => $data['id_transaction'] ?? '',
@@ -224,19 +209,15 @@ class PaymentService
                 'payment_date' => $data['payment_date'] ?? '',
                 'send_email' => $data['send_email']
             ]);
-
+    
             $Payment = new Payment($this->pdo);
             $Payment->register($fields);
-
+    
             if (!$Payment) {
                 throw new Exception("Não foi possível cadastrar registro do pagamento");
             }
-
+    
             return "Produto cadastrado com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 }

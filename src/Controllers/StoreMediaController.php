@@ -1,59 +1,37 @@
 <?php
 
 namespace App\Controllers;
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
+
+use App\Controllers\Base\BaseController;
 use App\Service\StoreMediaService;
-use PDO;
 
-
-class StoreMediaController{
+class StoreMediaController extends BaseController{
     
-    private PDO $pdo;
-
-    public function __construct(){
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-
-    public function create(Request $request, Response $response){
+    public function create(){
         
-        $data = $request::body();
+        $data = $this->request::body();
 
         $StoreMediaService = new StoreMediaService($this->pdo);
         $result = $StoreMediaService->createMedia($data);
 
         if(isset($result['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $result['error']
-            ], 400);
+            return $this->errorResponse($result['error']);
         }
         
-        $response::json([
-            "success" => true,
-            "message" => $result
-        ]);
+        return $this->successResponse($result);
     }
 
-    public function getAssets(Request $request, Response $response, $param)
+    public function getAssets($param)
     {
 
         $StoreMediaService = new StoreMediaService($this->pdo);
         $result = $StoreMediaService->getMedias();
 
         if(isset($result['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $result['error']
-            ], 400);
+            return $this->errorResponse($result['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => "Midia resgatada com sucesso",
-            "content" => $result
-        ]);
+        return $this->successResponse("Assets resgatado com sucesso.", $result);
     }
 
 }
