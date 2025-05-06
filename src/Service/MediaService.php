@@ -267,7 +267,7 @@ class MediaService extends BaseService
     // Files
     public function uploadFile(array $data, array $files): array | string
     {
-        return $this->execute(function () use ($data) {
+        return $this->execute(function () use ($data, $files) {
             $Media = new Media($this->pdo);
             $fields = Validator::validate([
                 "id_folder" => $data['id_folder'] ?? 1,

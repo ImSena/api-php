@@ -315,34 +315,112 @@ class ProductService extends BaseService
 
     public function insertQuantity(array $data)
     {
-        return $this->execute(function() use ($data){
+        return $this->execute(function () use ($data) {
             $fields = Validator::validate([
                 "id" => $data['id'],
                 "quantity" => $data['quantity']
             ]);
-    
+
             $Product = new Product($this->pdo);
-    
+
             if (!$Product->insertQuantity($fields)) {
                 throw new Exception("Não foi possível atualizar pedido");
             }
-    
+
             return "Quantidade inserida com sucesso!";
         });
     }
 
     public function getProductQuote(int $id_product)
     {
-        return $this->execute(function() use ($id_product){
+        return $this->execute(function () use ($id_product) {
             $Product = new Product($this->pdo);
-    
+
             $result = $Product->getProductQuote($id_product);
-    
+
             if (!$result) {
                 throw new Exception("Não foi possível encontrar produto");
             }
-    
+
             return $result;
         });
+    }
+
+    public function editProduct(array $data)
+    {
+        return $this->execute(function () use ($data) {
+            $Product = new Product($this->pdo);
+
+            $fields = Validator::validate([
+                "id_category" => $data['id_category'] ?? '',
+            ]);
+
+            $productData = Validator::validate([
+                "name" => $data['products']['name'] ?? '',
+                "description" => $data['products']['description'] ?? '',
+                "id_brand" => $data['products']['id_brand'] ?? '',
+                "weight" => $data['products']['weight'] ?? '',
+                "length" => $data['products']['length'] ?? '',
+                "width" => $data['products']['width'] ?? '',
+                "height" => $data['products']['height'] ?? '',
+            ]);
+
+            $productData['variations'] = [];
+
+            foreach ($data['products']['variations'] as $variation) {
+                $validatedVariation = Validator::validate([
+                    "id_product_variant" => $variation['id_product_variant'] ?? '',
+                    "sku" => $variation['sku'] ?? '',
+                    "price" => $variation['price'] ?? '',
+                    "qtd_stock" => $variation['qtd_stock'] ?? '',
+                    "is_default" => $variation['is_default'] ?? '',
+                    "discount" => $variation['discount'] ?? '',
+                ]);
+
+                $validatedVariation['pictures'] = [];
+
+                foreach ($variation['pictures'] ?? [] as $picture) {
+                    $validatedPicture = Validator::validate([
+                        "id_media" => $picture['id_media'] ?? '',
+                        "position" => $picture['position'] ?? '',
+                        "is_main" => $picture['is_main'] ?? '',
+                    ]);
+
+                    $validatedVariation['pictures'][] = $validatedPicture;
+                }
+
+                $productData['variations'][] = $validatedVariation;
+            }
+
+            $fields['products'] = $productData;
+            $fields['id_product'] = $data['id_product'];
+
+            $product = $Product->editProduct($fields);
+
+            if(!$product){
+                throw new Exception("Não foi possível editar o produto.");
+            }
+
+            $productVariation = $Product->editVariations($fields);
+
+            if(!$productVariation){
+                throw new Exception("Não foi possível editar variação");
+            }
+
+            $categoryProduct = $Product->editCategoryProduct($fields);
+
+            if(!$categoryProduct){
+                throw new Exception("Não foi possível atualizar categoria do produto");
+            }
+
+            $picturesProduct = $Product->editPicturesProduct($fields);
+
+            if(!$picturesProduct){
+                throw new Exception("Não foi possível atualizar imagens");
+            }
+
+            return "Produto editado com sucesso.";
+
+        }, true);
     }
 }

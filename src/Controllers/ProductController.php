@@ -58,7 +58,6 @@ class ProductController extends BaseController
             'page' => $productService['page'],
         ], 200);
     }
-
     public function getAllBy($param)
     {
         $params = [];
@@ -79,7 +78,6 @@ class ProductController extends BaseController
             'page' => $productService['page'],
         ]);
     }
-
     public function getById($param)
     {
         $params = [];
@@ -93,5 +91,21 @@ class ProductController extends BaseController
         }
 
         return $this->successResponse("Produto resgatado com sucesso.", $productService);
+    }
+    public function update($param)
+    {
+        $body = $this->request::body();
+        $id_product = (int) $param[0];
+        $body['id_product'] = $id_product;
+
+        $productService = new ProductService($this->pdo);
+        $result = $productService->editProduct($body);
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse("Produto editado com sucesso.", [], 204);
+
     }
 }

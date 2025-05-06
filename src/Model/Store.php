@@ -52,10 +52,11 @@ class Store extends BaseModel
 
     public function updateAccount(array $data){
         $pdo = $this->getPdo();
-        $sql = "UPDATE store SET stripe_account_id = :account_id WHERE id_store = :id";
+        $sql = "UPDATE store SET stripe_account_id = :account_id, updated_at = :updated_at WHERE id_store = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(":account_id", $data["stripe_account_id"], PDO::PARAM_STR);
         $stmt->bindParam(":id", $data['id_store'], PDO::PARAM_INT);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->execute();
 
         return $stmt->rowCount() > 0;

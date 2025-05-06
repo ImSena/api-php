@@ -57,6 +57,10 @@ require_once __DIR__ . "/Store.route.php";
 
 require_once __DIR__ . "/StoreMedia.route.php";
 
+//Banner
+
+require_once __DIR__ ."/Banner.route.php";
+
 //webhook
 
 require_once __DIR__ . "/Webhook.route.php";

@@ -13,7 +13,7 @@ class BannerController extends BaseController{
         $BannerService = new BannerService($this->pdo);
         $result = $BannerService->create($body);
 
-        if($result['error']){
+        if(isset($result['error'])){
             return $this->errorResponse($result['error']);
         }
 
@@ -30,5 +30,33 @@ class BannerController extends BaseController{
         }
 
         return $this->successResponse("Banners resgatados com sucesso", $result);
+    }
+
+    public function editBanner($param)
+    {
+        $body = $this->request::body();
+        $body['id_media'] = (int) $param[0];
+        $BannerService = new BannerService($this->pdo);
+        $result = $BannerService->editBanner($body);
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse("Banner editado com sucesso", [], 204);
+    }
+
+    public function deleteBanner($param)
+    {
+        $idBanner = (int) $param[0];
+
+        $bannerService = new BannerService($this->pdo);
+        $result = $bannerService->deleteBanner($idBanner);
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse("Banner deletado com sucesso", [], 204);
     }
 }
