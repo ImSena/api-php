@@ -25,14 +25,22 @@ class BannerService extends BaseService
 
             $Banner = new Banner($this->pdo);
 
+            if($fields['is_default']){
+                $setBanners = $Banner->setDefault();
+
+                if(!$setBanners){
+                    throw new Exception("Não foi possível criar banner: erro default.");
+                }
+            }
+
             $result = $Banner->create($fields);
 
             if (!$result) {
-                throw new Exception("Não foi possível criar Banners.");
+                throw new Exception("Não foi possível criar banner.");
             }
 
             return "Banner criados com sucesso";
-        });
+        }, true);
     }
 
     public function getBanners()
@@ -53,8 +61,8 @@ class BannerService extends BaseService
 
                 unset($banner['id_media']);
                 $banner['image_path'] = $picture;
-                $banner['is_mobile'] = $banner['is_mobile'] == 0;
-                $banner['is_default'] = $banner['is_default'] == 0;
+                $banner['is_mobile'] = $banner['is_mobile'] != 0;
+                $banner['is_default'] = $banner['is_default'] != 0;
             }
 
             return $result;
@@ -69,14 +77,23 @@ class BannerService extends BaseService
                 "id_media" => $data['id_media'] ?? '',
                 "is_mobile" => $data['is_mobile'] ?? '',
                 "is_default" => $data['is_default'] ?? '',
-                "id_banner" => $data['id_media'] ?? ''
             ]);
+
+            $fields['id_banner'] = $data['id_banner'];
 
             if (isset($data['name'])) {
                 $fields['name'] = $data['name'];
             }
 
             $Banner = new Banner($this->pdo);
+
+            if($fields['is_default']){
+                $setBanners = $Banner->setDefault();
+
+                if(!$setBanners){
+                    throw new Exception("Não foi possível criar banner.");
+                }
+            }
 
             $result = $Banner->update($fields);
 
@@ -85,7 +102,7 @@ class BannerService extends BaseService
             }
 
             return "Banner editado com sucesso.";
-        });
+        }, true);
     }
 
     public function deleteBanner(int $idBanner)

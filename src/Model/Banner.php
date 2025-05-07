@@ -67,6 +67,18 @@ class Banner extends BaseModel
         return $stmt->rowCount() > 0;
     }
 
+    public function setDefault(bool $value = false): bool
+    {
+        $pdo = $this->getPdo();
+
+        $sql = "UPDATE banners SET is_default = :value WHERE is_default != :value";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(":value", $value, PDO::PARAM_BOOL);
+        $stmt->execute();
+
+        return true;
+    }
+
     public function delete(int $id)
     {
         $pdo = $this->getPdo();

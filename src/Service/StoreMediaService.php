@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Model\Media;
+use App\Model\Store;
 use App\Model\StoreMedia;
 use App\Service\Base\BaseService;
 use App\Utils\Validator;
@@ -40,35 +41,22 @@ class StoreMediaService extends BaseService
         }, true);
     }
 
-    public function getMedias()
+    public function getIdentity()
     {
-        return $this->execute(function(){
-            $medias = $this->getIdentity();
-            $config = $this->getConfig();
-    
+        return $this->execute(function () {
+            $medias = $this->getMedias();
+
             return [
                 "LOGO" => isset($medias['LOGO']) ? $medias['LOGO'] : null,
                 "LOGO_FOOTER" => isset($medias['LOGO_FOOTER']) ? $medias['LOGO_FOOTER'] : null,
                 "FAVICON" => isset($medias['FAVICON']) ? $medias['FAVICON'] : null,
-                "THEME" => isset($config['THEME']) ? $config['THEME'] : null,
-                'LAYOUT' => isset($config['LAYOUT']) ? $config['LAYOUT'] : null
             ];
         });
     }
 
-    private function getConfig()
+    private function getMedias()
     {
-        return $this->execute(function(){
-            return [
-                "THEME" => "blue",
-                "LAYOUT" => "layout_teste"
-            ];
-        });
-    }
-
-    private function getIdentity()
-    {
-        return $this->execute(function(){
+        return $this->execute(function () {
             $StoreMedia = new StoreMedia($this->pdo);
             $Media = new Media($this->pdo);
             $MediaService = new MediaService($this->pdo);
@@ -122,4 +110,5 @@ class StoreMediaService extends BaseService
             return $medias;
         });
     }
+
 }

@@ -35,7 +35,7 @@ class BannerController extends BaseController{
     public function editBanner($param)
     {
         $body = $this->request::body();
-        $body['id_media'] = (int) $param[0];
+        $body['id_banner'] = (int) $param[0];
         $BannerService = new BannerService($this->pdo);
         $result = $BannerService->editBanner($body);
 

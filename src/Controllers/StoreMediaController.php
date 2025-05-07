@@ -20,18 +20,4 @@ class StoreMediaController extends BaseController{
         
         return $this->successResponse($result);
     }
-
-    public function getAssets($param)
-    {
-
-        $StoreMediaService = new StoreMediaService($this->pdo);
-        $result = $StoreMediaService->getMedias();
-
-        if(isset($result['error'])){
-            return $this->errorResponse($result['error']);
-        }
-
-        return $this->successResponse("Assets resgatado com sucesso.", $result);
-    }
-
 }
