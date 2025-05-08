@@ -12,7 +12,7 @@ class StoreMediaController extends BaseController{
         $data = $this->request::body();
 
         $StoreMediaService = new StoreMediaService($this->pdo);
-        $result = $StoreMediaService->createMedia($data);
+        $result = $StoreMediaService->createMedia($data, true);
 
         if(isset($result['error'])){
             return $this->errorResponse($result['error']);

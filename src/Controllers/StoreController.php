@@ -11,6 +11,7 @@ class StoreController extends BaseController
     public function createStore()
     {
         $data = $this->request::body();
+
         $storeService = new StoreService($this->pdo);
         $storeService = $storeService->createStore($data);
 

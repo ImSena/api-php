@@ -38,14 +38,15 @@ class StoreService extends BaseService
     public function createStore(array $data)
     {
         return $this->execute(function () use ($data) {
-            
             $Store = new Store($this->pdo);
+            $AddressStoreService = new AddressStoreService($this->pdo);
             $PhoneStoreService = new PhoneStoreService($this->pdo);
             $EmailStoreService = new EmailStoreService($this->pdo);
             $SociaisStoreService = new SocialStoreService($this->pdo);
             $StoreMediaService = new StoreMediaService($this->pdo);
             
             $storeCreated = $Store->getActiveStore();
+            
             
             if ($storeCreated) {
                 throw new Exception("Loja já cadastrada");
@@ -58,45 +59,62 @@ class StoreService extends BaseService
             }
             
             $fields = $this->validateFieldsStore($data);
-
+            
             $resultStore = $Store->createStore($fields);
-
-            if (!$resultStore) {
+            
+            if (isset($resultStore['error'])) {
                 throw new Exception("Não foi possível criar loja");
             }
+            
+            foreach($fields['addresses'] as $address){
+                $resultAddress = $AddressStoreService->createAddress($address);
 
-            foreach($fields['phones'] as $phone){
-
-                $resultPhone = $PhoneStoreService->createPhoneStore($phone);
-
-                if(isset($resultPhone['error'])){
-                    throw new Exception("Não foi possível criar loja: Phone");
+                if(isset($resultAddress['error'])){
+                    throw new Exception("Não foi possível criar loja: endereço");
                 }
             }
 
-            foreach($fields['emails'] as $email){
-
-                $resultEmail = $EmailStoreService->createEmail($email);
-
-                if(isset($resultEmail['error'])){
-                    throw new Exception("Não foi possível criar loja: emails");
+            if(!empty($fields['phones'])){
+                foreach($fields['phones'] as $phone){
+    
+                    $resultPhone = $PhoneStoreService->createPhoneStore($phone);
+    
+                    if(isset($resultPhone['error'])){
+                        throw new Exception("Não foi possível criar loja: Phone");
+                    }
                 }
             }
 
-            foreach($fields['sociais'] as $social){
-
-                $resultSocial = $SociaisStoreService->createSocial($social);
-
-                if(isset($resultSocial['error'])){
-                    throw new Exception("Não foi possível criar loja: social");
+            if(!empty($fields['emails'])){
+                foreach($fields['emails'] as $email){
+    
+                    $resultEmail = $EmailStoreService->createEmail($email);
+    
+                    if(isset($resultEmail['error'])){
+                        throw new Exception("Não foi possível criar loja: emails");
+                    }
                 }
             }
 
-            foreach($fields['identity'] as $identity){
-                $result = $StoreMediaService->createMedia($identity);
 
-                if(isset($result['error'])){
-                    throw new Exception("Não foi possível criar loja: identity");
+            if(!empty($fields['sociais'])){
+                foreach($fields['sociais'] as $social){
+    
+                    $resultSocial = $SociaisStoreService->createSocial($social);
+    
+                    if(isset($resultSocial['error'])){
+                        throw new Exception("Não foi possível criar loja: social");
+                    }
+                }
+            }
+
+            if(!empty($fields['identity'])){
+                foreach($fields['identity'] as $identity){
+                    $result = $StoreMediaService->createMedia($identity);
+    
+                    if(isset($result['error'])){
+                        throw new Exception("Não foi possível criar loja: identity");
+                    }
                 }
             }
 
@@ -145,7 +163,7 @@ class StoreService extends BaseService
                     "state" => $address['state'] ?? '',
                     "zip_code" => $address['zip_code'] ?? '',
                     "is_default" => $address['is_default'] ?? '',
-                    "is_show" => $address['is_show'] ?? ''
+                    "is_show" => $address['is_show'] ?? '',
                 ]);
 
                 $addressData['complement'] = isset($address['complement']) && !empty($address['complement']) ? $address['complement'] : null;

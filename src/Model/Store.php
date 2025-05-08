@@ -21,7 +21,7 @@ class Store extends BaseModel
         $id_tag_manager = isset($data['id_tag_manager']) ? $data['id_tag_manager'] : null;
 
         $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":name", $data['store_name'], PDO::PARAM_STR);
+        $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
         $stmt->bindParam(":domain", $data['domain'], PDO::PARAM_STR);
         $stmt->bindParam(":token_shipping", $token_shipping, $token_shipping === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindParam(":template", $data['template'], PDO::PARAM_STR);

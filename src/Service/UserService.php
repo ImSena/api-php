@@ -64,7 +64,11 @@ class UserService extends BaseService
                 "number" => $phone['number'] ?? ''
             ]);
 
-            self::isUserExists($fields);
+            $result = $this->isUserExists($fields);
+
+            if(isset($result['error'])){
+                throw new Exception($result['error']);
+            }
 
             $user = $User->create($fields);
 
@@ -107,6 +111,8 @@ class UserService extends BaseService
             if ($userModel) {
                 throw new Exception("Usuário já cadastrado! Realize seu login");
             }
+
+            return true;
         });
     }
 

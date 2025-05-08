@@ -11,7 +11,7 @@ use Exception;
 
 class StoreMediaService extends BaseService
 {
-    public function createMedia(array $data)
+    public function createMedia(array $data, bool $isTransaction = false)
     {
         return $this->execute(function () use ($data) {
             $types = [
@@ -38,7 +38,7 @@ class StoreMediaService extends BaseService
             }
 
             return "Media criada com sucesso";
-        }, true);
+        }, $isTransaction);
     }
 
     public function getIdentity()

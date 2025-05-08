@@ -7,7 +7,7 @@ use Exception;
 
 class SocialStoreService extends BannerService{
 
-    public function createSocial(array $data)
+    public function createSocial(array $data, bool $isTransaction = false)
     {
         return $this->execute(function() use ($data){
             $SocialStore = new SociaisStore($this->pdo);
@@ -25,7 +25,7 @@ class SocialStoreService extends BannerService{
             }
 
             return "Rede social cadastrada com sucesso.";
-        });
+        }, $isTransaction);
     }
 
 }

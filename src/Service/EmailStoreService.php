@@ -8,23 +8,33 @@ use Exception;
 
 class EmailStoreService extends BaseService
 {
-    public function createEmail(array $data){
-        return $this->execute(function() use($data){
-            $EmailStore = new EmailStore($this->pdo);
+    public function createEmail(array $data, bool $isTransaction = false)
+    {
+        if ($isTransaction) {
+            return $this->execute(function () use ($data) {
+                $this->createInternalEmailStore($data);
+            }, $isTransaction);
+        }
 
-            $inactiveResult = $EmailStore->setIsDefault();
+        return $this->createInternalEmailStore($data);
+    }
 
-            if(!$inactiveResult){
-                throw new Exception("Não foi possível inativar emails.");
-            }
+    private function createInternalEmailStore(array $data)
+    {
+        $EmailStore = new EmailStore($this->pdo);
 
-            $result = $EmailStore->createEmailStore($data);
+        $inactiveResult = $EmailStore->setIsDefault();
 
-            if(!$result){
-                throw new Exception("Não foi possível criar email para a loja.");
-            }
+        if (!$inactiveResult) {
+            throw new Exception("Não foi possível inativar emails.");
+        }
 
-            return "Email cadastrado com sucesso";
-        }, true);
+        $result = $EmailStore->createEmailStore($data);
+
+        if (!$result) {
+            throw new Exception("Não foi possível criar email para a loja.");
+        }
+
+        return "Email cadastrado com sucesso";
     }
 }

@@ -14,27 +14,27 @@ abstract class BaseService{
         $this->pdo = $pdo;
     }
 
-    protected function execute(callable $callback, bool $useTransaction = false)
+    protected function execute(callable $callback, ?bool $useTransaction = null)
     {
         try {
-            if ($useTransaction) {
+            if ($useTransaction === true) {
                 $this->pdo->beginTransaction();
             }
     
             $result = $callback();
     
-            if ($useTransaction) {
+            if ($useTransaction === true) {
                 $this->pdo->commit();
             }
     
             return $result;
         } catch (PDOException $e) {
-            if ($useTransaction) {
+            if ($useTransaction === true && $this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
             return ['error' => DatabaseErrorHelpers::error($e)];
         } catch (Exception $e) {
-            if ($useTransaction) {
+            if ($useTransaction === true && $this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
             return ['error' => $e->getMessage()];
