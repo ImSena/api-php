@@ -33,4 +33,16 @@ class EmailStore extends BaseModel
         $stmt->bindValue(":value", $value, PDO::PARAM_BOOL);
         return $stmt->execute();
     }
+
+    public function getEmails()
+    {
+        $pdo = $this->getPdo();
+
+        $sql = "SELECT email, is_default, is_show FROM emails_store";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
 }

@@ -28,4 +28,19 @@ class SocialStoreService extends BannerService{
         }, $isTransaction);
     }
 
+    public function getSocial()
+    {
+        return $this->execute(function(){
+            $SocialStore = new SociaisStore($this->pdo);
+
+            $result = $SocialStore->getSociais();
+
+            if(!$result){
+                throw new Exception("Não foi possível resgatar sociais midias.");
+            }
+
+            return $result;
+        });
+    }
+
 }

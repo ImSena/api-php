@@ -4,6 +4,6 @@ namespace App\Interfaces;
 
 use PDO;
 
-interface Model{
+interface IModel{
     public function getPdo(): PDO;
 }

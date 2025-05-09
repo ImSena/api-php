@@ -3,10 +3,11 @@
 use App\Controllers\VariantsController;
 use App\Http\Route;
 use App\Middlewares\AuthAdmin;
+use App\Middlewares\LockedStore;
 
 Route::group([
     "prefix" => "variations",
-    "middlewares" => [AuthAdmin::class]
+    "middlewares" => [LockedStore::class, AuthAdmin::class]
 ], function($prefix, $middlewares){
     //variações
     Route::post("/$prefix/create-variation", [VariantsController::class, "createVariant"], $middlewares);

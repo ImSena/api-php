@@ -2,13 +2,13 @@
 
 namespace App\Model\Base;
 
-use App\Interfaces\Model;
+use App\Interfaces\IModel;
 use DateTime;
 use PDO;
 
 require_once __DIR__ . '/../../../config.php';
 
-abstract class BaseModel implements Model
+abstract class BaseModel implements IModel
 {
     private PDO $pdo;
     protected string $currentDatetime;

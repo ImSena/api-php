@@ -7,7 +7,7 @@ use PDO;
 
 class AddressStore extends BaseModel
 {
-    public function createAddress(array $data):bool
+    public function createAddress(array $data): bool
     {
 
         $pdo = $this->getPdo();
@@ -41,6 +41,27 @@ class AddressStore extends BaseModel
         $stmt->bindValue(":value", $value, PDO::PARAM_BOOL);
 
         return $stmt->execute();
+    }
 
+    public function getAddresses()
+    {
+        $pdo = $this->getPdo();
+
+        $sql = "SELECT 
+        public_area, 
+        number, 
+        complement, 
+        district, 
+        city, 
+        state, 
+        zip_code, 
+        is_default, 
+        is_show 
+        FROM address_store WHERE is_active > 0";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
     }
 }

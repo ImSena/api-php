@@ -9,7 +9,7 @@ use Exception;
 
 class AddressStoreService extends BaseService
 {
-    public function createAddress(array $data, $isTransaction = null)
+    public function createAddress(array $data, ?bool $isTransaction = null)
     {
         return $this->execute(function() use ($data){
             $fields = Validator::validate([
@@ -47,5 +47,20 @@ class AddressStoreService extends BaseService
 
             return "Endereço cadastrado com sucesso";
         }, $isTransaction);
+    }
+
+    public function getAddressStore()
+    {
+        return $this->execute(function(){
+            $AddressStore = new AddressStore($this->pdo);
+
+            $result = $AddressStore->getAddresses();
+
+            if(!$result){
+                throw new Exception("Não foi possível resgatar endereço da loja");
+            }
+
+            return $result;
+        });
     }
 }

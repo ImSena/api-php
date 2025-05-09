@@ -34,4 +34,15 @@ class PhoneStore extends BaseModel
 
         return $stmt->execute();
     }
+
+    public function getPhones()
+    {
+        $pdo = $this->getPdo();
+        $sql = "SELECT type, number, is_default, is_show FROM phones_store";
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
 }

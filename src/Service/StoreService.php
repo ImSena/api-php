@@ -44,75 +44,75 @@ class StoreService extends BaseService
             $EmailStoreService = new EmailStoreService($this->pdo);
             $SociaisStoreService = new SocialStoreService($this->pdo);
             $StoreMediaService = new StoreMediaService($this->pdo);
-            
+
             $storeCreated = $Store->getActiveStore();
-            
-            
+
+
             if ($storeCreated) {
                 throw new Exception("Loja já cadastrada");
             }
-            
+
             $inactiveStores = $Store->setStatuStores();
-            
+
             if (!$inactiveStores) {
                 throw new Exception("Não foi possível criar loja");
             }
-            
+
             $fields = $this->validateFieldsStore($data);
-            
+
             $resultStore = $Store->createStore($fields);
-            
+
             if (isset($resultStore['error'])) {
                 throw new Exception("Não foi possível criar loja");
             }
-            
-            foreach($fields['addresses'] as $address){
+
+            foreach ($fields['addresses'] as $address) {
                 $resultAddress = $AddressStoreService->createAddress($address);
 
-                if(isset($resultAddress['error'])){
+                if (isset($resultAddress['error'])) {
                     throw new Exception("Não foi possível criar loja: endereço");
                 }
             }
 
-            if(!empty($fields['phones'])){
-                foreach($fields['phones'] as $phone){
-    
+            if (!empty($fields['phones'])) {
+                foreach ($fields['phones'] as $phone) {
+
                     $resultPhone = $PhoneStoreService->createPhoneStore($phone);
-    
-                    if(isset($resultPhone['error'])){
+
+                    if (isset($resultPhone['error'])) {
                         throw new Exception("Não foi possível criar loja: Phone");
                     }
                 }
             }
 
-            if(!empty($fields['emails'])){
-                foreach($fields['emails'] as $email){
-    
+            if (!empty($fields['emails'])) {
+                foreach ($fields['emails'] as $email) {
+
                     $resultEmail = $EmailStoreService->createEmail($email);
-    
-                    if(isset($resultEmail['error'])){
+
+                    if (isset($resultEmail['error'])) {
                         throw new Exception("Não foi possível criar loja: emails");
                     }
                 }
             }
 
 
-            if(!empty($fields['sociais'])){
-                foreach($fields['sociais'] as $social){
-    
+            if (!empty($fields['sociais'])) {
+                foreach ($fields['sociais'] as $social) {
+
                     $resultSocial = $SociaisStoreService->createSocial($social);
-    
-                    if(isset($resultSocial['error'])){
+
+                    if (isset($resultSocial['error'])) {
                         throw new Exception("Não foi possível criar loja: social");
                     }
                 }
             }
 
-            if(!empty($fields['identity'])){
-                foreach($fields['identity'] as $identity){
+            if (!empty($fields['identity'])) {
+                foreach ($fields['identity'] as $identity) {
                     $result = $StoreMediaService->createMedia($identity);
-    
-                    if(isset($result['error'])){
+
+                    if (isset($result['error'])) {
                         throw new Exception("Não foi possível criar loja: identity");
                     }
                 }
@@ -172,7 +172,7 @@ class StoreService extends BaseService
             }
 
             $fields['addresses'] = $addresses;
-        }else{
+        } else {
             throw new Exception("O campo [addresses] é obrigatório.");
         }
 
@@ -254,13 +254,11 @@ class StoreService extends BaseService
 
         return $fields;
     }
-
     private function getDomain(string $host): string
     {
         $new_host = str_replace("api.", "", $host);
         return $new_host;
     }
-
     public function startOnboardingProcess()
     {
         return $this->execute(function () {
@@ -304,7 +302,6 @@ class StoreService extends BaseService
             return ['url' => $accountLink->url, 'message' => "Processo onboarding iniciado."];
         });
     }
-
     public function createLogin()
     {
         return $this->execute(function () {
@@ -322,7 +319,6 @@ class StoreService extends BaseService
             return ['url' => $loginLink->url, 'message' => "Link gerado com sucesso"];
         });
     }
-
     public function getInfoStore()
     {
         return $this->execute(function () {
@@ -344,20 +340,104 @@ class StoreService extends BaseService
         return $this->execute(function () {
 
             $Store = new Store($this->pdo);
+            $AddressStore = new AddressStoreService($this->pdo);
+            $PhoneService = new PhoneStoreService($this->pdo);
+            $EmailsStore = new EmailStoreService($this->pdo);
+            $SocialStore = new SocialStoreService($this->pdo);
 
             $result = $Store->getActiveStore();
+            $resultAddress = $AddressStore->getAddressStore();
+            $resultEmails = $EmailsStore->getEmails();
+            $resultPhones = $PhoneService->getPhones();
+            $resultSociais = $SocialStore->getSocial();
+
+
+            if(!isset($resultAddress['error'])){
+                $resultAddress = array_filter($resultAddress, function($address) {
+                    return $address['is_show'];
+                });
+            }else{
+                $resultAddress = "";
+            }
+
+            if(!isset($resultPhones['error'])){
+                $resultPhones = array_filter($resultPhones, function($phones){
+                    return $phones['is_show'];
+                });
+            }else{
+                $resultAddress = "";
+            }
+
+            if(!isset($resultEmails['error'])){
+                $resultEmails = array_filter($resultEmails, function($email){
+                    return $email['is_show'];
+                });
+            }else{
+                $resultEmails = "";
+            }
+
+            if(isset($resultSociais['error'])){
+                $resultSociais = "";
+            }
 
             return [
+                "NAME_STORE" => $result['name'],
                 "THEME" => !empty($result['pallete']) ? $result['pallete'] : 'Gold',
                 "LAYOUT" => !empty($result['template']) ? $result['template'] : 'template01',
                 "ID_ANALITYCS" => $result['id_analitycs'] ?? '',
                 "ID_SEARCH_CONSOLE" => $result['id_search_console'] ?? '',
                 "ID_TAG_MANAGER" => $result['id_tag_manager'] ?? '',
-                "ADDRESSES" => $result['address'] ?? '',
-                "PHONES" => $result['phones'] ?? '',
-                "EMAILS" => $result['emails'] ?? '',
-                "SOCIAIS" => $result['social'] ?? '',
-                "IS_QUOTE" => !empty($result['is_quote']) ? $result['is_quote'] : false
+                "ADDRESSES" => $resultAddress,
+                "PHONES" => $resultPhones,
+                "EMAILS" => $resultEmails,
+                "SOCIAIS" => $resultSociais ?? '',
+            ];
+        });
+    }
+
+    public function getStatus()
+    {
+        return $this->execute(function () {
+            $Store = new Store($this->pdo);
+            $AddressStore = new AddressStoreService($this->pdo);
+
+            $store = $Store->getActiveStore();
+
+            if (!$store) {
+                return [
+                    "is_locked" => true,
+                    "locked_reasons" => "Loja não cadastrada."
+                ];
+            }
+
+            $AddressStore = $AddressStore->getAddressStore();
+
+            $isLocked = false;
+            $reasons = [];
+
+            if (empty($store['name'])) {
+                $isLocked = true;
+                $reasons[] = "Nome da loja não preenchido";
+            }
+
+            if(empty($store['stripe_account_id'])){
+                $isLocked = true;
+                $reasons[] = "Loja sem sistema de pagamento configurado.";
+            }
+
+            if(empty($store['token_shipping'])){
+                $isLocked = true;
+                $reasons[] = "Sistema de cotação de frete não configurado.";
+            }
+
+            if(isset($AddressStore['error'])){
+                $isLocked = true;
+                $reasons[] = "Endereço da loja não cadastrado.";
+            }
+
+            return [
+                'is_locked' => $isLocked,
+                'locked_reasons' => $reasons
             ];
         });
     }

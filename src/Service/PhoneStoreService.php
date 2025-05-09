@@ -10,40 +10,39 @@ use PDOException;
 
 class PhoneStoreService extends BaseService
 {
-    public function createPhoneStore(array $data, $isTransaction = false)
+    public function createPhoneStore(array $data, ?bool $isTransaction = null)
     {
-        if($isTransaction){
-            return $this->execute(function () use ($data) {
-                $this->createInternalPhoneStore($data);
-            }, $isTransaction);
-        }
 
-        return $this->createInternalPhoneStore($data);
-
-    }
-
-    private function createInternalPhoneStore(array $data)
-    {
-        try{
+        return $this->execute(function () use ($data) {
             $PhoneStore = new PhoneStore($this->pdo);
-    
+
             $resultInactive = $PhoneStore->setIsDefault();
-    
+
             if (!$resultInactive) {
                 throw new Exception("Não foi possível inativar contato.");
             }
-    
+
             $result = $PhoneStore->createPhone($data);
-    
+
             if (!$result) {
                 throw new Exception("Não foi possível inserir novo contato.");
             }
-    
+
             return "Contato inserido com sucesso.";
-        }catch(PDOException $e){
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        }catch(Exception $e){
-            return ['error' => $e->getMessage()];
-        }
+        }, $isTransaction);
+    }
+
+    public function getPhones(){
+        return $this->execute(function(){
+            $PhoneStore = new PhoneStore($this->pdo);
+
+            $result = $PhoneStore->getPhones();
+
+            if(!$result){
+                throw new Exception("Não foi possível resgatar contatos.");
+            }
+
+            return $result;
+        });
     }
 }

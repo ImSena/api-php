@@ -5,15 +5,16 @@ namespace App\Middlewares;
 use App\Http\Request;
 use App\Http\Response;
 use App\Jwt\JwtAuth;
+use App\Middlewares\Base\BaseMiddleware;
 
-class AuthPermission
+class AuthPermission extends BaseMiddleware
 {
-    public function handle(Request $request, Response $response)
+    public function handle(Request $request, Response $response):bool
     {
         $token = $request::getToken();
 
         if (!$token) {
-            return self::denyAccess($response, 'Acesso negado.', 401);
+            return $this->denyAccess($response, 'Acesso negado.', 401);
         }
 
         $decoded = JwtAuth::verifyToken($token);
@@ -40,12 +41,4 @@ class AuthPermission
         }
     }
 
-    private function denyAccess(Response $response, string $message, int $statusCode)
-    {
-        $response::json([
-            'success' => false,
-            'message' => $message
-        ], $statusCode);
-        return false;
-    }
 }

@@ -77,4 +77,21 @@ class StoreController extends BaseController
         $this->successResponse("Assets resgatados com sucesso", $assets);
     }
 
+    public function getStatus()
+    {
+        $storeService = new StoreService($this->pdo);
+        
+        $result = $storeService->getStatus();
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->response::json([
+            "success" => true,
+            "is_locked" => (bool) $result['is_locked'],
+            "reasons" => $result['locked_reasons']
+        ]);
+    }
+
 }

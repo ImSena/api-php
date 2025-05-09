@@ -3,10 +3,11 @@
 use App\Controllers\MediaController;
 use App\Http\Route;
 use App\Middlewares\AuthAdmin;
+use App\Middlewares\LockedStore;
 
 Route::group([
     "prefix" => "media",
-    "middlewares" => [AuthAdmin::class]
+    "middlewares" => [LockedStore::class, AuthAdmin::class]
 ], function($prefix, $middlewares){
     //Folders
     Route::post("/$prefix/get-content-folder", [MediaController::class, "getContentFolder"], $middlewares);

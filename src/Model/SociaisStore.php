@@ -23,10 +23,22 @@ class SociaisStore extends BaseModel
     public function findByType(string $type): ?array
     {
         $pdo = $this->getPdo();
-
-        $stmt = $pdo->prepare("SELECT * FROM sociais_midias WHERE type = :type LIMIT 1");
-        $stmt->execute([':type' => $type]);
+        $sql = "SELECT * FROM sociais_midias WHERE type = :type LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(":type", $type, PDO::PARAM_STR);
+        $stmt->execute();
 
         return $stmt->fetch();
+    }
+
+    public function getSociais(): ?array
+    {
+        $pdo = $this->getPdo();
+        $sql = "SELECT type, link FROM sociais_midias";
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
     }
 }

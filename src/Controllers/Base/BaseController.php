@@ -14,9 +14,9 @@ abstract class BaseController
 
     protected Request $request;
 
-    public function __construct(Request $request, Response $response)
+    public function __construct(Request $request, Response $response, PDO $connection)
     {
-        $this->pdo = ConnectionFactory::getConnection();
+        $this->pdo = $connection;
         $this->request = $request;
         $this->response = $response;
 
