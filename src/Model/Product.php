@@ -11,16 +11,14 @@ class Product extends BaseModel
 {
     public function create(array $data)
     {
-        $pdo = $this->getPdo();
-
-        $pdo->beginTransaction();
+        $this->pdo->beginTransaction();
 
         try {
 
             $products = $data['products'];
             $sql = "INSERT INTO products (name, description, id_brand, weight, length, width, height) VALUES (:name, :description, :id_brand, :weight, :length, :width, :height)";
 
-            $stmt = $pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
 
             $stmt->bindParam(":name", $products['name'], PDO::PARAM_STR);
             $stmt->bindParam(":description", $products['description'], PDO::PARAM_STR);
@@ -32,13 +30,13 @@ class Product extends BaseModel
 
             $stmt->execute();
 
-            $productId = $pdo->lastInsertId();
+            $productId = $this->pdo->lastInsertId();
 
             if (empty($productId)) {
                 throw new Exception("Erro ao criar produto.");
             }
 
-            $productVariant = $this->createVariant($products['variations'], $productId, $pdo);
+            $productVariant = $this->createVariant($products['variations'], $productId, $this->pdo);
 
             if (!$productVariant) {
                 throw new Exception("Erro ao criar variação");
@@ -46,27 +44,27 @@ class Product extends BaseModel
 
             foreach ($products['variations'] as $index => $variant) {
                 $productVariantId = $productVariant[$index];
-                $productPictures = $this->createProductPictures($variant['pictures'], $productVariantId, $variant['value_variant'], $pdo);
+                $productPictures = $this->createProductPictures($variant['pictures'], $productVariantId, $variant['value_variant'], $this->pdo);
 
                 if (!$productPictures) {
                     throw new Exception("Não foi possível cadastrar imagem do produto");
                 }
             }
 
-            $categoryProduct = $this->relationCategory($pdo, $productId, $data['id_category']);
+            $categoryProduct = $this->relationCategory($this->pdo, $productId, $data['id_category']);
 
             if (!$categoryProduct) {
                 throw new Exception("Não foi possível relacionar categoria");
             }
 
-            $pdo->commit();
+            $this->pdo->commit();
 
             return $productId;
         } catch (PDOException $e) {
-            $pdo->rollBack();
+            $this->pdo->rollBack();
             return ['error' => $e->getMessage()];
         } catch (Exception $e) {
-            $pdo->rollBack();
+            $this->pdo->rollBack();
             return ['error' => $e->getMessage()];
         }
     }
@@ -150,12 +148,9 @@ class Product extends BaseModel
      */
     public function getAll(int $page)
     {
-        $pdo = $this->getPdo();
-
         $limit = 40;
         $page = isset($page) ? (int) $page : 1;
         $offset = ($page - 1) * $limit;
-
 
         $sql = "SELECT 
                     p.id_product,
@@ -184,10 +179,9 @@ class Product extends BaseModel
                 ORDER BY p.id_product, pv.id_product_variant
                 LIMIT :limit OFFSET :offset";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
         $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
-
 
         $stmt->execute();
 
@@ -195,17 +189,13 @@ class Product extends BaseModel
     }
     public function getTotalProducts()
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT COUNT(id_product) AS total FROM products";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetch();
     }
     public function getById(int $id)
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT 
                     pv.id_product_variant,
                     p.name,
@@ -230,7 +220,7 @@ class Product extends BaseModel
                 ORDER BY p.id_product, pv.id_product_variant
                 LIMIT 1";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
 
         $stmt->execute();
@@ -239,8 +229,6 @@ class Product extends BaseModel
     }
     public function getAllCategory($params)
     {
-        $pdo = $this->getPdo();
-
         $limit = 40;
         $page = isset($params['page']) ? (int) $params['page'] : 1;
         $offset = ($page - 1) * $limit;
@@ -275,7 +263,7 @@ class Product extends BaseModel
             ORDER BY p.id_product, pv.id_product_variant
             LIMIT :limit OFFSET :offset";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(':id_category', $params['id_category'], PDO::PARAM_INT);
         $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
@@ -289,10 +277,9 @@ class Product extends BaseModel
      * @param int $id Esse id é da categoria especificada.
      */
     public function getTotalByCategory(int $id)
-    {
-        $pdo = $this->getPdo();
+    {    
         $sql = "SELECT COUNT(id_product) AS total FROM product_categories WHERE id_category = :id_category";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id_category", $id, PDO::PARAM_INT);
         $stmt->execute();
 
@@ -300,8 +287,6 @@ class Product extends BaseModel
     }
     public function getAllBrand(array $params)
     {
-        $pdo = $this->getPdo();
-
         $limit = 40;
         $page = isset($params['page']) ? (int) $params['page'] : 1;
         $offset = ($page - 1) * $limit;
@@ -333,7 +318,7 @@ class Product extends BaseModel
             ORDER BY p.id_product, pv.id_product_variant
             LIMIT :limit OFFSET :offset";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id_brand", $params['id_brand'], PDO::PARAM_INT);
         $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
         $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
@@ -344,10 +329,8 @@ class Product extends BaseModel
     }
     public function getTotalByBrand(int $id)
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT COUNT(id_product) AS total FROM products WHERE id_brand = :id";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
 
@@ -356,11 +339,9 @@ class Product extends BaseModel
 
     public function deleteProduct(array $data): bool
     {
-        $pdo = $this->getPdo();
-
         $sql = "UPDATE products SET status = 0, updated_at = :updated WHERE id_product = :id_product";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":id_product", $data['id_product'], PDO::PARAM_INT);
         $stmt->bindParam(":updated", $this->currentDatetime, PDO::PARAM_STR);
@@ -371,16 +352,14 @@ class Product extends BaseModel
     }
     public function getDatabaseConnection()
     {
-        return $this->getPdo();
+        return $this->pdo;
     }
 
     public function getVariations(int $id)
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT id_product_variant, sku, price, qtd_stock, is_default, discount FROM product_variants WHERE id_product = :id_product";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id_product", $id, PDO::PARAM_STR);
         $stmt->execute();
 
@@ -389,8 +368,6 @@ class Product extends BaseModel
 
     public function getMain(int $id)
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT 
                     b.name AS brand, 
                     p.name AS name, 
@@ -401,7 +378,7 @@ class Product extends BaseModel
                 WHERE p.id_product = :id
                 ";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
 
@@ -413,8 +390,6 @@ class Product extends BaseModel
      */
     public function getPicturesProduct(int $id)
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT 
                     pp.id_media,
                     pp.is_main,
@@ -424,7 +399,7 @@ class Product extends BaseModel
                 LEFT JOIN media AS m ON m.id_media = pp.id_media
                 WHERE id_product_variant = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -435,8 +410,6 @@ class Product extends BaseModel
      */
     public function getValueVariant(int $id)
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT 
                     pva.id_variant_attribute_value,
                     vav.value,
@@ -451,7 +424,7 @@ class Product extends BaseModel
                 WHERE pva.id_product_variant = :id
                 ";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
 
@@ -459,10 +432,8 @@ class Product extends BaseModel
     }
 
     public function insertQuantity(array $data)
-    {
-        $pdo = $this->getPdo();
-        $sql = "UPDATE product_variants SET qtd_stock = qtd_stock + :quantity, updated_at = :updated_at WHERE id_product_variant = :id";
-        $stmt = $pdo->prepare($sql);
+    {        $sql = "UPDATE product_variants SET qtd_stock = qtd_stock + :quantity, updated_at = :updated_at WHERE id_product_variant = :id";
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":quantity", $data['quantity'], PDO::PARAM_INT);
         $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
@@ -473,8 +444,6 @@ class Product extends BaseModel
 
     public function getProductQuote(int $id_product)
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT 
                 pv.id_product_variant, 
                 p.weight, 
@@ -486,7 +455,7 @@ class Product extends BaseModel
                 INNER JOIN products AS p ON pv.id_product = p.id_product
                 WHERE pv.id_product_variant = :id LIMIT 1";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id_product, PDO::PARAM_INT);
         $stmt->execute();
 
@@ -494,9 +463,7 @@ class Product extends BaseModel
     }
 
     public function editProduct(array $data)
-    {
-        $pdo = $this->getPdo();
-        $product = $data['products'];
+    {        $product = $data['products'];
 
         $sql = "UPDATE products 
         SET id_brand = :id_brand, 
@@ -508,7 +475,7 @@ class Product extends BaseModel
         updated_at = :updated_at
         WHERE id_product = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":id_brand", $product['id_brand'], PDO::PARAM_INT);
         $stmt->bindParam(":name", $product['name'], PDO::PARAM_STR);
@@ -526,8 +493,6 @@ class Product extends BaseModel
 
     public function editVariations(array $data)
     {
-        $pdo = $this->getPdo();
-
         $product = $data['products']['variations'];
 
         $sql = "UPDATE product_variants SET 
@@ -539,7 +504,7 @@ class Product extends BaseModel
                 updated_at = :updated_at
                 WHERE id_product_variant = :id
                 ";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $checks = [];
         foreach ($product as $variation) {
@@ -561,8 +526,6 @@ class Product extends BaseModel
 
     public function editCategoryProduct(array $data)
     {
-        $pdo = $this->getPdo();
-
         $category = $data['id_category'];
         $id_product = $data['id_product'];
 
@@ -571,7 +534,7 @@ class Product extends BaseModel
         updated_at = :updated_at
         WHERE id_product = :id_product";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":id_category", $category, PDO::PARAM_INT);
         $stmt->bindParam(":id_product", $id_product, PDO::PARAM_STR);
@@ -584,15 +547,13 @@ class Product extends BaseModel
 
     public function editPicturesProduct(array $data)
     {
-        $pdo = $this->getPdo();
-
         $variations = $data['products']['variations'];
 
         foreach ($variations as $variation) {
             $id_product_variant = $variation['id_product_variant'];
             $pictures = $variation['pictures'] ?? [];
 
-            $stmt = $pdo->prepare("SELECT id_media FROM product_pictures WHERE id_product_variant = :id");
+            $stmt = $this->pdo->prepare("SELECT id_media FROM product_pictures WHERE id_product_variant = :id");
             $stmt->bindParam(":id", $id_product_variant, PDO::PARAM_INT);
             $stmt->execute();
             $existingMedia = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -604,14 +565,14 @@ class Product extends BaseModel
             if (!empty($toDelete)) {
                 $in = implode(',', array_fill(0, count($toDelete), '?'));
                 $sqlDelete = "DELETE FROM product_pictures WHERE id_product_variant = ? AND id_media IN ($in)";
-                $stmtDelete = $pdo->prepare($sqlDelete);
+                $stmtDelete = $this->pdo->prepare($sqlDelete);
                 $stmtDelete->execute(array_merge([$id_product_variant], $toDelete));
             }
 
             $toInsert = array_diff($incomingMedia, $existingMedia);
             foreach ($pictures as $picture) {
                 if (in_array($picture['id_media'], $toInsert)) {
-                    $stmtInsert = $pdo->prepare("
+                    $stmtInsert = $this->pdo->prepare("
                     INSERT INTO product_pictures (id_product_variant, id_media, position, is_main, created_at)
                     VALUES (:id_product_variant, :id_media, :position, :is_main, :created_at)
                 ");
@@ -623,7 +584,7 @@ class Product extends BaseModel
                         ':created_at' => $this->currentDatetime
                     ]);
                 } else {
-                    $stmtUpdate = $pdo->prepare("
+                    $stmtUpdate = $this->pdo->prepare("
                     UPDATE product_pictures
                     SET position = :position, is_main = :is_main, updated_at = :updated_at
                     WHERE id_product_variant = :id_product_variant AND id_media = :id_media

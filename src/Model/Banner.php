@@ -9,11 +9,9 @@ class Banner extends BaseModel
 {
     public function create(array $data)
     {
-        $pdo = $this->getPdo();
-
         $sql = "INSERT INTO banners (id_media, name, is_mobile, is_default) VALUES (:id_media, :name, :is_mobile, :is_default)";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $name = isset($data['name']) ? $data['name'] : null;
 
@@ -29,11 +27,9 @@ class Banner extends BaseModel
 
     public function getBanners()
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT id_banner, id_media, name, is_mobile, is_default FROM banners WHERE is_active > 0";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
 
         return $stmt->fetchAll();
@@ -41,8 +37,6 @@ class Banner extends BaseModel
 
     public function update(array $data)
     {
-        $pdo = $this->getPdo();
-
         $sql = "UPDATE banners SET 
         id_media = :id_media, 
         name = :name, 
@@ -51,7 +45,7 @@ class Banner extends BaseModel
         updated_at = :updated_at
         WHERE id_banner = :id_banner";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $name = isset($data['name']) ? $data['name'] : null;
 
@@ -69,10 +63,8 @@ class Banner extends BaseModel
 
     public function setDefault(bool $value = false): bool
     {
-        $pdo = $this->getPdo();
-
         $sql = "UPDATE banners SET is_default = :value WHERE is_default != :value";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(":value", $value, PDO::PARAM_BOOL);
         $stmt->execute();
 
@@ -81,11 +73,9 @@ class Banner extends BaseModel
 
     public function delete(int $id)
     {
-        $pdo = $this->getPdo();
-
         $sql = "UPDATE banners SET is_active = false, updated_at = :updated_at WHERE id_banner = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindValue(":id", $id, PDO::PARAM_INT);
         $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);

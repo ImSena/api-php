@@ -8,9 +8,8 @@ use PDO;
 class Store extends BaseModel
 {
 
-    public function createStore(array $data){
-        $pdo = $this->getPdo();
-
+    public function createStore(array $data)
+    {
         $sql = "INSERT INTO 
         store (name, domain, token_shipping, template, pallete, id_analitycs, id_search_console, id_tag_manager) 
         VALUES (:name, :domain, :token_shipping, :template, :pallete, :id_analitycs, :id_search_console, :id_tag_manager)";
@@ -20,7 +19,7 @@ class Store extends BaseModel
         $id_search_console = isset($data['id_search_console']) ? $data['id_search_console'] : null;
         $id_tag_manager = isset($data['id_tag_manager']) ? $data['id_tag_manager'] : null;
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
         $stmt->bindParam(":domain", $data['domain'], PDO::PARAM_STR);
         $stmt->bindParam(":token_shipping", $token_shipping, $token_shipping === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
@@ -35,40 +34,33 @@ class Store extends BaseModel
     }
     public function setStatuStores($value = false)
     {
-        $pdo = $this->getPdo();
-
         $sql = "UPDATE store SET is_active = :value";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":value", $value, PDO::PARAM_BOOL);
         return $stmt->execute();
     }
 
     public function getActiveStore()
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT id_store, name, domain, stripe_account_id, token_shipping, template, pallete, id_analitycs, id_search_console FROM store WHERE is_active > 0 LIMIT 1";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
 
         return $stmt->fetch();
     }
 
-    public function findStores(){
-        $pdo = $this->getPdo();
-
+    public function findStores()
+    {
         $sql = "SELECT id_store, name, domain, stripe_account_id FROM store";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
 
         return $stmt->fetchAll();
     }
 
     public function findById(string $storeId)
-    {
-        $pdo = $this->getPdo();
-        $sql = "SELECT 
+    {        $sql = "SELECT 
                     id_store, 
                     name, 
                     domain, 
@@ -77,16 +69,15 @@ class Store extends BaseModel
                 FROM store 
                 WHERE id_store = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $storeId, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch();
     }
 
-    public function updateAccount(array $data){
-        $pdo = $this->getPdo();
-        $sql = "UPDATE store SET stripe_account_id = :account_id, updated_at = :updated_at WHERE is_active > 0";
-        $stmt = $pdo->prepare($sql);
+    public function updateAccount(array $data)
+    {        $sql = "UPDATE store SET stripe_account_id = :account_id, updated_at = :updated_at WHERE is_active > 0";
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":account_id", $data["stripe_account_id"], PDO::PARAM_STR);
         $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->execute();
@@ -95,24 +86,50 @@ class Store extends BaseModel
     }
 
     public function getInfoStore()
-    {
-        $pdo = $this->getPdo();
-        $sql = "SELECT name, domain, template, pallete, id_analytics, id_search_console, id_tag_manager FROM store WHERE stripe_account_id IS NOT NULL AND is_active > 0 ORDER BY created_at DESC LIMIT 1";
-        $stmt = $pdo->prepare($sql);
+    {        $sql = "SELECT name, domain, template, pallete, id_analytics, id_search_console, id_tag_manager FROM store WHERE stripe_account_id IS NOT NULL AND is_active > 0 ORDER BY created_at DESC LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
 
         return $stmt->fetch();
     }
 
     public function getAddress()
-    {
-        $pdo = $this->getPdo();
-        $sql = "SELECT id_address_store, public_area, number, complement, district, city, state, zip_code, is_default FROM address_store WHERE is_active > 0";
-        $stmt = $pdo->prepare($sql);
+    {        $sql = "SELECT id_address_store, public_area, number, complement, district, city, state, zip_code, is_default FROM address_store WHERE is_active > 0";
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
 
         return $stmt->fetchAll();
     }
 
+    public function updateStore(array $data): bool
+    {
+        $fields = [];
+        $params = [];
 
+        if (!empty($data['name'])) {
+            $fields[] = "name = :name";
+            $params[':name'] = $data['name'];
+        }
+        if (!empty($data['id_analitycs'])) {
+            $fields[] = "id_analitycs = :analitycs";
+            $params[':analitycs'] = $data['id_analitycs'];
+        }
+        if (!empty($data['id_search_console'])) {
+            $fields[] = "id_search_console = :console";
+            $params[':console'] = $data['id_search_console'];
+        }
+        if (!empty($data['id_tag_manager'])) {
+            $fields[] = "id_tag_manager = :manager";
+            $params[':manager'] = $data['id_tag_manager'];
+        }
+
+        if (empty($fields)) {
+            return true;
+        }
+
+        $sql = "UPDATE store SET " . implode(', ', $fields) . " WHERE is_active > 0";
+        $stmt = $this->pdo->prepare($sql);
+
+        return $stmt->execute($params);
+    }
 }

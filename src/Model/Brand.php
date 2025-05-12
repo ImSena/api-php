@@ -10,11 +10,9 @@ class Brand extends BaseModel
     
     public function create(array $data):bool
     {
-        $pdo = $this->getPdo();
-
         $sql = "INSERT INTO brands (name) VALUES (:name)";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
 
@@ -24,20 +22,16 @@ class Brand extends BaseModel
     }
 
     public function getAll():array
-    {
-        $pdo = $this->getPdo();
-        $sql = "SELECT id_brand, name FROM brands";
-        $stmt = $pdo->prepare($sql);
+    {        $sql = "SELECT id_brand, name FROM brands";
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
 
         return $stmt->fetchAll();
     }
 
     public function update(array $data):bool
-    {
-        $pdo = $this->getPdo();
-        $sql = "UPDATE brands SET name = :name, updated_at = :updated_at WHERE id_brand = :id_brand";
-        $stmt = $pdo->prepare($sql);
+    {        $sql = "UPDATE brands SET name = :name, updated_at = :updated_at WHERE id_brand = :id_brand";
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
         $stmt->bindParam(":id_brand", $data['id'], PDO::PARAM_INT);
         $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
@@ -47,10 +41,8 @@ class Brand extends BaseModel
     }
 
     public function delete(int $int):bool
-    {
-        $pdo = $this->getPdo();
-        $sql = "DELETE FROM brands WHERE id_brand = :id_brand";
-        $stmt = $pdo->prepare($sql);
+    {        $sql = "DELETE FROM brands WHERE id_brand = :id_brand";
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id_brand", $int, PDO::PARAM_INT);
         $stmt->execute();
 

@@ -11,12 +11,9 @@ class TokenAdmin extends BaseModel
 {
     public function create(array $data)
     {
-
-        $pdo = $this->getPdo();
-
         $sql = "INSERT INTO tokens_admins (id_admin, type, token) VALUES (:id_admin, :type, :token)";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":id_admin", $data['id_admin'], PDO::PARAM_STR);
         $stmt->bindParam(":type", $data['type'], PDO::PARAM_STR);
@@ -29,11 +26,9 @@ class TokenAdmin extends BaseModel
 
     public function select(string $token)
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT status FROM tokens_admins WHERE token = :token";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":token", $token, PDO::PARAM_STR);
 
@@ -44,10 +39,9 @@ class TokenAdmin extends BaseModel
 
     public function selectLastToken(array $data)
     {
-        $pdo = $this->getPdo();
         $sql = "SELECT created_at FROM tokens_admins WHERE id_admin = :id_admin AND status = 'ACTIVE'";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":id_admin", $data['id_admin'], PDO::PARAM_STR);
         $stmt->execute();
@@ -57,11 +51,10 @@ class TokenAdmin extends BaseModel
 
     public function inactiveAll(string $id_admin, string $type)
     {
-        $pdo = $this->getPdo();
 
         $sql = "UPDATE tokens_admins SET status = 'INACTIVE', updated_at = :updated_at WHERE id_admin = :id_admin AND type = :type";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":id_admin", $id_admin, PDO::PARAM_INT);
         $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
@@ -74,11 +67,10 @@ class TokenAdmin extends BaseModel
 
     public function inactiveToken(string $token)
     {
-        $pdo = $this->getPdo();
 
         $sql = "UPDATE tokens_admins SET status = 'INACTIVE', updated_at = :updated_at WHERE token = :token";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":token", $token, PDO::PARAM_STR);

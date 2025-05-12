@@ -7,11 +7,10 @@ use PDO;
 
 class Phone extends BaseModel
 {
-    public function getAllByIdUser(int $id){
-        $pdo = $this->getPdo();
-
+    public function getAllByIdUser(int $id)
+    {
         $sql = "SELECT * FROM phones WHERE id_user = :id";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
 

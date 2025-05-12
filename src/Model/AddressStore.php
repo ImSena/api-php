@@ -10,12 +10,11 @@ class AddressStore extends BaseModel
     public function createAddress(array $data): bool
     {
 
-        $pdo = $this->getPdo();
         $sql = "INSERT INTO address_store 
         (public_area, number, complement, district, city, state, zip_code, is_default, is_show)
         VALUES (:public_area, :number, :complement, :district, :city, :state, :zip_code, :is_default, :is_show)";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":public_area", $data['public_area'], PDO::PARAM_STR);
         $stmt->bindParam(":number", $data['number'], PDO::PARAM_STR);
@@ -34,10 +33,8 @@ class AddressStore extends BaseModel
 
     public function setIsDefault(bool $value = false)
     {
-        $pdo = $this->getPdo();
-
         $sql = "UPDATE address_store SET is_default = :value";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(":value", $value, PDO::PARAM_BOOL);
 
         return $stmt->execute();
@@ -45,9 +42,8 @@ class AddressStore extends BaseModel
 
     public function getAddresses()
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT 
+        id_address_store,
         public_area, 
         number, 
         complement, 
@@ -59,9 +55,40 @@ class AddressStore extends BaseModel
         is_show 
         FROM address_store WHERE is_active > 0";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
 
         return $stmt->fetchAll();
+    }
+
+    public function updateStore(array $data)
+    {
+        $sql = "UPDATE address_store SET
+        public_area = :public,
+        number = :number,
+        complement = :complement,
+        district = :district,
+        city = :city,
+        state = :state,
+        zip_code = :zip_code,
+        is_default = :is_default
+        WHERE id_address_store = :id
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindParam(":public", $data['public'], PDO::PARAM_STR);
+        $stmt->bindParam(":number", $data['number'], PDO::PARAM_STR);
+        $stmt->bindParam(":complement", $data['complement'], PDO::PARAM_STR);
+        $stmt->bindParam(":district", $data['district'], PDO::PARAM_STR);
+        $stmt->bindParam(":city", $data['city'], PDO::PARAM_STR);
+        $stmt->bindParam(":state", $data['state'], PDO::PARAM_STR);
+        $stmt->bindParam(":zip_code", $data['zip_code'], PDO::PARAM_STR);
+        $stmt->bindParam(":is_default", $data['is_default'], PDO::PARAM_STR);
+        $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
     }
 }

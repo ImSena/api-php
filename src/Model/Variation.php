@@ -9,11 +9,9 @@ class Variation extends BaseModel
 {
     public function createVariation(array $data):bool
     {
-        $pdo = $this->getPdo();
-
         $sql = "INSERT INTO variant_attributes (name) VALUES (:name)";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
         $stmt->execute();
@@ -23,11 +21,9 @@ class Variation extends BaseModel
 
     public function getAllVariants():array 
     {
-        $pdo = $this->getPdo();
-
         $sql = "SELECT id_variant_attribute, name FROM variant_attributes";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
 
         return $stmt->fetchAll();
@@ -35,11 +31,9 @@ class Variation extends BaseModel
 
     public function updateVariation(array $data):bool
     {
-        $pdo = $this->getPdo();
-
         $sql = "UPDATE variant_attributes SET name = :name, updated_at = :updated_at WHERE id_variant_attribute = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
         $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
@@ -52,11 +46,9 @@ class Variation extends BaseModel
 
     public function deleteVariation(int $id):bool
     {
-        $pdo = $this->getPdo();
-
         $sql = "DELETE FROM variant_attributes WHERE id_variant_attribute = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -66,11 +58,9 @@ class Variation extends BaseModel
 
     public function createValue(array $data):bool
     {
-        $pdo = $this->getPdo();
-
         $sql = "INSERT INTO variant_attributes_values (id_variant_attribute, value, viewer) VALUES (:id_variant_attribute, :value, :viewer)";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":id_variant_attribute", $data['id_variant_attribute'], PDO::PARAM_INT);
         $stmt->bindParam(":value", $data['value'], PDO::PARAM_STR);
@@ -83,11 +73,10 @@ class Variation extends BaseModel
 
     public function getValuesVariation(int $id):array
     {
-        $pdo = $this->getPdo();
 
         $sql = "SELECT id_variant_attribute_value, value, viewer FROM variant_attributes_values WHERE id_variant_attribute = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -97,11 +86,10 @@ class Variation extends BaseModel
 
     public function updateValue(array $data):bool
     {
-        $pdo = $this->getPdo();
 
         $sql = "UPDATE variant_attributes_values SET value = :value, updated_at = :updated_at WHERE id_variant_attribute_value = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":value", $data['value'], PDO::PARAM_STR);
         $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
@@ -113,11 +101,10 @@ class Variation extends BaseModel
 
     public function deleteValue(int $id):bool
     {
-        $pdo = $this->getPdo();
 
         $sql = "DELETE FROM variant_attributes_values WHERE id_variant_attribute_value = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
 

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\Base\BaseController;
+use App\Service\AddressStoreService;
 use App\Service\StoreMediaService;
 use App\Service\StoreService;
 
@@ -94,4 +95,43 @@ class StoreController extends BaseController
         ]);
     }
 
+    public function updateStore()
+    {
+        $body = $this->request::body();
+
+        $storeService = new StoreService($this->pdo);
+        
+        $result = $storeService->updateStore($body);
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+    }
+
+    public function updateAddress()
+    {
+        $body = $this->request::body();
+        $storeService = new AddressStoreService($this->pdo);
+
+        $result = $storeService->update($body);
+        
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+    }
+
+    
 }
+
+// public function getStripe()
+// {
+//     $storeService = new StoreService($this->pdo);
+
+//     $result = $storeService->getStatusStripe();
+
+//     echo json_encode($result);
+// }

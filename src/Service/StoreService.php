@@ -400,7 +400,7 @@ class StoreService extends BaseService
         return $this->execute(function () {
             $Store = new Store($this->pdo);
             $AddressStore = new AddressStoreService($this->pdo);
-
+            $Stripe = $this->getStatusStripe();
             $store = $Store->getActiveStore();
 
             if (!$store) {
@@ -408,6 +408,10 @@ class StoreService extends BaseService
                     "is_locked" => true,
                     "locked_reasons" => "Loja não cadastrada."
                 ];
+            }
+
+            if(isset($Stripe['error'])){
+                throw new Exception("Não foi possível obter status do stripe");
             }
 
             $AddressStore = $AddressStore->getAddressStore();
@@ -435,10 +439,74 @@ class StoreService extends BaseService
                 $reasons[] = "Endereço da loja não cadastrado.";
             }
 
+            if(!$Stripe){
+                $isLocked = true;
+                $reasons[] = "Conta Stripe não está ativa";
+            }
+
             return [
                 'is_locked' => $isLocked,
                 'locked_reasons' => $reasons
             ];
+        });
+    }
+
+    private function getStatusStripe()
+    {
+        return $this->execute(function() {
+            $Store = new Store($this->pdo);
+
+            $store = $Store->getActiveStore();
+
+            if(!$store){
+                throw new Exception("Não foi possível resgatar loja criada.");
+            }
+
+            $accountId = $store['stripe_account_id'];
+
+            Stripe::setApiKey(Keys::getSecretKey());
+
+            $account = Account::retrieve($accountId);
+
+            if($account->charges_enabled && $account->payouts_enabled && $account->details_submitted){
+                return true;
+            }else{
+                return false;
+            }
+        });
+    }
+
+    public function updateStore(array $data)
+    {
+        return $this->execute(function()use ($data){
+            $fields = Validator::validate([
+                "name" => $data['name'] ?? '',
+                "id_analitycs" => $data['id_analitycs'] ?? '',
+                "id_search_console" => $data['id_search_console'] ?? '',
+                "id_tag_manager" => $data['id_tag_manager'] ?? '',
+            ]);
+
+            if(isset($data['id_analitycs'])){
+                $fields['id_analitycs'] = $data['id_analitycs'];
+            }
+
+            if(isset($data['id_search_console'])){
+                $fields['id_search_console'] = $data['id_search_console'];
+            }
+
+            if(isset($data['id_tag_manager'])){
+                $fields['id_tag_manager'] = $data['id_tag_manager'];
+            }
+
+            $Store = new Store($this->pdo);
+
+            $store = $Store->updateStore($fields);
+
+            if(!$store){
+                throw new Exception("Não foi possível atualizar loja");
+            }
+
+            return "Loja atualizada com sucesso.";
         });
     }
 }

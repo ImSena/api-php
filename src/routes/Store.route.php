@@ -11,6 +11,9 @@ Route::group([
     Route::post("/$prefix/create", [StoreController::class, "createStore"], $middlewares);
     Route::post("/$prefix/onboarding", [StoreController::class, 'initiateOnboarding'], $middlewares);
     Route::get("/$prefix/status", [StoreController::class, 'getStatus']);
+    // Route::get("/$prefix/stripe", [StoreController::class, "getStripe"]);
     Route::get("/$prefix/login", [StoreController::class, 'login'], $middlewares);
     Route::get("/$prefix", [StoreController::class, 'getAssets']);
+
+    Route::put("/$prefix", [StoreController::class, 'updateStore'], $middlewares);
 });

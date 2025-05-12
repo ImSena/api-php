@@ -9,11 +9,9 @@ class PhoneStore extends BaseModel
 {
     public function createPhone(array $data): bool
     {
-        $pdo = $this->getPdo();
-
         $sql = "INSERT INTO phones_store (type, number, is_default, is_show) VALUES (:type, :number, :is_default, :is_show)";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":type", $data['type'], PDO::PARAM_STR);
         $stmt->bindParam(":number", $data['number'], PDO::PARAM_STR);
@@ -27,9 +25,8 @@ class PhoneStore extends BaseModel
 
     public function setIsDefault($value = false)
     {
-        $pdo = $this->getPdo();
-        $sql = "UPDATE phones_store SET is_default = :value";
-        $stmt = $pdo->prepare($sql);
+       $sql = "UPDATE phones_store SET is_default = :value";
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(":value", $value, PDO::PARAM_BOOL);
 
         return $stmt->execute();
@@ -37,9 +34,8 @@ class PhoneStore extends BaseModel
 
     public function getPhones()
     {
-        $pdo = $this->getPdo();
-        $sql = "SELECT type, number, is_default, is_show FROM phones_store";
-        $stmt = $pdo->prepare($sql);
+       $sql = "SELECT id_phone_store, type, number, is_default, is_show FROM phones_store";
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->execute();
 

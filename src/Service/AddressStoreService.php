@@ -63,4 +63,18 @@ class AddressStoreService extends BaseService
             return $result;
         });
     }
+
+    public function update($data){
+        return $this->execute(function () use ($data){
+            $AddressStore = new AddressStore($this->pdo);
+
+            $result = $AddressStore->updateStore($data);
+
+            if(!$result){
+                throw new Exception("Não foi possível atualizar endereço da loja");
+            }
+
+            return "Endereço atualizado com sucesso";
+        });
+    }
 }
