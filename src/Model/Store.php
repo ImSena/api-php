@@ -122,6 +122,13 @@ class Store extends BaseModel
             $fields[] = "id_tag_manager = :manager";
             $params[':manager'] = $data['id_tag_manager'];
         }
+        if (!empty($data['token_shipping'])){
+            $fields[] = "token_shipping = :token";
+            $params[':token'] = $data['token_shipping'];
+        }
+
+        $fields[] = "updated_at = :updated_at";
+        $params[':updated_at'] = $this->currentDatetime;
 
         if (empty($fields)) {
             return true;
@@ -131,5 +138,15 @@ class Store extends BaseModel
         $stmt = $this->pdo->prepare($sql);
 
         return $stmt->execute($params);
+    }
+
+    public function updateTheme(array $data):bool
+    {
+        $sql = "UPDATE store SET template = :template, pallete = :pallete, updated_at = :updated_at WHERE is_active > 0";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(":template", $data['layout'], PDO::PARAM_STR);
+        $stmt->bindParam(":pallete", $data['theme'], PDO::PARAM_STR);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
+        return $stmt->execute();
     }
 }

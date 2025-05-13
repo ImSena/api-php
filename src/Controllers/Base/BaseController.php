@@ -9,12 +9,12 @@ use PDO;
 
 abstract class BaseController
 {
-    protected PDO $pdo;
+    protected ?PDO $pdo;
     protected Response $response;
 
     protected Request $request;
 
-    public function __construct(Request $request, Response $response, PDO $connection)
+    public function __construct(Request $request, Response $response, ?PDO $connection = null)
     {
         $this->pdo = $connection;
         $this->request = $request;

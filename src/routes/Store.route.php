@@ -16,4 +16,9 @@ Route::group([
     Route::get("/$prefix", [StoreController::class, 'getAssets']);
 
     Route::put("/$prefix", [StoreController::class, 'updateStore'], $middlewares);
+    Route::put("/$prefix/theme", [StoreController::class, 'updateTheme'], $middlewares);
+    Route::put("/$prefix/address/{param}", [StoreController::class, 'updateAddress'], $middlewares);
+    Route::put("/$prefix/phone/{param}", [StoreController::class, "updatePhone"], $middlewares);
+    Route::put("/$prefix/email/{param}", [StoreController::class, 'updateEmail'], $middlewares);
+    Route::put("/$prefix/sociais", [StoreController::class, "updateSociais"], $middlewares);
 });

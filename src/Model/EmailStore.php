@@ -39,4 +39,24 @@ class EmailStore extends BaseModel
 
         return $stmt->fetchAll();
     }
+
+    public function updateEmail(array $data):bool
+    {
+        $sql = "UPDATE emails_store SET 
+        email = :email,
+        is_default = :is_default,
+        is_show = :is_show,
+        updated_at = :updated_at
+        WHERE id_email_store = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindParam(":email", $data['email'], PDO::PARAM_STR);
+        $stmt->bindParam(":is_default", $data['is_default'], PDO::PARAM_BOOL);
+        $stmt->bindParam(":is_show", $data['is_show'], PDO::PARAM_BOOL);
+        $stmt->bindParam(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
+        $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
 }

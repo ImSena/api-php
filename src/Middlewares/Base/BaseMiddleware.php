@@ -3,7 +3,7 @@
 namespace App\Middlewares\Base;
 
 use App\Http\Response;
-use App\Interfaces\IMiddleware;
+use App\Interfaces\Middleware\IMiddleware;
 use PDO;
 
 abstract class BaseMiddleware implements IMiddleware

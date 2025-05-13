@@ -4,6 +4,9 @@ namespace App\Controllers;
 
 use App\Controllers\Base\BaseController;
 use App\Service\AddressStoreService;
+use App\Service\EmailStoreService;
+use App\Service\PhoneStoreService;
+use App\Service\SocialStoreService;
 use App\Service\StoreMediaService;
 use App\Service\StoreService;
 
@@ -69,7 +72,7 @@ class StoreController extends BaseController
             return $this->errorResponse($storeService['error']);
         }
 
-        if(isset($storeMediaService['error'])){
+        if (isset($storeMediaService['error'])) {
             return $this->errorResponse($storeMediaService['error']);
         }
 
@@ -81,10 +84,10 @@ class StoreController extends BaseController
     public function getStatus()
     {
         $storeService = new StoreService($this->pdo);
-        
+
         $result = $storeService->getStatus();
 
-        if(isset($result['error'])){
+        if (isset($result['error'])) {
             return $this->errorResponse($result['error']);
         }
 
@@ -100,31 +103,96 @@ class StoreController extends BaseController
         $body = $this->request::body();
 
         $storeService = new StoreService($this->pdo);
-        
+
         $result = $storeService->updateStore($body);
 
-        if(isset($result['error'])){
+        if (isset($result['error'])) {
             return $this->errorResponse($result['error']);
         }
 
         $this->successResponse($result);
     }
 
-    public function updateAddress()
+    public function updateAddress($params)
+    {
+        $id = $params[0];
+
+        $body = $this->request::body();
+        $body['id'] = $id;
+        $addressService = new AddressStoreService($this->pdo);
+
+        $result = $addressService->update($body);
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+    }
+
+    public function updatePhone($params)
+    {
+        $id = $params[0];
+        $body = $this->request::body();
+        $body['id'] = $id;
+        $phoneService = new PhoneStoreService($this->pdo);
+
+        $result = $phoneService->update($body);
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+    }
+
+    public function updateTheme()
     {
         $body = $this->request::body();
-        $storeService = new AddressStoreService($this->pdo);
 
-        $result = $storeService->update($body);
-        
-        if(isset($result['error'])){
+        $storeService = new StoreService($this->pdo);
+        $result = $storeService->updateTheme($body);
+
+        if (isset($result['error'])) {
             return $this->errorResponse($result['error']);
         }
 
         $this->successResponse($result);
     }
 
-    
+    public function updateEmail($params)
+    {
+        $body = $this->request::body();
+
+        $id = $params[0];
+
+        $body['id'] = $id;
+
+        $emailStoreService = new EmailStoreService($this->pdo);
+
+        $result = $emailStoreService->update($body);
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+    }
+
+    public function updateSociais()
+    {
+        $body = $this->request::body();
+
+        $socialService = new SocialStoreService($this->pdo);
+
+        $result = $socialService->update($body);
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+    }
 }
 
 // public function getStripe()

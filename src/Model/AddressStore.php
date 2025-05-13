@@ -71,20 +71,24 @@ class AddressStore extends BaseModel
         city = :city,
         state = :state,
         zip_code = :zip_code,
-        is_default = :is_default
+        is_default = :is_default,
+        is_show = :is_show,
+        updated_at = :updated_at
         WHERE id_address_store = :id
         ";
 
         $stmt = $this->pdo->prepare($sql);
 
-        $stmt->bindParam(":public", $data['public'], PDO::PARAM_STR);
+        $stmt->bindParam(":public", $data['public_area'], PDO::PARAM_STR);
         $stmt->bindParam(":number", $data['number'], PDO::PARAM_STR);
         $stmt->bindParam(":complement", $data['complement'], PDO::PARAM_STR);
         $stmt->bindParam(":district", $data['district'], PDO::PARAM_STR);
         $stmt->bindParam(":city", $data['city'], PDO::PARAM_STR);
         $stmt->bindParam(":state", $data['state'], PDO::PARAM_STR);
         $stmt->bindParam(":zip_code", $data['zip_code'], PDO::PARAM_STR);
-        $stmt->bindParam(":is_default", $data['is_default'], PDO::PARAM_STR);
+        $stmt->bindParam(":is_default", $data['is_default'], PDO::PARAM_BOOL);
+        $stmt->bindParam(":is_show", $data['is_show'], PDO::PARAM_BOOL);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
 
         $stmt->execute();

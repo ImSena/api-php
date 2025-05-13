@@ -481,9 +481,6 @@ class StoreService extends BaseService
         return $this->execute(function()use ($data){
             $fields = Validator::validate([
                 "name" => $data['name'] ?? '',
-                "id_analitycs" => $data['id_analitycs'] ?? '',
-                "id_search_console" => $data['id_search_console'] ?? '',
-                "id_tag_manager" => $data['id_tag_manager'] ?? '',
             ]);
 
             if(isset($data['id_analitycs'])){
@@ -498,6 +495,10 @@ class StoreService extends BaseService
                 $fields['id_tag_manager'] = $data['id_tag_manager'];
             }
 
+            if(isset($data['token_shipping'])){
+                $fields['token_shipping'] = $data['token_shipping'];
+            }
+
             $Store = new Store($this->pdo);
 
             $store = $Store->updateStore($fields);
@@ -507,6 +508,26 @@ class StoreService extends BaseService
             }
 
             return "Loja atualizada com sucesso.";
+        });
+    }
+
+    public function updateTheme(array $data)
+    {
+        return $this->execute(function() use ($data){
+            $fields = Validator::validate([
+                "layout" => $data['layout'] ?? 'template01',
+                "theme" => $data['theme'] ?? 'Gold'
+            ]);
+
+            $Store = new Store($this->pdo);
+
+            $result = $Store->updateTheme($fields);
+
+            if(!$result){
+                throw new Exception("Não foi possível atualizar tema.");
+            }
+
+            return "Tema atualizado com sucesso";
         });
     }
 }

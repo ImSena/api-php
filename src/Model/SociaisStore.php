@@ -38,4 +38,14 @@ class SociaisStore extends BaseModel
 
         return $stmt->fetchAll();
     }
+
+    public function updateSocial(array $data):bool
+    {
+        $sql = "UPDATE sociais_midias SET link = :link, updated_at = :updated_at WHERE type = :type";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(":link", $data['link'], PDO::PARAM_STR);
+        $stmt->bindParam("type", $data['type'], PDO::PARAM_STR);
+        $stmt->bindParam(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
+        return $stmt->execute();
+    }
 }

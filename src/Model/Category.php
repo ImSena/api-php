@@ -80,7 +80,7 @@ class Category extends BaseModel
     }
 
     public function getCategory(int $id){
-        $sql = "SELECT id_category, name FROM ctegories WHERE id_category = :id";
+        $sql = "SELECT id_category, name FROM categories WHERE id_category = :id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
