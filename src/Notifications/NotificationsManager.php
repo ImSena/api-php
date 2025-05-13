@@ -29,6 +29,20 @@ class NotificationsManager
 
         $email = $email[0]['email'] ?? null;
 
-        return EmailProviderFactory::make($email, $fromName);
+        $email = explode("@", $email);
+        $email = "no-reply@".$email[1];
+
+        $ano = date("Y");
+
+        $data_email = [
+            "url_logo" => "https://nsararidades.com.br/assets/logo-D20lBSqG.png",
+            "company" => "NSA Raridades",
+            "date" => $ano,
+            "link_eccomerce" => "https://nsararidades.com.br/",
+            "link_policy" => "https://nsararidades.com.br/",
+            "link_contact" => "https://nsararidades.com.br/"
+        ];
+
+        return EmailProviderFactory::make($email, $fromName, $data_email);
     }
 }

@@ -10,27 +10,37 @@ class PHPMailerNotifier extends EmailNotifier
 {
     protected PHPMailer $mailer;
 
-    public function __construct(PHPMailer $mailer)
+    public function __construct(PHPMailer $mailer, $var_defaults)
     {
-        parent::__construct();
+        parent::__construct($var_defaults);
         $this->mailer = $mailer;
     }
 
     public function sendOrderCreated(array $order, string $recipientEmail): bool
     {
-        $body = $this->renderTemplate("order_created.html", $order);
+        $variables = [...$this->var_default_email, ... $order];
+        $body = $this->renderTemplate("order_created.twig", $variables);
         return $this->send($recipientEmail, "Pedido criado com sucesso!", $body);
+    }
+
+    public function sendPaymentConfirmed(array $order, string $recipientEmail): bool
+    {
+           $variables = [...$this->var_default_email, ... $order];
+        $body = $this->renderTemplate('payment_confirmed.twig', $variables);
+        return $this->send($recipientEmail, "Pagamento Confirmado!", $body);
     }
 
     public function sendOrderCompleted(array $order, string $recipientEmail): bool
     {
-        $body = $this->renderTemplate("order_completed.html", $order);
+        $variables = [...$this->var_default_email, ... $order];
+        $body = $this->renderTemplate("order_completed.html", $variables);
         return $this->send($recipientEmail, "Pedido concluído", $body);
     }
 
     public function sendStatusOrder(array $order, string $subject, string $recipientEmail): bool
     {
-        $body = $this->renderTemplate("change_status_order.html", $order);
+        $variables = [...$this->var_default_email, ... $order];
+        $body = $this->renderTemplate("change_status_order.html", $variables);
         return $this->send($recipientEmail, $subject, $body);
     }
 

@@ -11,10 +11,10 @@ require_once __DIR__ . '/../../../config.php';
 
 class EmailProviderFactory
 {
-    public static function make(string $fromEmail, string $fromName, string $driver = DRIVEREMAIL): INotifier
+    public static function make(string $fromEmail, string $fromName, array $var_default_email, string $driver = DRIVEREMAIL): INotifier
     {
         return match (strtolower($driver)) {
-            "phpmailer" => new PHPMailerNotifier(self::createPHPMailerInstance($fromEmail, $fromName)),
+            "phpmailer" => new PHPMailerNotifier(self::createPHPMailerInstance($fromEmail, $fromName), $var_default_email),
             default => throw new InvalidArgumentException("Provedor de email [$driver] não suportado.")
         };
     }

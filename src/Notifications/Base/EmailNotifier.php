@@ -4,29 +4,34 @@ namespace App\Notifications\Base;
 
 use App\Interfaces\Notifications\INotifier;
 use Exception;
+use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
 
 abstract class EmailNotifier implements INotifier
 {
-    protected string $templatePath;
+    protected Environment $twig;
+    protected ?array $var_default_email;
 
-    public function __construct(string $templatePath = __DIR__. '/../templates/'){
-        $this->templatePath = rtrim($templatePath, "/") . "/";
-    }
-
-    protected function renderTemplate(string $fileName, array $variables):string
+    public function __construct(?array $var_default_email = null, string $templatePath = __DIR__ . '/../templates/')
     {
-        $file = $this->templatePath.$fileName;
-        if(!file_exists($file)){
-            throw new Exception("Template não encontrado: $file");
-        }
 
-        $template = file_get_contents($file);
-        foreach($variables as $key => $value){
-            $template = str_replace("{{{$key}}}", htmlspecialchars($value), $template);
-        }
+        $loader = new FilesystemLoader(rtrim($templatePath, "/"));
 
-        return $template;
+        $this->twig = new Environment($loader, [
+            'cache' => false
+        ]);
+
+        $this->var_default_email = $var_default_email;
     }
 
-    abstract protected function send(string $to, string $subject, string $body):bool | array;
+    protected function renderTemplate(string $fileName, array $variables): string
+    {
+        try {
+            return $this->twig->render($fileName, $variables);
+        } catch (Exception $e) {
+            throw new Exception("Erro ao renderizar template: {$fileName} — {$e->getMessage()}");
+        }
+    }
+
+    abstract protected function send(string $to, string $subject, string $body): bool | array;
 }
