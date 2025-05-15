@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Store;
 use App\Service\Base\BaseService;
 use App\Stripe\Keys;
@@ -10,6 +11,8 @@ use Stripe\Account;
 use Stripe\AccountLink;
 use Stripe\Stripe;
 use Exception;
+use PDOException;
+use Stripe\Exception\ApiErrorException;
 
 class StoreService extends BaseService
 {
@@ -157,7 +160,7 @@ class StoreService extends BaseService
             foreach ($data['addresses'] as $address) {
                 $addressData = Validator::validate([
                     "public_area" => $address['public_area'] ?? '',
-                    "number" => $address['number'] ?? '',
+                    "number" => $address['number'] ?? "",
                     "district" => $address['district'] ?? '',
                     "city" => $address['city'] ?? '',
                     "state" => $address['state'] ?? '',
@@ -165,7 +168,6 @@ class StoreService extends BaseService
                     "is_default" => $address['is_default'] ?? '',
                     "is_show" => $address['is_show'] ?? '',
                 ]);
-
                 $addressData['complement'] = isset($address['complement']) && !empty($address['complement']) ? $address['complement'] : null;
 
                 $addresses[] = $addressData;
@@ -352,31 +354,31 @@ class StoreService extends BaseService
             $resultSociais = $SocialStore->getSocial();
 
 
-            if(!isset($resultAddress['error'])){
-                $resultAddress = array_filter($resultAddress, function($address) {
+            if (!isset($resultAddress['error'])) {
+                $resultAddress = array_filter($resultAddress, function ($address) {
                     return $address['is_show'];
                 });
-            }else{
+            } else {
                 $resultAddress = "";
             }
 
-            if(!isset($resultPhones['error'])){
-                $resultPhones = array_filter($resultPhones, function($phones){
+            if (!isset($resultPhones['error'])) {
+                $resultPhones = array_filter($resultPhones, function ($phones) {
                     return $phones['is_show'];
                 });
-            }else{
+            } else {
                 $resultAddress = "";
             }
 
-            if(!isset($resultEmails['error'])){
-                $resultEmails = array_filter($resultEmails, function($email){
+            if (!isset($resultEmails['error'])) {
+                $resultEmails = array_filter($resultEmails, function ($email) {
                     return $email['is_show'];
                 });
-            }else{
+            } else {
                 $resultEmails = "";
             }
 
-            if(isset($resultSociais['error'])){
+            if (isset($resultSociais['error'])) {
                 $resultSociais = "";
             }
 
@@ -410,92 +412,157 @@ class StoreService extends BaseService
                 ];
             }
 
-            if(isset($Stripe['error'])){
+            if (isset($Stripe['error'])) {
                 throw new Exception("Não foi possível obter status do stripe");
             }
 
             $AddressStore = $AddressStore->getAddressStore();
 
             $isLocked = false;
-            $reasons = [];
+            $errors = [];
 
             if (empty($store['name'])) {
                 $isLocked = true;
-                $reasons[] = "Nome da loja não preenchido";
+                $errors[] = [
+                    'code' => 'STORE_NAME_MISSING',
+                    'message' => 'Nome da loja não preenchido'
+                ];
             }
 
-            if(empty($store['stripe_account_id'])){
+            if (empty($store['stripe_account_id'])) {
                 $isLocked = true;
-                $reasons[] = "Loja sem sistema de pagamento configurado.";
+                $errors[] = [
+                    'code' => 'STRIPE_ACCOUNT_MISSING',
+                    'message' => 'Loja sem sistema de pagamento configurado.'
+                ];
             }
 
-            if(empty($store['token_shipping'])){
+            if (empty($store['token_shipping'])) {
                 $isLocked = true;
-                $reasons[] = "Sistema de cotação de frete não configurado.";
+                $errors[] = [
+                    'code' => 'SHIPPING_TOKEN_MISSING',
+                    'message' => 'Sistema de cotação de frete não configurado.'
+                ];
             }
 
-            if(isset($AddressStore['error'])){
+            if (isset($AddressStore['error'])) {
                 $isLocked = true;
-                $reasons[] = "Endereço da loja não cadastrado.";
+                $errors[] = [
+                    'code' => 'STORE_ADDRESS_MISSING',
+                    'message' => 'Endereço da loja não cadastrado.'
+                ];
             }
 
-            if(!$Stripe){
+            if (!$Stripe['status']) {
                 $isLocked = true;
-                $reasons[] = "Conta Stripe não está ativa";
+                $errors[] = [
+                    'code' => 'STRIPE_ACCOUNT_INACTIVE',
+                    'message' => 'Conta Stripe não está ativa. Por favor, valide seus dados.'
+                ];
             }
 
             return [
                 'is_locked' => $isLocked,
-                'locked_reasons' => $reasons
+                'locked_reasons' => $errors
             ];
         });
     }
 
-    private function getStatusStripe()
+
+    public function updateAccountStripe()
     {
-        return $this->execute(function() {
-            $Store = new Store($this->pdo);
-
-            $store = $Store->getActiveStore();
-
-            if(!$store){
-                throw new Exception("Não foi possível resgatar loja criada.");
+        try {
+            $store = new Store($this->pdo);
+            $store = $store->getActiveStore();
+            if (!$store) {
+                throw new Exception("Loja não cadastrada.");
             }
 
             $accountId = $store['stripe_account_id'];
 
             Stripe::setApiKey(Keys::getSecretKey());
 
+            $accountLink = AccountLink::create([
+                'account' => $accountId,
+                'refresh_url' => 'https://sua-plataforma.com/refresh',
+                'return_url' => 'https://sua-plataforma.com/retorno',
+                'type' => 'account_update',
+            ]);
+
+            return [
+                'url' => $accountLink->url,
+                'message' => 'Link para atualizar conta gerado com sucesso.'
+            ];
+        } catch (PDOException $e) {
+            return ['error' => DatabaseErrorHelpers::error($e)];
+        } catch (ApiErrorException $e) {
+            return ['error' => "Ocorreu um erro ao se conectar com stripe. Conta não foi feito processo de onboarding: "];
+        } catch (Exception $e) {
+            return [
+                "error" => $e->getMessage()
+            ];
+        }
+    }
+
+    private function getStatusStripe()
+    {
+        return $this->execute(function () {
+            $storeModel = new Store($this->pdo);
+            $store = $storeModel->getActiveStore();
+
+            if (!$store) {
+                throw new Exception("Não foi possível resgatar loja criada.");
+            }
+
+            $accountId = $store['stripe_account_id'];
+            Stripe::setApiKey(Keys::getSecretKey());
+
             $account = Account::retrieve($accountId);
 
-            if($account->charges_enabled && $account->payouts_enabled && $account->details_submitted){
-                return true;
-            }else{
-                return false;
+            $isFullyEnabled = $account->charges_enabled
+                && $account->payouts_enabled
+                && $account->details_submitted
+                && empty($account->requirements->currently_due)
+                && empty($account->requirements->past_due)
+                && empty($account->requirements->eventually_due);
+
+            if ($isFullyEnabled) {
+                return ['status' => true, 'message' => 'Conta Stripe habilitada'];
             }
+
+            return [
+                'status' => false,
+                'message' => 'Conta com pendências na Stripe',
+                'pending_requirements' => [
+                    'currently_due'   => $account->requirements->currently_due,
+                    'eventually_due'  => $account->requirements->eventually_due,
+                    'past_due'        => $account->requirements->past_due,
+                ]
+            ];
         });
     }
 
+
     public function updateStore(array $data)
     {
-        return $this->execute(function()use ($data){
-            $fields = Validator::validate([
-                "name" => $data['name'] ?? '',
-            ]);
+        return $this->execute(function () use ($data) {
+            if (isset($data['name'])) {
+                $fields['name'] = $data['name'];
+            }
 
-            if(isset($data['id_analitycs'])){
+            if (isset($data['id_analitycs'])) {
                 $fields['id_analitycs'] = $data['id_analitycs'];
             }
 
-            if(isset($data['id_search_console'])){
+            if (isset($data['id_search_console'])) {
                 $fields['id_search_console'] = $data['id_search_console'];
             }
 
-            if(isset($data['id_tag_manager'])){
+            if (isset($data['id_tag_manager'])) {
                 $fields['id_tag_manager'] = $data['id_tag_manager'];
             }
 
-            if(isset($data['token_shipping'])){
+            if (isset($data['token_shipping'])) {
                 $fields['token_shipping'] = $data['token_shipping'];
             }
 
@@ -503,7 +570,7 @@ class StoreService extends BaseService
 
             $store = $Store->updateStore($fields);
 
-            if(!$store){
+            if (!$store) {
                 throw new Exception("Não foi possível atualizar loja");
             }
 
@@ -513,7 +580,7 @@ class StoreService extends BaseService
 
     public function updateTheme(array $data)
     {
-        return $this->execute(function() use ($data){
+        return $this->execute(function () use ($data) {
             $fields = Validator::validate([
                 "layout" => $data['layout'] ?? 'template01',
                 "theme" => $data['theme'] ?? 'Gold'
@@ -523,7 +590,7 @@ class StoreService extends BaseService
 
             $result = $Store->updateTheme($fields);
 
-            if(!$result){
+            if (!$result) {
                 throw new Exception("Não foi possível atualizar tema.");
             }
 

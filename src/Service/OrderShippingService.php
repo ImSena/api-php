@@ -13,11 +13,10 @@ class OrderShippingService extends BaseService
     {
         return $this->execute(function() use ($data){
             $decoded = JwtAuth::verifyToken($data['shipping_signature']);
-            
             if(isset($decoded['error'])){
                 throw new Exception("Assinatura da cotação de frete inválida");
             }
-    
+
             $OrderShipping = new OrderShipping($this->pdo);
     
             $shipping = $decoded['decoded']['shipping'];
@@ -42,7 +41,7 @@ class OrderShippingService extends BaseService
     
             return "Cotação salva com sucesso.";
 
-        }, true);
+        });
     }
 
     public function getOrderShipping(int $order)

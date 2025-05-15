@@ -14,6 +14,7 @@ class LockedStore extends BaseMiddleware{
 
     public function handle(Request $request, Response $response):bool
     {
+        return true;
         try{
 
             $storeService = new StoreService($this->connection);

@@ -193,6 +193,19 @@ class StoreController extends BaseController
 
         $this->successResponse($result);
     }
+
+    public function activeAccountStripe()
+    {
+        $store = new StoreService($this->pdo);
+
+        $result = $store->updateAccountStripe();
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result['message'], [$result['url']]);
+    }
 }
 
 // public function getStripe()

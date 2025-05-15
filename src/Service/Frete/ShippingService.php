@@ -51,7 +51,9 @@ class ShippingService extends BaseService
                 return $address['is_default'] == 1;
             });
 
-            return $address[0]['zip_code'];
+            $address = reset($address);
+
+            return $address['zip_code'];
         });
     }
 

@@ -109,6 +109,8 @@ class ProductService extends BaseService
             $Media = new Media($this->pdo);
             $Products = $Product->getAllCategory($params);
             $MediaService = new MediaService($this->pdo);
+            $ProductCategories = new ProductCategory($this->pdo);
+            $Category = new CategoryService($this->pdo);
 
             if (!$Products) {
                 throw new Exception("Não há produtos cadastrados nessa categoria");
@@ -117,11 +119,16 @@ class ProductService extends BaseService
             $result = [];
             foreach ($Products as $product) {
                 $id_product = $product['id_product'];
+                $id_category = $ProductCategories->getCategory($id_product);
+                $id_category = $id_category['id_category'];
+                $name_category = $Category->getCategory($id_category);
+                $name_category = $name_category['name'];
                 if (!isset($result[$id_product])) {
                     $result[$id_product] = [
                         'id_product' => $product['id_product'],
                         'brand' => $product['brand_name'],
                         'name' => $product['name'],
+                        "categoria" => $name_category,
                         'variations' => []
                     ];
                 }
@@ -169,6 +176,8 @@ class ProductService extends BaseService
             $Media = new Media($this->pdo);
             $Products = $Product->getAllBrand($params);
             $MediaService = new MediaService($this->pdo);
+            $ProductCategories = new ProductCategory($this->pdo);
+            $Category = new CategoryService($this->pdo);
 
             if (!$Products) {
                 throw new Exception("Não há produtos cadastrados nessa marca");
@@ -178,11 +187,16 @@ class ProductService extends BaseService
 
             foreach ($Products as $product) {
                 $id_product = $product['id_product'];
+                $id_category = $ProductCategories->getCategory($id_product);
+                $id_category = $id_category['id_category'];
+                $name_category = $Category->getCategory($id_category);
+                $name_category = $name_category['name'];
                 if (!isset($result[$id_product])) {
                     $result[$id_product] = [
                         'id_product' => $product['id_product'],
                         'brand' => $product['brand_name'],
                         'name' => $product['name'],
+                        "categoria" => $name_category,
                         'variations' => []
                     ];
                 }
@@ -397,30 +411,29 @@ class ProductService extends BaseService
 
             $product = $Product->editProduct($fields);
 
-            if(!$product){
+            if (!$product) {
                 throw new Exception("Não foi possível editar o produto.");
             }
 
             $productVariation = $Product->editVariations($fields);
 
-            if(!$productVariation){
+            if (!$productVariation) {
                 throw new Exception("Não foi possível editar variação");
             }
 
             $categoryProduct = $Product->editCategoryProduct($fields);
 
-            if(!$categoryProduct){
+            if (!$categoryProduct) {
                 throw new Exception("Não foi possível atualizar categoria do produto");
             }
 
             $picturesProduct = $Product->editPicturesProduct($fields);
 
-            if(!$picturesProduct){
+            if (!$picturesProduct) {
                 throw new Exception("Não foi possível atualizar imagens");
             }
 
             return "Produto editado com sucesso.";
-
         }, true);
     }
 }

@@ -8,7 +8,9 @@ use App\Model\Product;
 use App\Service\Base\BaseService;
 use App\Utils\Pagination;
 use App\Utils\Validator;
-use Exception;;
+use Exception;
+
+require_once __DIR__ . '/../../config.php';
 
 class OrderService extends BaseService
 {
@@ -17,6 +19,8 @@ class OrderService extends BaseService
         return $this->execute(function () use ($data) {
             $Order = new Order($this->pdo);
             $OrderShippingService = new OrderShippingService($this->pdo);
+            $UserService = new UserService($this->pdo);
+            $notificacao = $this->getNotifier();
 
             $fields = Validator::validate([
                 "id_address" => $data['id_address'] ?? '',
@@ -42,9 +46,59 @@ class OrderService extends BaseService
                 throw new Exception("Assinatura de cotação inválida");
             }
 
+            $order = $this->getById($Order);
+            $order = $order['content'];
+            $subtotal = (float) $order['total_price'];
+            $shipping = (float) $order['shipping']['shipping_cost'];
+            $total = $subtotal + $shipping;
+
+            $products = [];
+
+            foreach ($order['products'] as $product) {
+                $products[] = [
+                    "product_url" => "categoria/nome_produto/id",
+                    "product_image" => $product['image_path'],
+                    "product_name" => $product['name'],
+                    "quantity" => $product['quantity'],
+                    "price" => $product['price'],
+                ];
+            }
+
+            $user = $UserService->getById($order['id_user']);
+
+            if (isset($user['error'])) {
+                throw new Exception("Não foi possível resgatar usuário");
+            }
+
+            $user = $user['content'];
+
+            $dataOrder = [
+                "order_number" => $Order,
+                "order_date" => date("m/d/Y - H:i:s"),
+                "order_url" => URL_ORDER . $Order,
+                'items' => [],
+                "subtotal" => $subtotal,
+                "shipping" => $shipping,
+                "total" => $total,
+                "shipping_method" => [
+                    "carrier" => $order['shipping']['carrier'],
+                    "service" => $order['shipping']['shipping_cost']
+                ],
+                "shipping_address" => [
+                    "public_area" => "area",
+                    "number" => "",
+                    "complement" => "",
+                    "district" => "",
+                    "city" => "",
+                    "state"
+                ]
+            ];
+
+            // $send = $notificacao->sendOrderCreated($order, $user['email']);
+
             return [
                 'message' => "Pedido realizado com sucesso",
-                'id_order' => $Order
+                'id_order' => $Order,
             ];
         }, true);
     }
@@ -153,9 +207,16 @@ class OrderService extends BaseService
             $OrderResult = $Order->getById($id);
             $Product = new Product($this->pdo);
             $MediaService = new MediaService($this->pdo);
+            $OrderShippingService = new OrderShippingService($this->pdo);
+
 
             if (!$OrderResult) {
                 throw new Exception("Não foi possível buscar pedido");
+            }
+            $OrderShippingService = $OrderShippingService->getOrderShipping($id);
+
+            if (isset($OrderShippingService['error'])) {
+                throw new Exception("Não foi possível enviar buscar dados de frete do produto");
             }
 
             $productItems = $Order->getOrderIdProductItems($id);
@@ -175,7 +236,14 @@ class OrderService extends BaseService
                 $totalPrice += $price * intval($productItem['quantity']);
             }
 
+            $OrderResult['shipping'] = [
+                "carrier" => $OrderShippingService['carrier'],
+                "shipping_type" => $OrderShippingService['shipping_type'],
+                "shipping_cost" => $OrderShippingService['shipping_cost'],
+            ];
+
             $OrderResult['total_price'] = number_format($totalPrice, 2, ',', '.');
+
 
             return [
                 'message' => 'Pedido encontrado com sucesso',

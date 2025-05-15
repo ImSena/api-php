@@ -25,23 +25,29 @@ class PHPMailerNotifier extends EmailNotifier
 
     public function sendPaymentConfirmed(array $order, string $recipientEmail): bool
     {
-           $variables = [...$this->var_default_email, ... $order];
+        $variables = [...$this->var_default_email, ... $order];
         $body = $this->renderTemplate('payment_confirmed.twig', $variables);
         return $this->send($recipientEmail, "Pagamento Confirmado!", $body);
     }
 
-    public function sendOrderCompleted(array $order, string $recipientEmail): bool
+    public function sendPaymentDenied(array $order, string $recipientEmail): bool
     {
         $variables = [...$this->var_default_email, ... $order];
-        $body = $this->renderTemplate("order_completed.html", $variables);
-        return $this->send($recipientEmail, "Pedido concluído", $body);
+        $body = $this->renderTemplate("payment_denied.twig", $variables);
+        return $this->send($recipientEmail, "Pagamento Negado", $body);
+    }
+    
+    public function sendOrderShipped(array $order, string $recipientEmail): bool{
+        $variables = [...$this->var_default_email, ... $order];
+        $body = $this->renderTemplate("order_shipped.twig", $variables);
+        return $this->send($recipientEmail, "Pedido Enviado!", $body);
     }
 
-    public function sendStatusOrder(array $order, string $subject, string $recipientEmail): bool
+    public function sendOrderDeliverd(array $order, string $recipientEmail): bool
     {
-        $variables = [...$this->var_default_email, ... $order];
-        $body = $this->renderTemplate("change_status_order.html", $variables);
-        return $this->send($recipientEmail, $subject, $body);
+        $variables = [...$this->var_default_email, ...$order];
+        $body = $this->renderTemplate("order_shipped.twig", $variables);
+        return $this->send($recipientEmail, "Pedido Entregue!", $body);
     }
 
     protected function send(string $to, string $subject, string $body): bool|array
