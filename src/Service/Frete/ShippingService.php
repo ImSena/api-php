@@ -122,6 +122,12 @@ class ShippingService extends BaseService
 
             $shippings = json_decode($response->getBody()->getContents(), true);
 
+            $shippings = array_filter($shippings, function ($shipping) {
+                return !isset($shipping['error']);
+            });
+
+            $shippings = array_values($shippings);
+
             foreach ($shippings as &$shipping) {
                 $service = json_encode($shipping);
                 $shipping['signature_eccomerce'] = JwtAuth::renderSignatureShipping($service);

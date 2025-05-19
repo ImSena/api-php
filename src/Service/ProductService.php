@@ -434,4 +434,17 @@ class ProductService extends BaseService
             return "Produto editado com sucesso.";
         }, true);
     }
+
+    public function searchProduct(string $search)
+    {
+        return $this->execute(function() use ($search){
+            $Product = new Product($this->pdo);
+
+            $search = $search ? $search : 'moeda';
+
+            $productResult =  $Product->searchByName($search);
+
+            return $productResult;
+        });
+    }
 }

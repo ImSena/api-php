@@ -356,4 +356,40 @@ class UserService extends BaseService
             ];
         });
     }
+
+    public function editUser(array $data)
+    {
+        return $this->execute(function() use ($data){
+            $fields = Validator::validate([
+                "username" => $data['username'] ?? '',
+                "email" => $data['email'] ?? '',
+                "type" => $data['type'] ?? '',
+                "person" => $data['person'] ?? '',
+                "id_user" => $data['id_user'] ?? '',
+                "rule" => $data['rule'] ?? ''
+            ]);
+            $person = $fields['person'];
+            if($fields['type'] == "NATURAL"){
+
+                $fields['person'] = Validator::validate([
+                    "cpf" => $person['cpf'] ?? '',
+                    "dt_birth" => $person['dt_birth'] ?? '',
+                    "gender" => $person['gender'] ?? ''
+                ]);
+            }else{
+                $fields['person'] = Validator::validate([
+                    "cnpj" => $person['cnpj'] ?? '',
+                    "corporate_name" => $person['corporate_name'] ?? '',
+                    "trade_name" => $person['trade_name'] ?? '',
+                    "state_registration" => $person['state_registration'] ?? ''
+                ]);
+            }
+
+            if($fields['rule'] !== "user"){
+                throw new Exception("Token Inválido para o tipo de requisição");
+            }
+
+        
+        }, true);
+    }
 }

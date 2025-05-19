@@ -17,6 +17,7 @@ Route::group([
 
     Route::post("/$prefix/send-active-account", [UserController::class, 'sendActiveUser'], [LockedStore::class]);
     Route::put("/$prefix/active-account", [UserController::class, 'activeAccount'], [LockedStore::class]);
+    Route::put("/$prefix", [UserController::class, "edit"], $middlewares);
     Route::get("/$prefix/{param}", [UserController::class, 'getAll'], [LockedStore::class, AuthAdmin::class]);
     Route::get("/$prefix/inactive/{param}", [UserController::class, 'getAllInactive'], [LockedStore::class, AuthAdmin::class]);
 });

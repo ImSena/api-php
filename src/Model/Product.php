@@ -277,7 +277,7 @@ class Product extends BaseModel
      * @param int $id Esse id é da categoria especificada.
      */
     public function getTotalByCategory(int $id)
-    {    
+    {
         $sql = "SELECT COUNT(id_product) AS total FROM product_categories WHERE id_category = :id_category";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id_category", $id, PDO::PARAM_INT);
@@ -432,7 +432,8 @@ class Product extends BaseModel
     }
 
     public function insertQuantity(array $data)
-    {        $sql = "UPDATE product_variants SET qtd_stock = qtd_stock + :quantity, updated_at = :updated_at WHERE id_product_variant = :id";
+    {
+        $sql = "UPDATE product_variants SET qtd_stock = qtd_stock + :quantity, updated_at = :updated_at WHERE id_product_variant = :id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":quantity", $data['quantity'], PDO::PARAM_INT);
         $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
@@ -463,7 +464,8 @@ class Product extends BaseModel
     }
 
     public function editProduct(array $data)
-    {        $product = $data['products'];
+    {
+        $product = $data['products'];
 
         $sql = "UPDATE products 
         SET id_brand = :id_brand, 
@@ -601,5 +603,49 @@ class Product extends BaseModel
         }
 
         return true;
+    }
+
+    public function searchByName(string $term)
+    {
+        $term = mb_strtolower(trim($term));
+        if (mb_strlen($term) < 2) return [];
+
+        $like = '%' . $term . '%';
+
+        $sql = "SELECT 
+                    p.id_product,
+                    p.name,
+                    b.name AS brand,
+                    c.name AS category
+                FROM products p
+                LEFT JOIN brands b ON p.id_brand = b.id_brand
+                LEFT JOIN product_categories pc ON p.id_product = pc.id_product
+                LEFT JOIN categories c ON pc.id_category = c.id_category
+                WHERE p.name LIKE :like
+                LIMIT 50";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindParam("like", $like, PDO::PARAM_STR);
+        $stmt->execute();
+        $results = $stmt->fetchAll();
+
+        foreach ($results as &$product) {
+            $name = mb_strtolower($product['name']);
+            $score = 0;
+
+            if (strpos($name, $term) === 0) $score += 30;
+            if (strpos($name, ' ' . $term) !== false) $score += 20;
+            if (strpos($name, $term) !== false) $score += 10;
+
+            similar_text($term, $name, $percent);
+            $score += $percent / 5;
+
+            $product['score'] = $score;
+        }
+
+        usort($results, fn($a, $b) => $b['score'] <=> $a['score']);
+        unset($results['score']);
+        return array_slice($results, 0, 20);
     }
 }

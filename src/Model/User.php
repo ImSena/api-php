@@ -276,4 +276,10 @@ class User extends BaseModel
     
         return  $stmt->fetch();
     }
+
+    public function updateUser(array $user)
+    {
+        $sql = "UPDATE users SET username = :username WHERE id_user = :id";
+        
+    }
 }

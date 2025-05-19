@@ -148,5 +148,22 @@ class UserController extends BaseController
         ], 200);
     }
 
+    public function edit()
+    {
+        $body = $this->request::body();
+        $body['id_user'] = $this->request::getUserId();
+        $body['rule'] = $this->request::getRule();
+
+        $userService = new UserService($this->pdo);
+        $userResult = $userService->editUser($body);
+
+        if(isset($userResult['error'])){
+            $this->errorResponse($userResult['error']);
+        }
+
+        return $this->successResponse("Usuário editado com sucesso.");
+
+        
+    }
     
 }

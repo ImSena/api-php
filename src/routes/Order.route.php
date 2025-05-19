@@ -12,7 +12,7 @@ Route::group([
     "middlewares" => [LockedStore::class, AuthPermission::class]
 ], function($prefix, $middlewares){
     Route::post("/$prefix", [OrderController::class, "create"], [LockedStore::class, AuthUser::class]);
-    Route::post("/$prefix/change-status/{param}", [OrderController::class, "changeStatus"], $middlewares);
+    Route::post("/$prefix/change-status/{param}", [OrderController::class, "changeStatus"], [LockedStore::class, AuthUser::class]);
     Route::get("/$prefix/get-all/1", [OrderController::class, "getAllOrder"], $middlewares);
     Route::get("/$prefix/{param}", [OrderController::class, "getById"], $middlewares);
     Route::get("/$prefix/{param}/{param}", [OrderController::class, "getAll"], $middlewares);

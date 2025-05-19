@@ -106,6 +106,19 @@ class ProductController extends BaseController
         }
 
         return $this->successResponse("Produto editado com sucesso.", [], 204);
+    }
 
+    public function search($param)
+    {
+        $search = $param[0];
+
+        $productService = new ProductService($this->pdo);
+        $result = $productService->searchProduct($search);
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse("Pesquisa realizada.", $result);
     }
 }
