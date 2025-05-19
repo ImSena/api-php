@@ -26,10 +26,11 @@ class OrderNotificationFormatter
         }, $order['products']);
 
         return [
+            "id" => $order['id_order'],
             "email" => $emailUser,
             "order_number" => "#".$order['id_order'],
             "order_date" => date("m/d/Y - H:i:s"),
-            "order_url" => URL_ORDER . $order['id'],
+            "order_url" => URL_ORDER . $order['id_order'],
             'items' => $products,
             "subtotal" => 'R$ ' . number_format($subtotal, 2, ',', '.'),
             "shipping" => 'R$ ' . number_format($shipping, 2, ',', '.'),

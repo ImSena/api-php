@@ -20,6 +20,7 @@ class WebhookController extends BaseController
 
 
         error_log("pagamento: " . print_r($webHookService, true));
+        error_log("mensagem");
 
         if (isset($webHookService['error'])) {
             $errorService = new ErrorService($this->pdo);

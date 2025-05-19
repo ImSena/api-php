@@ -534,9 +534,9 @@ class StoreService extends BaseService
                 'status' => false,
                 'message' => 'Conta com pendências na Stripe',
                 'pending_requirements' => [
-                    'currently_due'   => $account->requirements->currently_due,
-                    'eventually_due'  => $account->requirements->eventually_due,
-                    'past_due'        => $account->requirements->past_due,
+                    'currently_due'   => $account->requirements->currently_due ?? '',
+                    'eventually_due'  => $account->requirements->eventually_due ?? '',
+                    'past_due'        => $account->requirements->past_due ?? '',
                 ]
             ];
         });

@@ -316,7 +316,7 @@ class Media extends BaseModel
 
     public function getPathToFolder(int $id_folder, bool $old = true, bool $delete = false): string
     {
-
+        $this->ensureRootFolderExists();
         $sql = "SELECT parent_id, folder_name FROM folders WHERE id_folder = :id_folder";
 
         $stmt = $this->pdo->prepare($sql);
@@ -333,7 +333,6 @@ class Media extends BaseModel
 
         $path = "";
 
-
         if (empty($result['parent_id'])) {
             $path = "/uploads";
         } else {
@@ -348,6 +347,8 @@ class Media extends BaseModel
     //Files
     public function createFiles(int $id_folder, array $files, PDO $pdo): bool
     {
+        $this->ensureRootFolderExists();
+
         $sql = "INSERT INTO media (file_name, alias, file_type, file_size, id_folder) 
                 VALUES (:file_name, :alias, :file_type, :file_size, :id_folder)";
         $stmt = $pdo->prepare($sql);

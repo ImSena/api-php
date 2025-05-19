@@ -7,7 +7,7 @@ use App\Middlewares\LockedStore;
 
 Route::group([
     "prefix" => "shipping",
-    "middlewares" => [LockedStore::class, AuthUser::class]
+    "middlewares" => [LockedStore::class]
 ], function($prefix, $middlewares){
     Route::post("/$prefix", [ShippingController::class, 'getQuote'], $middlewares);
 });

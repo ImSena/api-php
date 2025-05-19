@@ -38,5 +38,5 @@ abstract class EmailNotifier implements INotifier
         }
     }
 
-    abstract protected function send(string $to, string $subject, string $body): bool | array;
+    abstract protected function send(string $to, string $subject, string $body, ?array $attachments = null): bool | array;
 }

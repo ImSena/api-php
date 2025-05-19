@@ -86,7 +86,63 @@ class NotificationsService extends BaseService
                 throw new Exception("Não foi possivel enviar e-mail para o usuário: " . $orderData['email']);
             }
 
-            $send = $this->getNotifier()->sendPaymentDenied($orderData, $emailAdmin);
+            $send = $this->getNotifier()->sendPaymentDenied($orderData, $emailAdmin, "ADMIN");
+
+            if (!$send) {
+                throw new Exception("Não foi possível enviar o e-mail para o cliente");
+            }
+
+            return true;
+        });
+    }
+
+    public function notifyOrderShipped(array $orderData, ?array $files = null)
+    {
+        return $this->execute(function () use ($orderData, $files) {
+            $emailStore = new EmailStoreService($this->pdo);
+            $emailAdmin = $emailStore->getEmailDefault();
+
+            if (isset($emailAdmin['error'])) {
+                throw new Exception("Não foi possível resgatar o e-mail do lojista");
+            }
+
+            $emailAdmin = $emailAdmin['email'];
+
+            $send = $this->getNotifier()->sendOrderShipped($orderData, $orderData['email'], "USER", $files);
+
+            if (!$send) {
+                throw new Exception("Não foi possivel enviar e-mail para o usuário: " . $orderData['email']);
+            }
+
+            $send = $this->getNotifier()->sendOrderShipped($orderData, $emailAdmin, "ADMIN", $files);
+
+            if (!$send) {
+                throw new Exception("Não foi possível enviar o e-mail para o cliente");
+            }
+
+            return true;
+        });
+    }
+
+    public function notifyOrderDelivered(array $orderData, ?array $files = null)
+    {
+        return $this->execute(function () use ($orderData, $files) {
+            $emailStore = new EmailStoreService($this->pdo);
+            $emailAdmin = $emailStore->getEmailDefault();
+
+            if (isset($emailAdmin['error'])) {
+                throw new Exception("Não foi possível resgatar o e-mail do lojista");
+            }
+
+            $emailAdmin = $emailAdmin['email'];
+
+            $send = $this->getNotifier()->sendOrderDeliverd($orderData, $orderData['email'], "USER", $files);
+
+            if (!$send) {
+                throw new Exception("Não foi possivel enviar e-mail para o usuário: " . $orderData['email']);
+            }
+
+            $send = $this->getNotifier()->sendOrderDeliverd($orderData, $emailAdmin, "ADMIN", $files);
 
             if (!$send) {
                 throw new Exception("Não foi possível enviar o e-mail para o cliente");

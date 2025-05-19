@@ -9,18 +9,20 @@ use Exception;
 use PDO;
 use PDOException;
 
-abstract class BaseService{
+abstract class BaseService
+{
     protected PDO $pdo;
 
     private ?NotificationsManager $notificationsManager = null;
 
-    public function __construct(PDO $pdo){
+    public function __construct(PDO $pdo)
+    {
         $this->pdo = $pdo;
     }
 
-    protected function getNotifier():INotifier
+    protected function getNotifier(): INotifier
     {
-        if(!$this->notificationsManager){
+        if (!$this->notificationsManager) {
             $this->notificationsManager = new NotificationsManager($this->pdo);
         }
 
@@ -34,13 +36,13 @@ abstract class BaseService{
             if ($useTransaction === true) {
                 $this->pdo->beginTransaction();
             }
-    
+
             $result = $callback();
-    
+
             if ($useTransaction === true) {
                 $this->pdo->commit();
             }
-    
+
             return $result;
         } catch (PDOException $e) {
             if ($useTransaction === true && $this->pdo->inTransaction()) {

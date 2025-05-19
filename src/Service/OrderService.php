@@ -11,6 +11,7 @@ use App\Service\Base\BaseService;
 use App\Utils\Pagination;
 use App\Utils\Validator;
 use Exception;
+use Stripe\File;
 
 require_once __DIR__ . '/../../config.php';
 
@@ -21,8 +22,6 @@ class OrderService extends BaseService
         return $this->execute(function () use ($data) {
             $orderModel = new Order($this->pdo);
             $OrderShippingService = new OrderShippingService($this->pdo);
-            $UserService = new UserService($this->pdo);
-            $AddressService = new AddressService($this->pdo);
             $NotificationService = new NotificationsService($this->pdo);
 
             $fields = Validator::validate([
@@ -57,23 +56,12 @@ class OrderService extends BaseService
             $order = $orderResponse['content'];
             $order['id'] = $orderId;
 
-            $resultUser = $UserService->getById($order['id_user']);
+            $resultUser = $order['user'];
+            $userEmail = $resultUser['email'];
 
-            if (isset($resultUser['error'])) {
-                throw new Exception("Não foi possível carregar usuário");
-            }
+            $resultAddress = $order['address'];
 
-            $user = $resultUser['content'];
-
-            $resultAddress = $AddressService->getById($order['id_address']);
-
-            if (isset($resultAddress['error'])) {
-                throw new Exception("Não foi possível carregar endereço");
-            }
-
-            $address = $resultAddress['content'];
-
-            $dataOrder = OrderNotificationFormatter::format($order, $user['email'], $address);
+            $dataOrder = OrderNotificationFormatter::format($order, $userEmail, $resultAddress);
             $dataOrder['id'] = $orderId;
 
             $send = $NotificationService->notifyOrderCreated($dataOrder);
@@ -99,6 +87,8 @@ class OrderService extends BaseService
             $UserService = new UserService($this->pdo);
             $OrderShippingService = new OrderShippingService($this->pdo);
             $MediaService = new MediaService($this->pdo);
+            $UserService = new UserService($this->pdo);
+            $AddressService = new AddressService($this->pdo);
             $statusOrder = [
                 'PENDING',
                 'PROCESSING',
@@ -144,6 +134,7 @@ class OrderService extends BaseService
             }
 
             foreach ($OrderResult as &$item) {
+                $totalPrice = 0.00;
                 $productItem = $Order->getOrderIdProductItems($item['id_order']);
                 $orderShipping = $OrderShippingService->getOrderShipping($item['id_order']);
 
@@ -155,25 +146,30 @@ class OrderService extends BaseService
                 $item['address_shipped'] = $address['content'];
                 unset($item['id_address']);
 
+                
                 foreach ($productItem as $product) {
                     $productData = $Product->getById($product['id_product_variant']);
                     $path = $Media->getPathToFile($productData);
                     $extension = $MediaService->getExtension($productData['file_type']);
                     $productData['image_path'] = $path . '.' . $extension;
                     $productData['quantity'] = $product['quantity'];
-                    $productData['shipping'] = $orderShipping;
                     unset($productData['id_media']);
                     unset($productData['file_type']);
                     unset($productData['qtd_stock']);
                     $item['products'][] = $productData;
+                    $price = floatval($productData['price']);
+                    $discount = floatval($productData['discount']);
+                    $price -= $discount;
+                    $totalPrice += $price * intval($product['quantity']);
                 }
 
                 if ($data['rule'] == 'admin') {
-                    $User = $UserService->getById(1);
+                    $User = $UserService->getById($item['id_user']);
                     $item['user'] = $User['content'];
                 }
 
-                unset($item['id_user']);
+                $item['total_price'] = number_format($totalPrice, 2, ',', '.');
+                $item['shipping'] = $orderShipping;
             }
 
             $qtdPage = Pagination::calculateTotalPages($totalOrders['total'],  $limitPage);
@@ -201,6 +197,8 @@ class OrderService extends BaseService
             $MediaService = new MediaService($this->pdo);
             $OrderShippingService = new OrderShippingService($this->pdo);
             $ProductCategories = new ProductCategory($this->pdo);
+            $UserService = new UserService($this->pdo);
+            $AddressService = new AddressService($this->pdo);
 
             if (!$OrderResult) {
                 throw new Exception("Não foi possível buscar pedido");
@@ -236,7 +234,23 @@ class OrderService extends BaseService
                 "shipping_cost" => $OrderShippingService['shipping_cost'],
             ];
 
+            $address = $AddressService->getById($OrderResult['id_address']);
+
+            if (isset($address['error'])) {
+                throw new Exception("Não foi possível resgatar endereço");
+            }
+
+            $user = $UserService->getById($OrderResult['id_user']);
+
+            if (isset($user['error'])) {
+                throw new Exception("Não foi possível resgatar dados do usuário");
+            }
+
+            $OrderResult['address'] = $address['content'];
+            $OrderResult['user'] = $user['content'];
             $OrderResult['total_price'] = number_format($totalPrice, 2, ',', '.');
+            // unset($OrderResult['id_user']);
+            // unset($OrderResult['id_address']);
 
 
             return [
@@ -245,9 +259,15 @@ class OrderService extends BaseService
             ];
         });
     }
-    public function changeStatus(string $status, int $id_order)
+    public function changeStatus(string $status, int $id_order, ?array $attachment = null)
     {
-        return $this->execute(function () use ($status, $id_order) {
+        return $this->execute(function () use ($status, $id_order, $attachment) {
+
+            Validator::validate([
+                "status" => $status ?? '',
+                "id_order" => $id_order ?? ''
+            ]);
+
             $statusExisting = [
                 'PENDING',
                 'PROCESSING',
@@ -270,9 +290,48 @@ class OrderService extends BaseService
                 throw new Exception("Não foi possível alterar o status");
             }
 
+            if ($status == "SHIPPED" || $status == "DELIVERED") {
+                $send = $this->sendMailStatus($status, $id_order, $attachment);
+
+                if (isset($send['error'])) {
+                    throw new Exception("Não foi possível enviar e-mail");
+                }
+            }
+
             return "Status do pedido alterado com sucesso.";
         });
     }
+
+
+    private function sendMailStatus(string $status, int $id_order, ?array $files = null)
+    {
+        return $this->execute(function () use ($status, $id_order, $files) {
+            $orderResult = $this->getById($id_order);
+            $notificationService = new NotificationsService($this->pdo);
+
+            if (isset($orderResult['error'])) {
+                throw new Exception("Não foi possivel resgatar dados do pedido");
+            }
+
+            $orderResult = $orderResult['content'];
+
+            $dataOrder = OrderNotificationFormatter::format($orderResult, $orderResult['user']['email'], $orderResult['address']);
+
+            switch ($status) {
+                case "SHIPPED":
+                    $notificationService->notifyOrderShipped($dataOrder, $files);
+                    break;
+                case "DELIVERED":
+                    $notificationService->notifyOrderDelivered($dataOrder, $files);
+                    break;
+                default:
+                    throw new Exception("status do pedido inconsistente");
+            }
+
+            return true;
+        });
+    }
+
     public function verifyOrder(int $id)
     {
         return $this->execute(function () use ($id) {

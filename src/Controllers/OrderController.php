@@ -71,4 +71,21 @@ class OrderController extends BaseController
         return $this->successResponse($orderService['message'], $orderService['content']);
     }
 
+    public function changeStatus($id)
+    {
+        $id = intval($id[0]);
+        $body = $this->request::body();
+        $files = $this->request::files();
+        $status = $body['status'];
+        
+        $orderService = new OrderService($this->pdo);
+        $orderService = $orderService->changeStatus($status, $id, $files);
+
+        if(isset($orderService['error'])){
+            return $this->errorResponse($orderService['error']);
+        }
+
+        return $this->successResponse("Status do pedido alterado com sucesso.");
+    }
+
 }
