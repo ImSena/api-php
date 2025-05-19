@@ -11,9 +11,94 @@ require_once __DIR__ . '/../../config.php';
 
 class NotificationsService extends BaseService
 {
+
+    public function notifyOrderCreated(array $orderData)
+    {
+        return $this->execute(function () use ($orderData) {
+            $emailStore = new EmailStoreService($this->pdo);
+            $emailAdmin = $emailStore->getEmailDefault();
+
+            if (isset($emailAdmin['error'])) {
+                throw new Exception("Não foi possível resgatar e-mail do lojista");
+            }
+
+            $emailAdmin = $emailAdmin['email'];
+
+            $send = $this->getNotifier()->sendOrderCreated($orderData, $orderData['email']);
+
+            if (!$send) {
+                throw new Exception("Não foi possível enviar e-mail para o usuário: " . $orderData['email']);
+            }
+
+            $send = $this->getNotifier()->sendOrderCreated($orderData, $emailAdmin, "ADMIN");
+
+            if (!$send) {
+                throw new Exception("Não foi possível enviar e-mail para o lojista");
+            }
+
+            return true;
+        });
+    }
+
+    public function notifyOrderPaySuccess(array $orderData)
+    {
+        return $this->execute(function () use ($orderData) {
+            $emailStore = new EmailStoreService($this->pdo);
+            $emailAdmin = $emailStore->getEmailDefault();
+
+            if (isset($emailAdmin['error'])) {
+                throw new Exception("Não foi possível resgatar o e-mail do lojista");
+            }
+
+            $emailAdmin = $emailAdmin['email'];
+
+            $send = $this->getNotifier()->sendPaymentConfirmed($orderData, $orderData['email']);
+
+            if (!$send) {
+                throw new Exception("Não foi possivel enviar e-mail para o usuário: " . $orderData['email']);
+            }
+
+            $send = $this->getNotifier()->sendPaymentConfirmed($orderData, $emailAdmin, "ADMIN");
+
+            if (!$send) {
+                throw new Exception("Não foi possível enviar o e-mail para o cliente");
+            }
+
+            return true;
+        });
+    }
+
+    public function notifyOrderPayFailed(array $orderData)
+    {
+        return $this->execute(function () use ($orderData) {
+            $emailStore = new EmailStoreService($this->pdo);
+            $emailAdmin = $emailStore->getEmailDefault();
+
+            if (isset($emailAdmin['error'])) {
+                throw new Exception("Não foi possível resgatar o e-mail do lojista");
+            }
+
+            $emailAdmin = $emailAdmin['email'];
+
+            $send = $this->getNotifier()->sendPaymentDenied($orderData, $orderData['email']);
+
+            if (!$send) {
+                throw new Exception("Não foi possivel enviar e-mail para o usuário: " . $orderData['email']);
+            }
+
+            $send = $this->getNotifier()->sendPaymentDenied($orderData, $emailAdmin);
+
+            if (!$send) {
+                throw new Exception("Não foi possível enviar o e-mail para o cliente");
+            }
+
+            return true;
+        });
+    }
+
     public function sendNotificationsClient(string $subject, string $email)
     {
-        return $this->execute(function() use ($subject, $email){
+        return $this->execute(function () use ($subject, $email) {
             $subjects = [
                 'PAYMENT_SUCCESS',
                 'PAYMENT_CANCELED',
@@ -111,7 +196,7 @@ class NotificationsService extends BaseService
 
     public function sendNotificationsAdmin(string $subject, array $info)
     {
-        return $this->execute(function() use ($subject, $info){
+        return $this->execute(function () use ($subject, $info) {
             $Admin = new AdminService($this->pdo);
             $Store = new StoreService($this->pdo);
 
@@ -138,7 +223,7 @@ class NotificationsService extends BaseService
             $mail->Username = USERNAME_MAIL;
             $mail->Password = PASSWORD_MAIL;
             $mail->CharSet = 'UTF-8';
-            $mail->From     = "no-reply@".$StoreResult['domain'];
+            $mail->From     = "no-reply@" . $StoreResult['domain'];
             $mail->FromName = "Escala Web";
             $mail->addAddress($AdminResult['email']);
             $mail->WordWrap = 50;

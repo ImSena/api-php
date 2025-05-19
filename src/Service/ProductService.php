@@ -312,8 +312,6 @@ class ProductService extends BaseService
                     $path = $Media->getPathToFile($picture);
                     $extension = $MediaService->getExtension($picture['file_type']);
                     $picture['image_path'] = $path . '.' . $extension;
-                    unset($picture['id_media']);
-                    unset($picture['file_type']);
                 }
                 $prod['value_variant'] = $Product->getValueVariant($prod['id_product_variant']);
                 $ProductResult['variations'][] = $prod;

@@ -45,6 +45,21 @@ class EmailStoreService extends BaseService
         });
     }
 
+    public function getEmailDefault()
+    {
+        return $this->execute(function() {
+            $EmailStore = new EmailStore($this->pdo);
+
+            $result = $EmailStore->getDefault();
+
+            if(!$result){
+                throw new Exception("Não foi possível resgatar e-email");
+            }
+
+            return $result;
+        });
+    }
+
     public function update(array $data)
     {
         return $this->execute(function () use ($data) {

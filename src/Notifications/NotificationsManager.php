@@ -7,6 +7,7 @@ use App\Notifications\Factory\EmailProviderFactory;
 use App\Service\StoreService;
 use PDO;
 
+require_once __DIR__ . "/../../config.php";
 class NotificationsManager
 {
     private PDO $pdo;
@@ -38,9 +39,12 @@ class NotificationsManager
             "url_logo" => "https://nsararidades.com.br/assets/logo-D20lBSqG.png",
             "company" => "NSA Raridades",
             "date" => $ano,
-            "link_eccomerce" => "https://nsararidades.com.br/",
-            "link_policy" => "https://nsararidades.com.br/",
-            "link_contact" => "https://nsararidades.com.br/"
+            "date_hour" => date("Y-m-d H:i:s"),
+            "link_eccomerce" => URL_STORE,
+            "link_policy" => "https://escalaweb.com.br/politica-de-privacidade",
+            "link_contact" => URL_STORE.'/contato',
+            "link_painel" => URL_STORE.'/administrativo',
+            "store_url" => URL_STORE
         ];
 
         return EmailProviderFactory::make($email, $fromName, $data_email);

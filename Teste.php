@@ -170,11 +170,11 @@ $dataShipped = [
     ]
 ];
 
-$send = $notificacao->sendOrderCreated($data, "escalaweb4@gmail.com");
-$send = $notificacao->sendPaymentConfirmed($dataPayment, "escalaweb4@gmail.com");
-$send = $notificacao->sendPaymentDenied($dataDenied, "escalaweb4@gmail.com");
-$send = $notificacao->sendOrderShipped($dataPayment, "escalaweb4@gmail.com");
-$send = $notificacao->sendOrderDeliverd($dataDenied, "teste@escalaweb.com.br");
+// $send = $notificacao->sendOrderCreated($data, "teste@escalaweb.com.br", "ADMIN");
+// $send = $notificacao->sendPaymentConfirmed($dataPayment, "teste@escalaweb.com.br", "ADMIN");
+// $send = $notificacao->sendPaymentDenied($dataDenied, "teste@escalaweb.com.br", "ADMIN");
+$send = $notificacao->sendOrderShipped($dataPayment, "teste@escalaweb.com.br", "ADMIN");
+// $send = $notificacao->sendOrderDeliverd($dataDenied, "teste@escalaweb.com.br", "ADMIN");
 
 var_dump($send);
 exit;

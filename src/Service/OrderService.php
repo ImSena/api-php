@@ -2,9 +2,11 @@
 
 namespace App\Service;
 
+use App\Helpers\OrderNotificationFormatter;
 use App\Model\Media;
 use App\Model\Order;
 use App\Model\Product;
+use App\Model\ProductCategory;
 use App\Service\Base\BaseService;
 use App\Utils\Pagination;
 use App\Utils\Validator;
@@ -17,28 +19,30 @@ class OrderService extends BaseService
     public function create(array $data)
     {
         return $this->execute(function () use ($data) {
-            $Order = new Order($this->pdo);
+            $orderModel = new Order($this->pdo);
             $OrderShippingService = new OrderShippingService($this->pdo);
             $UserService = new UserService($this->pdo);
-            $notificacao = $this->getNotifier();
+            $AddressService = new AddressService($this->pdo);
+            $NotificationService = new NotificationsService($this->pdo);
 
             $fields = Validator::validate([
                 "id_address" => $data['id_address'] ?? '',
                 "order_items" => $data['order_items'] ?? '',
                 "shipping_signature" => $data['shipping_signature'] ?? ''
             ]);
+
             $fields['id_user'] = $data['id_user'];
             $fields['id_coupon'] = $data['id_coupon'] ?? null;
 
-            $Order = $Order->create($fields);
+            $orderId = $orderModel->create($fields);
 
-            if (!$Order) {
+            if (!$orderId) {
                 throw new Exception("Não foi possível realizar pedidos");
             }
 
             $dataShipping = [
                 "shipping_signature" => $fields['shipping_signature'],
-                "id_order" => $Order
+                "id_order" => $orderId
             ];
             $shippingSignature = $OrderShippingService->createShipping($dataShipping);
 
@@ -46,59 +50,41 @@ class OrderService extends BaseService
                 throw new Exception("Assinatura de cotação inválida");
             }
 
-            $order = $this->getById($Order);
-            $order = $order['content'];
-            $subtotal = (float) $order['total_price'];
-            $shipping = (float) $order['shipping']['shipping_cost'];
-            $total = $subtotal + $shipping;
+            $orderResponse = $this->getById($orderId);
+            if (isset($orderResponse['error'])) {
+                throw new Exception("Erro ao buscar pedido");
+            }
+            $order = $orderResponse['content'];
+            $order['id'] = $orderId;
 
-            $products = [];
+            $resultUser = $UserService->getById($order['id_user']);
 
-            foreach ($order['products'] as $product) {
-                $products[] = [
-                    "product_url" => "categoria/nome_produto/id",
-                    "product_image" => $product['image_path'],
-                    "product_name" => $product['name'],
-                    "quantity" => $product['quantity'],
-                    "price" => $product['price'],
-                ];
+            if (isset($resultUser['error'])) {
+                throw new Exception("Não foi possível carregar usuário");
             }
 
-            $user = $UserService->getById($order['id_user']);
+            $user = $resultUser['content'];
 
-            if (isset($user['error'])) {
-                throw new Exception("Não foi possível resgatar usuário");
+            $resultAddress = $AddressService->getById($order['id_address']);
+
+            if (isset($resultAddress['error'])) {
+                throw new Exception("Não foi possível carregar endereço");
             }
 
-            $user = $user['content'];
+            $address = $resultAddress['content'];
 
-            $dataOrder = [
-                "order_number" => $Order,
-                "order_date" => date("m/d/Y - H:i:s"),
-                "order_url" => URL_ORDER . $Order,
-                'items' => [],
-                "subtotal" => $subtotal,
-                "shipping" => $shipping,
-                "total" => $total,
-                "shipping_method" => [
-                    "carrier" => $order['shipping']['carrier'],
-                    "service" => $order['shipping']['shipping_cost']
-                ],
-                "shipping_address" => [
-                    "public_area" => "area",
-                    "number" => "",
-                    "complement" => "",
-                    "district" => "",
-                    "city" => "",
-                    "state"
-                ]
-            ];
+            $dataOrder = OrderNotificationFormatter::format($order, $user['email'], $address);
+            $dataOrder['id'] = $orderId;
 
-            // $send = $notificacao->sendOrderCreated($order, $user['email']);
+            $send = $NotificationService->notifyOrderCreated($dataOrder);
+
+            if (isset($send['error'])) {
+                throw new Exception("Não foi possível enviar notificação.");
+            }
 
             return [
                 'message' => "Pedido realizado com sucesso",
-                'id_order' => $Order,
+                'id_order' => $orderId,
             ];
         }, true);
     }
@@ -111,6 +97,7 @@ class OrderService extends BaseService
             $Media = new Media($this->pdo);
             $AddressService = new AddressService($this->pdo);
             $UserService = new UserService($this->pdo);
+            $OrderShippingService = new OrderShippingService($this->pdo);
             $MediaService = new MediaService($this->pdo);
             $statusOrder = [
                 'PENDING',
@@ -158,7 +145,11 @@ class OrderService extends BaseService
 
             foreach ($OrderResult as &$item) {
                 $productItem = $Order->getOrderIdProductItems($item['id_order']);
+                $orderShipping = $OrderShippingService->getOrderShipping($item['id_order']);
 
+                // if (isset($orderShipping['error'])) {
+                //     throw new Exception($orderShipping['error']);
+                // }
                 $address = $AddressService->getById($item['id_address']);
                 unset($address['content']['id_user']);
                 $item['address_shipped'] = $address['content'];
@@ -170,6 +161,7 @@ class OrderService extends BaseService
                     $extension = $MediaService->getExtension($productData['file_type']);
                     $productData['image_path'] = $path . '.' . $extension;
                     $productData['quantity'] = $product['quantity'];
+                    $productData['shipping'] = $orderShipping;
                     unset($productData['id_media']);
                     unset($productData['file_type']);
                     unset($productData['qtd_stock']);
@@ -208,7 +200,7 @@ class OrderService extends BaseService
             $Product = new Product($this->pdo);
             $MediaService = new MediaService($this->pdo);
             $OrderShippingService = new OrderShippingService($this->pdo);
-
+            $ProductCategories = new ProductCategory($this->pdo);
 
             if (!$OrderResult) {
                 throw new Exception("Não foi possível buscar pedido");
@@ -224,9 +216,11 @@ class OrderService extends BaseService
             $totalPrice = 0.00;
             foreach ($productItems as $productItem) {
                 $product = $Product->getById($productItem['id_product_variant']);
+                $product['category'] = $ProductCategories->getCategoryVariant($productItem['id_product_variant'])['category_name'];
                 $path = $Media->getPathToFile($product);
                 $extension = $MediaService->getExtension($product['file_type']);
                 $product['image_path'] = $path . '.' . $extension;
+                $product['quantity'] = $productItem['quantity'];
                 unset($product['qtd_stock']);
                 unset($product['id_media']);
                 $OrderResult['products'][] = $product;
@@ -339,8 +333,6 @@ class OrderService extends BaseService
             if (isset($result['error'])) {
                 throw new Exception("Não foi possível cancelar pedido.");
             }
-
-            $this->pdo->commit();
         }, true);
     }
 }

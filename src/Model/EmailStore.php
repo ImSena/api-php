@@ -59,4 +59,12 @@ class EmailStore extends BaseModel
 
         return $stmt->execute();
     }
+
+    public function getDefault()
+    {
+        $sql = "SELECT email FROM emails_store WHERE is_default > 0 LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
 }

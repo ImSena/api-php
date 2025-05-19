@@ -24,9 +24,14 @@ abstract class EmailNotifier implements INotifier
         $this->var_default_email = $var_default_email;
     }
 
-    protected function renderTemplate(string $fileName, array $variables): string
+    protected function renderTemplate(string $fileName, array $variables, string $type = 'USER'): string
     {
         try {
+            if($type == "ADMIN"){
+                $fileWithPath = "admin/".$fileName;
+                return $this->twig->render($fileWithPath, $variables);
+            }
+
             return $this->twig->render($fileName, $variables);
         } catch (Exception $e) {
             throw new Exception("Erro ao renderizar template: {$fileName} — {$e->getMessage()}");

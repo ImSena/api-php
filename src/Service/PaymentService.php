@@ -49,14 +49,31 @@ class PaymentService extends BaseService
 
                 $fields['id_order'] = $data['id_order'];
                 $orderService = $Order->getById($fields['id_order']);
-                $user = $UserService->getById($orderService['content']['id_user']);
+                $orderService = $orderService['content'];
+
+                $created_at = new DateTime($orderService['created_at'], new DateTimeZone('America/Sao_Paulo'));
+                $now = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+                $interval = $created_at->diff($now);
+
+                if ($interval->i + ($interval->h * 60) + ($interval->d * 1440) > 15) {
+                    $result = $Order->cancellPayment($fields['id_order']);
+                    if (isset($result['error'])) {
+                        throw new Exception($result['error']);
+                    }
+
+                    throw new Exception("Pedido expirado. Por favor, gere um novo pedido.");
+                }
+
+                $user = $UserService->getById($orderService['id_user']);
                 $user = $user['content'];
+
                 $phone = $user['contact'][0]['number'];
-                $address = $addressService->getById($orderService['content']['id_address']);
+
+                $address = $addressService->getById($orderService['id_address']);
                 $address = $address['content'];
 
                 $storeModel = new Store($this->pdo);
-                $store = $storeModel->findById(1);
+                $store = $storeModel->getActiveStore();
 
                 $options = [
                     'stripe_account' => $store['stripe_account_id']
@@ -86,13 +103,18 @@ class PaymentService extends BaseService
 
 
                 $shippingCost = floatval($shippingResult['shipping_cost']);
-                $totalPrice = $orderService['content']['total_price'];
-                $totalPrice = str_replace(['.', ','], ['', '.'], $totalPrice);
-                $totalPrice = floatval($totalPrice);
-                $totalPrice += $shippingCost;
+                $rawTotal = $orderService['total_price'];
+
+                if (is_string($rawTotal)) {
+                    $rawTotal = str_replace('.', '', $rawTotal);
+                    $rawTotal = str_replace(',', '.', $rawTotal);
+                }
+
+                $totalPrice = floatval($rawTotal) + $shippingCost;
 
                 $sessionParams = [
-                    "payment_method_types" => ['card', 'boleto'],
+                    //para add boleto basta colocar ,boleto
+                    "payment_method_types" => ['card'],
                     "line_items" => [
                         [
                             'price_data' => [
@@ -112,14 +134,14 @@ class PaymentService extends BaseService
                     'payment_intent_data' => [
                         'metadata' => [
                             'id_order' => $data['id_order'],
-                            'domain' => 'http://localhost/api-php/',
+                            'domain' => URL_API,
                             'email' => $user['email'],
                             'stripe_account_id' => $store['stripe_account_id'],
                         ]
                     ],
                     'metadata' => [
                         'id_order' => $data['id_order'],
-                        'domain' => 'http://localhost/api-php/',
+                        'domain' => URL_API,
                         'email' => $user['email'],
                         'stripe_account_id' => $store['stripe_account_id'],
                     ]
@@ -157,7 +179,7 @@ class PaymentService extends BaseService
                         throw new Exception("Ocorreu um erro inesperado. Por favor, tente mais tarde.");
                     }
 
-                    throw new Exception("Pagamento expirado. Por favor, gere um novo pedido.");
+                    throw new Exception("Pedido expirado. Por favor, gere um novo pedido.");
                 }
 
                 $result = $this->getPayment($data['id_order']);
@@ -176,15 +198,15 @@ class PaymentService extends BaseService
 
     public function getPayment(int $id)
     {
-        return $this->execute(function() use ($id){
+        return $this->execute(function () use ($id) {
             $Order = new Order($this->pdo);
-    
+
             $result = $Order->getLinkPayment($id);
-    
+
             if (!$result) {
                 throw new Exception("Não foi possível recuperar link de pagamento!");
             }
-    
+
             return $result;
         });
     }
@@ -198,7 +220,7 @@ class PaymentService extends BaseService
 
     public function register(array $data)
     {
-        return $this->execute(function() use ($data){
+        return $this->execute(function () use ($data) {
             $fields = Validator::validate([
                 "id_order" => $data['id_order'] ?? '',
                 "id_transaction" => $data['id_transaction'] ?? '',
@@ -209,14 +231,14 @@ class PaymentService extends BaseService
                 'payment_date' => $data['payment_date'] ?? '',
                 'send_email' => $data['send_email']
             ]);
-    
+
             $Payment = new Payment($this->pdo);
             $Payment->register($fields);
-    
+
             if (!$Payment) {
                 throw new Exception("Não foi possível cadastrar registro do pagamento");
             }
-    
+
             return "Produto cadastrado com sucesso!";
         });
     }
