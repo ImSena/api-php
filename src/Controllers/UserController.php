@@ -148,11 +148,24 @@ class UserController extends BaseController
         ], 200);
     }
 
+    public function getById()
+    {
+        $id_user = $this->request::getUserId();
+
+        $userService = new UserService($this->pdo);
+        $userResult = $userService->getById($id_user);
+
+        if(isset($userResult['error'])){
+            $this->errorResponse($userResult['error']);
+        }
+
+        return $this->successResponse("Usuário resgatado com sucesso", $userResult['content']);
+    }
+
     public function edit()
     {
         $body = $this->request::body();
         $body['id_user'] = $this->request::getUserId();
-        $body['rule'] = $this->request::getRule();
 
         $userService = new UserService($this->pdo);
         $userResult = $userService->editUser($body);

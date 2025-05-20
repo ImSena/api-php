@@ -102,6 +102,113 @@ class ProductService extends BaseService
             return ['message' => "Produtos Resgatados", 'content' => $formattedResult, 'page' => $pages];
         });
     }
+
+    public function getRecents()
+    {
+        return $this->execute(function () {
+            $Product = new Product($this->pdo);
+            $Products = $Product->getAllRecents();
+            $Media = new Media($this->pdo);
+            $MediaService = new MediaService($this->pdo);
+            $ProductCategories = new ProductCategory($this->pdo);
+            $Category = new CategoryService($this->pdo);
+
+            if (!$Products) {
+                throw new Exception("Não foi encontrado nenhum produto.");
+            }
+
+            $result = [];
+            foreach ($Products as $product) {
+                $id_product = $product['id_product'];
+                $id_category = $ProductCategories->getCategory($id_product);
+                $id_category = $id_category['id_category'];
+                $name_category = $Category->getCategory($id_category);
+                $name_category = $name_category['name'];
+
+                if (!isset($result[$id_product])) {
+                    $result[$id_product] = [
+                        'id_product' => $product['id_product'],
+                        'brand' => $product['brand_name'],
+                        'name' => $product['name'],
+                        'category' => $name_category,
+                        'variations' => []
+                    ];
+                }
+
+                $path = $Media->getPathToFile($product);
+                $extension = $MediaService->getExtension($product['file_type']);
+                $product['image_path'] = $path . '.' . $extension;
+                $result[$id_product]['variations'][] = [
+                    'id_product_variant' => $product['id_product_variant'],
+                    'sku' => $product['sku'],
+                    'price' => $product['price'],
+                    'qtd_stock' => $product['qtd_stock'],
+                    'discount' => $product['discount'],
+                    'price_discount' => '0.00',
+                    'image_path' => $product['image_path'] ?? null,
+                    "is_default" => $product['is_default'] ?? null
+                ];
+            }
+
+            $formattedResult = array_values($result);
+
+            return ['message' => "Produtos Resgatados", 'content' => $formattedResult];
+        });
+    }
+
+    public function getPopular()
+    {
+        return $this->execute(function () {
+            $Product = new Product($this->pdo);
+            $Products = $Product->getAllPopular();
+            $Media = new Media($this->pdo);
+            $MediaService = new MediaService($this->pdo);
+            $ProductCategories = new ProductCategory($this->pdo);
+            $Category = new CategoryService($this->pdo);
+
+            if (!$Products) {
+                throw new Exception("Não foi encontrado nenhum produto.");
+            }
+
+            $result = [];
+            foreach ($Products as $product) {
+                $id_product = $product['id_product'];
+                $id_category = $ProductCategories->getCategory($id_product);
+                $id_category = $id_category['id_category'];
+                $name_category = $Category->getCategory($id_category);
+                $name_category = $name_category['name'];
+
+                if (!isset($result[$id_product])) {
+                    $result[$id_product] = [
+                        'id_product' => $product['id_product'],
+                        'brand' => $product['brand_name'],
+                        'name' => $product['name'],
+                        'category' => $name_category,
+                        'variations' => []
+                    ];
+                }
+
+                $path = $Media->getPathToFile($product);
+                $extension = $MediaService->getExtension($product['file_type']);
+                $product['image_path'] = $path . '.' . $extension;
+                $result[$id_product]['variations'][] = [
+                    'id_product_variant' => $product['id_product_variant'],
+                    'sku' => $product['sku'],
+                    'price' => $product['price'],
+                    'qtd_stock' => $product['qtd_stock'],
+                    'discount' => $product['discount'],
+                    'price_discount' => '0.00',
+                    'image_path' => $product['image_path'] ?? null,
+                    "is_default" => $product['is_default'] ?? null
+                ];
+            }
+
+            $formattedResult = array_values($result);
+
+            return ['message' => "Produtos Resgatados", 'content' => $formattedResult];
+        });
+    }
+
     public function getAllCategory(array $params)
     {
         return $this->execute(function () use ($params) {
@@ -437,7 +544,7 @@ class ProductService extends BaseService
 
     public function searchProduct(string $search)
     {
-        return $this->execute(function() use ($search){
+        return $this->execute(function () use ($search) {
             $Product = new Product($this->pdo);
 
             $search = $search ? $search : 'moeda';

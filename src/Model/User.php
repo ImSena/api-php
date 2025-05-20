@@ -237,6 +237,10 @@ class User extends BaseModel
                     WHEN lp.id_legal_person IS NOT NULL THEN 'Jurídica' 
                     ELSE NULL 
                 END AS person_type,
+                CASE 
+                    WHEN np.id_natural_person IS NOT NULL THEN np.id_natural_person
+                    WHEN lp.id_legal_person IS NOT NULL THEN lp.id_legal_person
+                END AS id_person,
                 CASE
                     WHEN np.id_natural_person IS NOT NULL THEN np.cpf
                     ELSE NULL
@@ -274,12 +278,63 @@ class User extends BaseModel
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
     
-        return  $stmt->fetch();
+        return $stmt->fetch();
     }
 
-    public function updateUser(array $user)
+    public function updateUser(array $data)
     {
         $sql = "UPDATE users SET username = :username WHERE id_user = :id";
-        
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindParam(":username", $data['username'], PDO::PARAM_STR);
+        $stmt->bindParam(":id", $data['id_user'], PDO::PARAM_INT);
+
+        if($stmt->execute()){
+            if($data['type'] == "LEGAL"){
+                return $this->updateLegalPerson($data['person']);
+            }else{
+                return $this->updateNaturalPerson($data['person']);
+            }
+        }else{
+            return false;
+        }
+    }
+
+    private function updateLegalPerson(array $person)
+    {
+        $sql = "UPDATE legal_people
+                SET cnpj = :cnpj, 
+                corporate_name = :corporate_name, 
+                trade_name = :trade_name, 
+                state_registration = :state_registration
+                WHERE id_legal_person = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindParam(":cnpj", $person['cnpj'], PDO::PARAM_STR);
+        $stmt->bindParam(":corporate_name", $person['corporate_name'], PDO::PARAM_STR);
+        $stmt->bindParam(":trade_name", $person['trade_name'], PDO::PARAM_STR);
+        $stmt->bindParam(":state_registration", $person['state_registration'], PDO::PARAM_STR);
+        $stmt->bindParam(":id", $person['id'], PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
+
+    private function updateNaturalPerson(array $person)
+    {
+        $sql = "UPDATE natural_people
+                SET cpf = :cpf,
+                dt_birth = :dt_birth,
+                gender = :gender
+                WHERE id_natural_person = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(":cpf", $person['cpf'], PDO::PARAM_STR);
+        $stmt->bindParam("dt_birth", $person['dt_birth'], PDO::PARAM_STR);
+        $stmt->bindParam(":gender", $person['gender'], PDO::PARAM_STR);
+        $stmt->bindParam(":id", $person['id'], PDO::PARAM_INT);
+
+        return $stmt->execute();
     }
 }

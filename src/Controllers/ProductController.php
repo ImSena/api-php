@@ -121,4 +121,28 @@ class ProductController extends BaseController
 
         return $this->successResponse("Pesquisa realizada.", $result);
     }
+
+    public function getRecents()
+    {
+        $productService = new ProductService($this->pdo);
+        $result = $productService->getRecents();
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse($result['message'], $result['content']);
+    }
+
+    public function getPopular()
+    {
+        $productService = new ProductService($this->pdo);
+        $result = $productService->getPopular();
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse($result['message'], $result['content']);
+    }
 }

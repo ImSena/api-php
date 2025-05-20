@@ -15,6 +15,8 @@ Route::group([
     Route::get("/$prefix/get-all-by/{param}/{param}/{param}", [ProductController::class, 'getAllBy'], [LockedStore::class]);
     Route::get("/$prefix/get-by-id/{param}", [ProductController::class, 'getById'], [LockedStore::class]);
     Route::get("/$prefix/search/{param}", [ProductController::class, 'search']);
+    Route::get("/$prefix/recents", [ProductController::class, "getRecents"], [LockedStore::class]);
+    Route::get("/$prefix/popular", [ProductController::class, "getPopular"], [LockedStore::class]);
     Route::get("/$prefix/{param}", [ProductController::class, 'getAll'], [LockedStore::class]);
     Route::put("/$prefix/{param}", [ProductController::class, "update"], $middlewares);
     // Route::delete("/$prefix", [ProductController::class, 'delete'] , $middlewares);

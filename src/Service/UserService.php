@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Jwt\JwtAuth;
+use App\Model\Phone;
 use App\Model\TokenUser;
 use App\Service\Base\BaseService;
 use App\Utils\SendEmail;
@@ -362,34 +363,72 @@ class UserService extends BaseService
         return $this->execute(function() use ($data){
             $fields = Validator::validate([
                 "username" => $data['username'] ?? '',
-                "email" => $data['email'] ?? '',
                 "type" => $data['type'] ?? '',
                 "person" => $data['person'] ?? '',
-                "id_user" => $data['id_user'] ?? '',
-                "rule" => $data['rule'] ?? ''
+                "contact" => $data['contact'] ?? '',
+                "id_user" => $data['id_user'] ?? ''
             ]);
             $person = $fields['person'];
+
             if($fields['type'] == "NATURAL"){
 
-                $fields['person'] = Validator::validate([
+                $fields['person'] = $fields['person'] = Validator::validateNaturalPerson([
                     "cpf" => $person['cpf'] ?? '',
-                    "dt_birth" => $person['dt_birth'] ?? '',
+                    'dt_birth' => $person['dt_birth'] ?? '',
                     "gender" => $person['gender'] ?? ''
                 ]);
-            }else{
-                $fields['person'] = Validator::validate([
+            }else if($fields['type'] == "LEGAL"){
+                $fields['person'] = Validator::validateLegalPerson([
                     "cnpj" => $person['cnpj'] ?? '',
                     "corporate_name" => $person['corporate_name'] ?? '',
                     "trade_name" => $person['trade_name'] ?? '',
-                    "state_registration" => $person['state_registration'] ?? ''
+                    "state_registration" => $person['state_registration'] ?? 'ISENTO'
                 ]);
+            }else{
+                throw new Exception("Tipo de user incorreto.");
             }
 
-            if($fields['rule'] !== "user"){
-                throw new Exception("Token Inválido para o tipo de requisição");
+            $fields['contact'] = Validator::validate([
+                "id_phone" => $fields['contact']['id_phone'] ?? '',
+                "type" => $fields['contact']['type'] ?? '',
+                "number" => $fields['contact']['number'] ?? ''
+            ]);
+
+            $user = $this->getById($fields['id_user']);
+
+            if(isset($user['error'])){
+                throw new Exception("Não foi possível encontrar usuário.");
             }
 
-        
+            $user = $user['content'];
+
+            $type_user = $user['person_type'] == "Jurídica" ? "LEGAL" : "NATURAL";
+
+            if($type_user !== $fields['type'])
+            {
+                throw new Exception("É necessário que o tipo de usuário seja o mesmo cadastrado para que ocorra a edição.");
+            }
+
+            $fields['person']['id'] = $user['id_person'];
+
+            $User = new User($this->pdo);
+
+            $resultEdit = $User->updateUser($fields);
+
+            if(!$resultEdit){
+                throw new Exception("Não foi possível editar usuário.");
+            }
+
+            $phone = new Phone($this->pdo);
+
+            $resultPhone = $phone->edit($data);
+
+            if(!$resultPhone){
+                throw new Exception("Não foi possível editar telefone");
+            }
+
+            return "Usuário editado com sucesso.";
+
         }, true);
     }
 }

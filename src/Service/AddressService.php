@@ -2,19 +2,16 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Address;
 use App\Service\Base\BaseService;
 use App\Utils\Validator;
 use Exception;
-use PDO;
-use PDOException;
 
 class AddressService extends BaseService
 {
     public function create(array $data)
     {
-        try{
+        return $this->execute(function () use ($data) {
             $Address = new Address($this->pdo);
             $fields = Validator::validate([
                 "id_user" => $data['id_user'] ?? '',
@@ -23,39 +20,57 @@ class AddressService extends BaseService
                 "district" => $data['district'] ?? '',
                 "city" => $data['city'] ?? '',
                 "state" => $data['state'] ?? '',
-                "zip_code" => $data['zip_code'] ?? ''
+                "zip_code" => $data['zip_code'] ?? '',
+                "is_default" => $data['is_default'] ?? true
             ]);
 
             $fields['complement'] = $data['complement'] ?? null;
 
-            $Address = $Address->create($fields);
+            $resultCreated = $Address->create($fields);
 
-            if(!$Address){
+            if (!$resultCreated) {
                 throw new Exception("Não foi possível criar endereço");
             }
 
             return "Endereço criado com sucesso";
+        }, true);
+    }
 
-
-        }catch(PDOException $e){
-            return[
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        }
-        catch(Exception $e){
-            return [
-                'error' => $e->getMessage()
-            ];
-        }
-    }   
-    
-    public function getAll(int $id)
-    {
-        try{
+    public function edit(array $data){
+        return $this->execute(function() use ($data){
             $Address = new Address($this->pdo);
-            $Address = $Address->getAll($id);
 
-            if(!$Address){
+            $fields = Validator::validate([
+                "id_user" => $data['id_user'] ?? '',
+                "id_address" => $data['id_address'] ?? '',
+                "public_area" => $data['public_area'] ?? '',
+                "number" => $data['number'] ?? '',
+                "district" => $data['district'] ?? '',
+                "city" => $data['city'] ?? '',
+                "state" => $data['state'] ?? '',
+                "zip_code" => $data['zip_code'] ?? '',
+                "is_default" => $data['is_default'] ?? false
+            ]);
+
+            $fields['complement'] = $data['complement'] ?? null;
+
+            $resultEdit = $Address->edit($fields);
+
+            if(!$resultEdit){
+                throw new Exception("Não foi possível editar endereço do usuário.");
+            }
+
+            return "Endereço atualizado com sucesso";
+        }, true);
+    }
+
+    public function getAll(array $data)
+    {
+        return $this->execute(function () use ($data) {
+            $Address = new Address($this->pdo);
+            $Address = $Address->getAll($data);
+
+            if (!$Address) {
                 throw new Exception("Não foi possível encontrar endereços");
             }
 
@@ -63,25 +78,16 @@ class AddressService extends BaseService
                 'message' => 'Endereços encontrados com sucesso',
                 'content' => $Address
             ];
-
-        }catch(PDOException $e){
-            return[
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        }
-        catch(Exception $e){
-            return [
-                'error' => $e->getMessage()
-            ];
-        }
+        });
     }
 
-    public function getById(int $id){
-        try{
+    public function getById(int $id)
+    {
+        return $this->execute(function () use ($id) {
             $Address = new Address($this->pdo);
             $Address = $Address->getById($id);
 
-            if(!$Address){
+            if (!$Address) {
                 throw new Exception("Não foi possível encontrar o endereço correspondente");
             }
 
@@ -89,15 +95,19 @@ class AddressService extends BaseService
                 'message' => "Endereço encontrado",
                 'content' => $Address
             ];
-        }catch(PDOException $e){
-            return[
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        }
-        catch(Exception $e){
-            return [
-                'error' => $e->getMessage()
-            ];
-        }
+        });
+    }
+
+    public function getByUser(int $id){
+        return $this->execute(function () use ($id){
+            $Address = new Address($this->pdo);
+            $Address = $Address->getByUser($id);
+
+            if(!$Address){
+                throw new Exception("Não foi possível resgatar endereço do usuário.");
+            }
+
+            return $Address;
+        });
     }
 }

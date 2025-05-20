@@ -110,6 +110,27 @@ class Product extends BaseModel
     private function createProductPictures(array $pictures, $id_product_variant, $id_variant_attribute_value, PDO $pdo)
     {
         try {
+
+            $hasMain = false;
+
+            foreach($pictures as $index => $picture){
+                if(isset($picture['is_main']) && $picture['is_main']){
+                    if(!$hasMain){
+                        $hasMain = true;
+                        $pictures[$index]['is_main'] = 1;
+                    }else{
+                        $pictures[$index]['is_main'] = 0;
+                    }
+                }else{
+                    $pictures[$index]['is_main'] = 0;
+                }   
+            }
+
+            if(!$hasMain && count($pictures) > 0){
+                $firstKey = array_key_first($pictures);
+                $pictures[$firstKey]['is_main'] = 1;
+            } 
+
             $sql = "INSERT INTO product_pictures (id_product_variant, id_variant_attribute_value, id_media, position, is_main) 
             VALUES (:id_product_variant, :id_variant_attribute_value, :id_media, :position, :is_main)";
 
@@ -187,6 +208,79 @@ class Product extends BaseModel
 
         return $stmt->fetchAll();
     }
+
+    public function getAllRecents()
+    {
+        $sql = "SELECT 
+                    p.id_product,
+                    p.id_brand,
+                    p.name,
+                    pv.id_product_variant,
+                    pv.sku,
+                    pv.price,
+                    pv.qtd_stock,
+                    pv.discount,
+                    pv.is_default,
+                    m.id_media,
+                    m.file_type,
+                    b.name AS brand_name
+                FROM products AS p
+                LEFT JOIN product_variants AS pv 
+                    ON p.id_product = pv.id_product
+                LEFT JOIN product_pictures AS pp 
+                    ON pv.id_product_variant = pp.id_product_variant 
+                    AND pp.is_main = 1
+                LEFT JOIN media AS m 
+                    ON pp.id_media = m.id_media
+                LEFT JOIN brands AS b
+                    ON p.id_brand = b.id_brand
+                WHERE p.status > 0
+                ORDER BY p.created_at DESC
+                LIMIT 10
+                ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    public function getAllPopular()
+    {
+        $sql = "SELECT 
+                p.id_product,
+                p.id_brand,
+                p.name,
+                pv.id_product_variant,
+                pv.sku,
+                pv.price,
+                pv.qtd_stock,
+                pv.discount,
+                pv.is_default,
+                m.id_media,
+                m.file_type,
+                b.name AS brand_name
+            FROM products AS p
+            LEFT JOIN product_variants AS pv 
+                ON p.id_product = pv.id_product
+            LEFT JOIN product_pictures AS pp 
+                ON pv.id_product_variant = pp.id_product_variant 
+                AND pp.is_main = 1
+            LEFT JOIN media AS m 
+                ON pp.id_media = m.id_media
+            LEFT JOIN brands AS b
+                ON p.id_brand = b.id_brand
+            WHERE p.status > 0
+            ORDER BY RAND()
+            LIMIT 10
+                ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
     public function getTotalProducts()
     {
         $sql = "SELECT COUNT(id_product) AS total FROM products";
@@ -205,7 +299,8 @@ class Product extends BaseModel
                     pv.discount,
                     m.id_media,
                     m.file_type,
-                    b.name AS brand_name
+                    b.name AS brand_name,
+                    c.id_category
                 FROM products AS p
                 LEFT JOIN product_variants AS pv 
                     ON p.id_product = pv.id_product
@@ -216,6 +311,10 @@ class Product extends BaseModel
                     ON pp.id_media = m.id_media
                 LEFT JOIN brands AS b
                     ON p.id_brand = b.id_brand
+                LEFT JOIN product_categories AS pc
+                    ON p.id_product = pc.id_product
+                LEFT JOIN categories AS c
+                    ON pc.id_category = c.id_category
                 WHERE p.status > 0 AND pv.id_product_variant = :id
                 ORDER BY p.id_product, pv.id_product_variant
                 LIMIT 1";
@@ -370,11 +469,16 @@ class Product extends BaseModel
     {
         $sql = "SELECT 
                     b.name AS brand, 
+                    c.id_category, 
                     p.name AS name, 
-                    p.description 
+                    p.description
                 FROM products AS p 
                 LEFT JOIN brands AS b 
-                ON p.id_brand = b.id_brand 
+                ON p.id_brand = b.id_brand
+                LEFT JOIN product_categories AS pc
+                    ON p.id_product = pc.id_product
+                LEFT JOIN categories AS c
+                    ON c.id_category = pc.id_category 
                 WHERE p.id_product = :id
                 ";
 

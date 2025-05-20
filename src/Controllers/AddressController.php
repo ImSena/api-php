@@ -29,15 +29,37 @@ class AddressController extends BaseController
     public function getAll()
     {
         $id = $this->request::getUserId();
+        $rule = $this->request::getRule();
+        $data = [
+            "id_user" => $id,
+            "rule" => $rule
+        ];
 
         $addressService = new AddressService($this->pdo);
-        $addressService = $addressService->getAll($id);
+        $addressService = $addressService->getAll($data);
 
         if (isset($addressService['error'])) {
             return $this->errorResponse($addressService['error']);
         }
 
         return $this->successResponse($addressService['message'], $addressService['content']);
+    }
+
+    public function update()
+    {
+        $id = $this->request::getUserId();
+
+        $body = $this->request::body();
+        $body['id_user'] = $id;
+
+        $addressService = new AddressService($this->pdo);
+        $addressService = $addressService->edit($body);
+
+        if(isset($addressService['error'])){
+            return $this->errorResponse($addressService['error']);
+        }
+
+        return $this->successResponse("Endereço editado com sucesso.");
     }
 
     // public function getById(Request $request, Response $response, $id)
