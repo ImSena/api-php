@@ -12,4 +12,6 @@ interface INotifier
     public function sendOrderDeliverd(array $order, string $recipientEmail, string $type = "USER", ?array $files = null):bool;
 
     public function sendError(array $error, string $recipientEmail):bool;
+
+     public function sendStore(array $data, string $recepientEmail): bool;
 }

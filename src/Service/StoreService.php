@@ -14,6 +14,8 @@ use Exception;
 use PDOException;
 use Stripe\Exception\ApiErrorException;
 
+require_once __DIR__ . "/../../config.php";
+
 class StoreService extends BaseService
 {
     private $ITypePhones = [
@@ -296,8 +298,8 @@ class StoreService extends BaseService
 
             $accountLink = AccountLink::create([
                 'account' => $accountId,
-                'refresh_url' => 'http://escalaweb.com.br/',
-                'return_url' => 'http://escalaweb.com.br/',
+                'refresh_url' => URL_STORE.'/administrativo',
+                'return_url' => URL_STORE.'/administrativo',
                 'type' => 'account_onboarding',
             ]);
 
@@ -413,7 +415,13 @@ class StoreService extends BaseService
             }
 
             if (isset($Stripe['error'])) {
-                throw new Exception("Não foi possível obter status do stripe");
+                return [
+                    "is_locked" => true,
+                    "locked_reasons" => [
+                        'code' => 'STRIPE_ACCOUNT_MISSING',
+                        'message' => 'Loja sem sistema de pagamento configurado.'
+                    ]
+                ];
             }
 
             $AddressStore = $AddressStore->getAddressStore();
@@ -515,6 +523,9 @@ class StoreService extends BaseService
             }
 
             $accountId = $store['stripe_account_id'];
+            if (!$accountId) {
+                throw new Exception("Não foi possível resgatar id da loja");
+            }
             Stripe::setApiKey(Keys::getSecretKey());
 
             $account = Account::retrieve($accountId);

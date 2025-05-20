@@ -58,6 +58,13 @@ class PHPMailerNotifier extends EmailNotifier
         return $this->send($recipientEmail, "Erro na Loja", $body);
     }
 
+    public function sendStore(array $data, string $recepientEmail): bool
+    {
+        $variables = [...$this->var_default_email, ...$data];
+        $body = $this->renderTemplate("store.twig", $variables);
+        return $this->send($recepientEmail, "Contato da Loja", $body);
+    }
+
     protected function send(string $to, string $subject, string $body, ?array $attachments = null): bool|array
     {
         try {

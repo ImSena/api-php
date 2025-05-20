@@ -64,3 +64,7 @@ require_once __DIR__ ."/Banner.route.php";
 //webhook
 
 require_once __DIR__ . "/Webhook.route.php";
+
+//email
+
+require_once __DIR__ . "/Email.route.php";

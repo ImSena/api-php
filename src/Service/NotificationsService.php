@@ -11,7 +11,6 @@ require_once __DIR__ . '/../../config.php';
 
 class NotificationsService extends BaseService
 {
-
     public function notifyOrderCreated(array $orderData)
     {
         return $this->execute(function () use ($orderData) {
@@ -67,7 +66,6 @@ class NotificationsService extends BaseService
             return true;
         });
     }
-
     public function notifyOrderPayFailed(array $orderData)
     {
         return $this->execute(function () use ($orderData) {
@@ -149,6 +147,29 @@ class NotificationsService extends BaseService
             }
 
             return true;
+        });
+    }
+
+    public function sendNotificationStore($data)
+    {
+        return $this->execute(function() use ($data){
+            $emailStore = new EmailStoreService($this->pdo);
+            $emailAdmin = $emailStore->getEmailDefault();
+
+            if(isset($emailAdmin['error'])){
+                throw new Exception("Não foi possível resgatar o e-mail do lojista");
+            }
+
+            $emailAdmin = $emailAdmin['email'];
+
+            $send = $this->getNotifier()->sendStore($data, $emailAdmin);
+
+            if(!$send){
+                throw new Exception("Não foi possível enviar email de contato");
+            }
+
+            return true;
+
         });
     }
 
