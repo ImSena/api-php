@@ -12,7 +12,7 @@ abstract class EmailNotifier implements INotifier
     protected Environment $twig;
     protected ?array $var_default_email;
 
-    public function __construct(?array $var_default_email = null, string $templatePath = __DIR__ . '/../templates/')
+    public function __construct(?array $var_default_email = null, string $templatePath = __DIR__ . '/../Templates/')
     {
 
         $loader = new FilesystemLoader(rtrim($templatePath, "/"));

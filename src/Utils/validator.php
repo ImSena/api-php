@@ -279,7 +279,7 @@ class Validator
             throw new Exception("Nome fantasia deve ser válido.");
         }
 
-        $state_registration = self::validateName($fields['state_registration'], 20);
+         $state_registration = self::validateName($fields['state_registration'] ?? 'ISENTO', 20);
 
         if (!$state_registration) {
             throw new Exception("A inscrição estadual deve ser válida.");

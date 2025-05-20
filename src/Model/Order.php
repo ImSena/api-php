@@ -336,7 +336,7 @@ class Order extends BaseModel
 
     public function getById(int $id)
     {
-        $sql = "SELECT * FROM ORDERS WHERE id_order = :id";
+        $sql = "SELECT * FROM orders WHERE id_order = :id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();

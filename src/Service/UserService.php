@@ -34,8 +34,9 @@ class UserService extends BaseService
                     "cnpj" => $person['cnpj'] ?? '',
                     "corporate_name" => $person['corporate_name'] ?? '',
                     "trade_name" => $person['trade_name'] ?? '',
-                    "state_registration" => $person['state_registration'] ?? 'ISENTO'
                 ]);
+
+                $fields['person']["state_registration"] = isset($person['state_registration']) ? $person['state_registration'] : 'ISENTO';
             } else {
                 $fields['person'] = Validator::validateNaturalPerson([
                     "cpf" => $person['cpf'] ?? '',
