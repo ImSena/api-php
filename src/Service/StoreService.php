@@ -410,7 +410,10 @@ class StoreService extends BaseService
             if (!$store) {
                 return [
                     "is_locked" => true,
-                    "locked_reasons" => "Loja não cadastrada."
+                    "locked_reasons" => [
+                        'code' => 'STORE_NOT_FOUND',
+                        'message' => "Loja não está cadastrada"
+                    ]
                 ];
             }
 

@@ -12,7 +12,7 @@ class AddressStoreService extends BaseService
     public function createAddress(array $data, ?bool $isTransaction = null)
     {
         return $this->execute(function () use ($data) {
-            $fields = Validator::validate([
+            $fields = Validator::validateAddress([
                 "public_area" => $data['public_area'],
                 "number" => $data['number'],
                 "district" => $data['district'],
@@ -68,7 +68,7 @@ class AddressStoreService extends BaseService
     {
         return $this->execute(function () use ($data) {
 
-            $fields = Validator::validate([
+            $fields = Validator::validateAddress([
                 "public_area" => $data['public_area'] ?? '',
                 "number" => $data['number'] ?? '',
                 "district" => $data['district'] ?? '',

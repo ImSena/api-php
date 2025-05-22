@@ -90,6 +90,8 @@ class Validator
             throw new Exception($message);
         }
 
+        $phone['number'] = preg_replace('/\D/', '', $phone['number']);
+
         switch ($phone['type']) {
             case "WHATSAPP":
             case "CELLPHONE":
@@ -139,8 +141,8 @@ class Validator
             throw new Exception($message);
         }
 
-        self::validateCPF($fields['cpf']);
-        self::validateBirthDate($fields['dt_birth']);
+        $fields['cpf'] = self::validateCPF($fields['cpf']);
+        $fields['dt_birth'] = self::validateBirthDate($fields['dt_birth']);
 
         return $fields;
     }
@@ -214,7 +216,9 @@ class Validator
             }
         }
 
-        if (!empty($fields['zip_code']) && !preg_match('/^\d{8}$/', $fields['zip_code'])) {
+        $zip = preg_replace('/\D/', '', $fields['zip_code']); // Remove tudo que não for número
+
+        if (!empty($zip) && !preg_match('/^\d{8}$/', $zip)) {
             $errors[] = 'zip_code';
         }
 
@@ -279,7 +283,7 @@ class Validator
             throw new Exception("Nome fantasia deve ser válido.");
         }
 
-         $state_registration = self::validateName($fields['state_registration'] ?? 'ISENTO', 20);
+        $state_registration = self::validateName($fields['state_registration'] ?? 'ISENTO', 20);
 
         if (!$state_registration) {
             throw new Exception("A inscrição estadual deve ser válida.");

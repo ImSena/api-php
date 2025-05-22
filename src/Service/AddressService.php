@@ -13,7 +13,7 @@ class AddressService extends BaseService
     {
         return $this->execute(function () use ($data) {
             $Address = new Address($this->pdo);
-            $fields = Validator::validate([
+            $fields = Validator::validateAddress([
                 "id_user" => $data['id_user'] ?? '',
                 "public_area" => $data['public_area'] ?? '',
                 "number" => $data['number'] ?? '',
@@ -40,7 +40,7 @@ class AddressService extends BaseService
         return $this->execute(function() use ($data){
             $Address = new Address($this->pdo);
 
-            $fields = Validator::validate([
+            $fields = Validator::validateAddress([
                 "id_user" => $data['id_user'] ?? '',
                 "id_address" => $data['id_address'] ?? '',
                 "public_area" => $data['public_area'] ?? '',
