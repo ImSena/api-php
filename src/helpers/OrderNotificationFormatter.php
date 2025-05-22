@@ -18,7 +18,7 @@ class OrderNotificationFormatter
             $id = $product['id_product_variant'];
             return [
                 "product_url" => URL_STORE."/$categoria/$productName/$id",
-                "product_image" => URL_PHOTOS . $product['image_path'],
+                "product_image" => URL_PHOTOS . strtolower(pathinfo($product['image_path'], PATHINFO_DIRNAME)) . '/' . pathinfo($product['image_path'], PATHINFO_BASENAME),
                 "product_name" => $product['name'],
                 "quantity" => $product['quantity'],
                 "price" => 'R$ ' . number_format($product['price'], 2, ',', '.'),
@@ -29,7 +29,7 @@ class OrderNotificationFormatter
             "id" => $order['id_order'],
             "email" => $emailUser,
             "order_number" => "#".$order['id_order'],
-            "order_date" => date("m/d/Y - H:i:s"),
+            "order_date" => date("d/m/Y - H:i:s"),
             "order_url" => URL_ORDER . $order['id_order'],
             'items' => $products,
             "subtotal" => 'R$ ' . number_format($subtotal, 2, ',', '.'),

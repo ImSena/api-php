@@ -113,23 +113,23 @@ class Product extends BaseModel
 
             $hasMain = false;
 
-            foreach($pictures as $index => $picture){
-                if(isset($picture['is_main']) && $picture['is_main']){
-                    if(!$hasMain){
+            foreach ($pictures as $index => $picture) {
+                if (isset($picture['is_main']) && $picture['is_main']) {
+                    if (!$hasMain) {
                         $hasMain = true;
                         $pictures[$index]['is_main'] = 1;
-                    }else{
+                    } else {
                         $pictures[$index]['is_main'] = 0;
                     }
-                }else{
+                } else {
                     $pictures[$index]['is_main'] = 0;
-                }   
+                }
             }
 
-            if(!$hasMain && count($pictures) > 0){
+            if (!$hasMain && count($pictures) > 0) {
                 $firstKey = array_key_first($pictures);
                 $pictures[$firstKey]['is_main'] = 1;
-            } 
+            }
 
             $sql = "INSERT INTO product_pictures (id_product_variant, id_variant_attribute_value, id_media, position, is_main) 
             VALUES (:id_product_variant, :id_variant_attribute_value, :id_media, :position, :is_main)";
@@ -170,43 +170,91 @@ class Product extends BaseModel
     public function getAll(int $page)
     {
         $limit = 40;
-        $page = isset($page) ? (int) $page : 1;
+        $page = max(1, $page);
         $offset = ($page - 1) * $limit;
 
         $sql = "SELECT 
                     p.id_product,
                     p.id_brand,
                     p.name,
+                    CASE 
+                        WHEN pv.qtd_stock > 0 THEN pv.qtd_stock 
+                        ELSE NULL 
+                    END AS qtd_stock,
                     pv.id_product_variant,
                     pv.sku,
                     pv.price,
-                    pv.qtd_stock,
                     pv.discount,
                     pv.is_default,
                     m.id_media,
                     m.file_type,
                     b.name AS brand_name
                 FROM products AS p
-                LEFT JOIN product_variants AS pv 
-                    ON p.id_product = pv.id_product
-                LEFT JOIN product_pictures AS pp 
-                    ON pv.id_product_variant = pp.id_product_variant 
-                    AND pp.is_main = 1
-                LEFT JOIN media AS m 
-                    ON pp.id_media = m.id_media
-                LEFT JOIN brands AS b
-                    ON p.id_brand = b.id_brand
-                WHERE p.status > 0
+                LEFT JOIN product_variants AS pv ON p.id_product = pv.id_product
+                LEFT JOIN product_pictures AS pp ON pv.id_product_variant = pp.id_product_variant AND pp.is_main = 1
+                LEFT JOIN media AS m ON pp.id_media = m.id_media
+                LEFT JOIN brands AS b ON p.id_brand = b.id_brand
+                WHERE p.status > 0 AND pv.qtd_stock > 0
                 ORDER BY p.id_product, pv.id_product_variant
                 LIMIT :limit OFFSET :offset";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
         $stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
-
         $stmt->execute();
+        $withStock = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        return $stmt->fetchAll();
+        $found = count($withStock);
+
+        if ($found < $limit) {
+            $remaining = $limit - $found;
+
+            $offsetSemEstoque = ($page - 1) * $limit - $this->countWithStock();
+
+            $offsetSemEstoque = max(0, $offsetSemEstoque);
+
+            $sqlNoStock = "SELECT 
+                                p.id_product,
+                                p.id_brand,
+                                p.name,
+                                NULL AS qtd_stock,
+                                pv.id_product_variant,
+                                pv.sku,
+                                pv.price,
+                                NULL AS discount,
+                                pv.is_default,
+                                m.id_media,
+                                m.file_type,
+                                b.name AS brand_name
+                            FROM products AS p
+                            LEFT JOIN product_variants AS pv ON p.id_product = pv.id_product
+                            LEFT JOIN product_pictures AS pp ON pv.id_product_variant = pp.id_product_variant AND pp.is_main = 1
+                            LEFT JOIN media AS m ON pp.id_media = m.id_media
+                            LEFT JOIN brands AS b ON p.id_brand = b.id_brand
+                            WHERE p.status > 0 AND pv.qtd_stock = 0
+                            ORDER BY p.id_product, pv.id_product_variant
+                            LIMIT :limit OFFSET :offset";
+
+            $stmt2 = $this->pdo->prepare($sqlNoStock);
+            $stmt2->bindValue(":limit", $remaining, PDO::PARAM_INT);
+            $stmt2->bindValue(":offset", $offsetSemEstoque, PDO::PARAM_INT);
+            $stmt2->execute();
+            $withoutStock = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+            $withStock = array_merge($withStock, $withoutStock);
+        }
+
+        return $withStock;
+    }
+
+    public function countWithStock()
+    {
+        $sql = "SELECT COUNT(*) as total
+                FROM products AS p
+                LEFT JOIN product_variants AS pv ON p.id_product = pv.id_product
+                WHERE p.status > 0 AND pv.qtd_stock > 0";
+
+        return (int) $this->pdo->query($sql)->fetchColumn();
     }
 
     public function getAllRecents()
@@ -234,7 +282,7 @@ class Product extends BaseModel
                     ON pp.id_media = m.id_media
                 LEFT JOIN brands AS b
                     ON p.id_brand = b.id_brand
-                WHERE p.status > 0
+                WHERE p.status > 0 AND pv.qtd_stock > 0
                 ORDER BY p.created_at DESC
                 LIMIT 10
                 ";
@@ -270,7 +318,7 @@ class Product extends BaseModel
                 ON pp.id_media = m.id_media
             LEFT JOIN brands AS b
                 ON p.id_brand = b.id_brand
-            WHERE p.status > 0
+            WHERE p.status > 0 AND pv.qtd_stock > 0
             ORDER BY RAND()
             LIMIT 10
                 ";
@@ -283,7 +331,7 @@ class Product extends BaseModel
 
     public function getTotalProducts()
     {
-        $sql = "SELECT COUNT(id_product) AS total FROM products";
+        $sql = "SELECT COUNT(id_product) AS total FROM products WHERE status > 0";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetch();
@@ -300,7 +348,8 @@ class Product extends BaseModel
                     m.id_media,
                     m.file_type,
                     b.name AS brand_name,
-                    c.id_category
+                    c.id_category,
+                    c.name AS category_name
                 FROM products AS p
                 LEFT JOIN product_variants AS pv 
                     ON p.id_product = pv.id_product
@@ -358,7 +407,7 @@ class Product extends BaseModel
             LEFT JOIN product_categories AS pc
                 ON p.id_product = pc.id_product
             WHERE p.status > 0 
-                AND pc.id_category = :id_category 
+                AND pc.id_category = :id_category AND pv.qtd_stock > 0
             ORDER BY p.id_product, pv.id_product_variant
             LIMIT :limit OFFSET :offset";
 
@@ -377,7 +426,14 @@ class Product extends BaseModel
      */
     public function getTotalByCategory(int $id)
     {
-        $sql = "SELECT COUNT(id_product) AS total FROM product_categories WHERE id_category = :id_category";
+        $sql = "SELECT COUNT(DISTINCT p.id_product) AS total
+            FROM products AS p
+            LEFT JOIN product_categories AS pc ON p.id_product = pc.id_product
+            LEFT JOIN product_variants AS pv ON p.id_product = pv.id_product
+            WHERE p.status > 0
+              AND pc.id_category = :id_category
+              AND pv.qtd_stock > 0";
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id_category", $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -413,7 +469,7 @@ class Product extends BaseModel
             LEFT JOIN brands AS b
                 ON p.id_brand = b.id_brand
             WHERE p.status > 0 
-                AND p.id_brand = :id_brand 
+                AND p.id_brand = :id_brand AND pv.qtd_stock > 0
             ORDER BY p.id_product, pv.id_product_variant
             LIMIT :limit OFFSET :offset";
 
@@ -428,26 +484,30 @@ class Product extends BaseModel
     }
     public function getTotalByBrand(int $id)
     {
-        $sql = "SELECT COUNT(id_product) AS total FROM products WHERE id_brand = :id";
+        $sql = "SELECT COUNT(DISTINCT p.id_product) AS total
+            FROM products AS p
+            LEFT JOIN product_variants AS pv ON p.id_product = pv.id_product
+            WHERE p.status > 0
+              AND p.id_brand = :id_brand
+              AND pv.qtd_stock > 0";
+
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->bindParam(":id_brand", $id, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetch();
     }
 
-    public function deleteProduct(array $data): bool
+    public function deleteProduct(int $idProduct): bool
     {
         $sql = "UPDATE products SET status = 0, updated_at = :updated WHERE id_product = :id_product";
 
         $stmt = $this->pdo->prepare($sql);
 
-        $stmt->bindParam(":id_product", $data['id_product'], PDO::PARAM_INT);
+        $stmt->bindValue(":id_product", $idProduct, PDO::PARAM_INT);
         $stmt->bindParam(":updated", $this->currentDatetime, PDO::PARAM_STR);
 
-        $stmt->execute();
-
-        return $stmt->rowCount() > 0;
+        return $stmt->execute();
     }
     public function getDatabaseConnection()
     {
@@ -468,8 +528,10 @@ class Product extends BaseModel
     public function getMain(int $id)
     {
         $sql = "SELECT 
+                    p.id_product,
                     b.name AS brand, 
-                    c.id_category, 
+                    c.id_category,
+                    c.name AS name_category, 
                     p.name AS name, 
                     p.description
                 FROM products AS p 

@@ -357,6 +357,27 @@ class Order extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public function getQtdStatus(string $status){
+        $sql = "SELECT COUNT(*) AS total FROM orders o 
+        INNER JOIN ( 
+            SELECT os1.id_order, os1.status FROM order_status os1 
+            INNER JOIN ( 
+                SELECT id_order, MAX(created_at) AS max_created_at FROM order_status GROUP BY id_order 
+            ) os2 ON os1.id_order = os2.id_order AND os1.created_at = os2.max_created_at 
+        ) latest_status ON o.id_order = latest_status.id_order 
+        WHERE latest_status.status = :status";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindValue(":status", $status, PDO::PARAM_STR);
+
+        if(!$stmt->execute()){
+            return false;
+        }
+
+        return $stmt->fetch();
+    }
+
     public function changeStatus(string $status, int $id_order)
     {
         $sql = "INSERT INTO order_status (id_order, status) VALUES (:id_order, :status)";

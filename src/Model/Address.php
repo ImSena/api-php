@@ -19,7 +19,8 @@ class Address extends BaseModel
             }
         }
 
-        $sql = "INSERT INTO addresses (id_user, public_area, number, complement, district, city, state, zip_code) VALUES (:id_user, :public_area, :number, :complement, :district, :city, :state, :zip_code)";
+        $sql = "INSERT INTO addresses (id_user, public_area, number, complement, district, city, state, zip_code, is_default)
+        VALUES (:id_user, :public_area, :number, :complement, :district, :city, :state, :zip_code, :is_default)";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id_user", $data['id_user'], PDO::PARAM_INT);

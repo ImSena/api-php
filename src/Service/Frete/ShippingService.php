@@ -86,7 +86,7 @@ class ShippingService extends BaseService
             foreach ($data['products'] as $prod) {
                 $product = $ProductService->getProductQuote($prod['id_product']);
 
-                $products = [
+                $products[] = [
                     "id" => $product['id_product_variant'],
                     "width" => $product['weight'],
                     "height" => $product['height'],
@@ -104,9 +104,7 @@ class ShippingService extends BaseService
                 "to" => [
                     "postal_code" => $data['zip_code']
                 ],
-                "products" => [
-                    $products
-                ]
+                "products" => $products
             ];
 
             $response = $client->request('POST', $this->url . 'shipment/calculate', [

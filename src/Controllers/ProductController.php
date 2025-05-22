@@ -68,7 +68,7 @@ class ProductController extends BaseController
         $productService = new ProductService($this->pdo);
         $productService = $productService->getAllBy($params);
 
-        if(isset($productService['error'])){
+        if (isset($productService['error'])) {
             return $this->errorResponse($productService['error']);
         }
         $this->response::json([
@@ -86,48 +86,20 @@ class ProductController extends BaseController
         $productService = new ProductService($this->pdo);
         $productService = $productService->getProductAndVariations($params);
 
-        if(isset($productService['error'])){
+        if (isset($productService['error'])) {
             return $this->errorResponse($productService['error']);
         }
 
         return $this->successResponse("Produto resgatado com sucesso.", $productService);
     }
-    public function update($param)
-    {
-        $body = $this->request::body();
-        $id_product = (int) $param[0];
-        $body['id_product'] = $id_product;
 
-        $productService = new ProductService($this->pdo);
-        $result = $productService->editProduct($body);
-
-        if(isset($result['error'])){
-            return $this->errorResponse($result['error']);
-        }
-
-        return $this->successResponse("Produto editado com sucesso.", [], 204);
-    }
-
-    public function search($param)
-    {
-        $search = $param[0];
-
-        $productService = new ProductService($this->pdo);
-        $result = $productService->searchProduct($search);
-
-        if(isset($result['error'])){
-            return $this->errorResponse($result['error']);
-        }
-
-        return $this->successResponse("Pesquisa realizada.", $result);
-    }
 
     public function getRecents()
     {
         $productService = new ProductService($this->pdo);
         $result = $productService->getRecents();
 
-        if(isset($result['error'])){
+        if (isset($result['error'])) {
             return $this->errorResponse($result['error']);
         }
 
@@ -139,10 +111,53 @@ class ProductController extends BaseController
         $productService = new ProductService($this->pdo);
         $result = $productService->getPopular();
 
-        if(isset($result['error'])){
+        if (isset($result['error'])) {
             return $this->errorResponse($result['error']);
         }
 
         return $this->successResponse($result['message'], $result['content']);
     }
+    
+    public function search($param)
+    {
+        $search = $param[0];
+
+        $productService = new ProductService($this->pdo);
+        $result = $productService->searchProduct($search);
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse("Pesquisa realizada.", $result);
+    }
+    public function update($param)
+    {
+        $body = $this->request::body();
+        $id_product = (int) $param[0];
+        $body['id_product'] = $id_product;
+
+        $productService = new ProductService($this->pdo);
+        $result = $productService->editProduct($body);
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse("Produto editado com sucesso.", [], 204);
+    }
+
+    public function delete($param)
+    {
+        $id_product = (int) $param[0];
+        $productService = new ProductService($this->pdo);
+        $result = $productService->delete($id_product);
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse("", [], 204);
+    }
+
 }

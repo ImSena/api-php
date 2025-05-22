@@ -259,6 +259,38 @@ class OrderService extends BaseService
             ];
         });
     }
+
+    public function getQtdOrderStatus()
+    {
+        return $this->execute(function(){
+            $Orders = new Order($this->pdo);
+
+            $status = [
+                'PENDING',
+                'PROCESSING',
+                'SHIPPED',
+                'DELIVERED',
+                'CANCELLED',
+                'REFUNDED',
+                'RETURNED'
+            ];
+
+            $orders = [];
+
+            foreach($status as $s){
+                $result = $Orders->getQtdStatus($s);
+
+                if($result === false){
+                    throw new Exception("Ocorreu um erro ao resgatar quantidade dos pedidos");
+                }
+
+                $orders[$s] = (int) $result['total'];
+            }
+
+            return $orders;
+        });
+    }
+
     public function changeStatus(string $status, int $id_order, ?array $attachment = null)
     {
         return $this->execute(function () use ($status, $id_order, $attachment) {

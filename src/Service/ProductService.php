@@ -554,4 +554,19 @@ class ProductService extends BaseService
             return $productResult;
         });
     }
+
+    public function delete(int $id_product){
+        return $this->execute(function() use ($id_product){
+            $Product = new Product($this->pdo);
+
+            $resultDel = $Product->deleteProduct($id_product);
+
+            if(!$resultDel){
+                throw new Exception("Não foi possível deletar o produto");
+            }
+
+            return $resultDel;
+        });
+        
+    }
 }

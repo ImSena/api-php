@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Interfaces\Notifications\INotifier;
 use App\Notifications\Factory\EmailProviderFactory;
+use App\Service\StoreMediaService;
 use App\Service\StoreService;
 use PDO;
 
@@ -20,8 +21,11 @@ class NotificationsManager
     public function getDefaultNotifier(): INotifier
     {
         $storeService = new StoreService($this->pdo);
+        $storeMediaService = new StoreMediaService($this->pdo);
 
         $result = $storeService->getAssets();
+        $resultIdentity = $storeMediaService->getIdentity();
+        $logo = $resultIdentity['LOGO']['path'];
 
         $fromName = $result['NAME_STORE'];
         $email = array_values(array_filter($result['EMAILS'], function ($email) {
@@ -36,10 +40,10 @@ class NotificationsManager
         $ano = date("Y");
 
         $data_email = [
-            "url_logo" => "https://nsararidades.com.br/assets/logo-D20lBSqG.png",
-            "company" => "NSA Raridades",
+            "url_logo" => URL_PHOTOS.strtolower(pathinfo($logo, PATHINFO_DIRNAME)) . '/' . pathinfo($logo, PATHINFO_BASENAME),
+            "company" => $fromName,
             "date" => $ano,
-            "date_hour" => date("Y-m-d H:i:s"),
+            "date_hour" => date("d-m-Y H:i:s"),
             "link_eccomerce" => URL_STORE,
             "link_policy" => "https://escalaweb.com.br/politica-de-privacidade",
             "link_contact" => URL_STORE.'/contato',

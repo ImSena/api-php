@@ -19,5 +19,5 @@ Route::group([
     Route::get("/$prefix/popular", [ProductController::class, "getPopular"], [LockedStore::class]);
     Route::get("/$prefix/{param}", [ProductController::class, 'getAll'], [LockedStore::class]);
     Route::put("/$prefix/{param}", [ProductController::class, "update"], $middlewares);
-    // Route::delete("/$prefix", [ProductController::class, 'delete'] , $middlewares);
+    Route::delete("/$prefix/{param}", [ProductController::class, 'delete'] , $middlewares);
 });

@@ -57,6 +57,18 @@ class OrderController extends BaseController
         ]);
     }
 
+    public function getQtdOrderStatus()
+    {
+        $orderService = new OrderService($this->pdo);
+        $orders = $orderService->getQtdOrderStatus();
+
+        if(isset($orders['error'])){
+            return $this->errorResponse($orders['error']);
+        }
+
+        return $this->successResponse("Quantidade resgatadas com sucesso.", $orders);
+    }
+
     public function getById($id)
     {
         $id = intval($id[0]);
