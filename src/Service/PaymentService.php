@@ -242,4 +242,54 @@ class PaymentService extends BaseService
             return "Produto cadastrado com sucesso!";
         });
     }
+
+    public function getReport()
+    {
+        return $this->execute(function () {
+            $Payment = new Payment($this->pdo);
+            $result = $Payment->getReport();
+
+            if (!$result) {
+                throw new Exception("Não foi possível resgatar dados de pagamento");
+            }
+
+            $total = array_sum(array_column($result, 'monthly_total'));
+
+            $yearly = [];
+
+            foreach ($result as $row) {
+                $year = substr($row['month'], 0, 4);
+                $yearly[$year] = ($yearly[$year] ?? 0) + floatval($row['monthly_total']);
+            }
+
+            $monthly = $this->getFormattedMonthlyBilling($result);
+
+            return [
+                'total' => $total,
+                'monthly' => $monthly,
+                'yearly' => $yearly
+            ];
+        });
+    }
+    private function getFormattedMonthlyBilling(array $rawData): array
+    {
+        $months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+        $formatted = [];
+
+        foreach ($rawData as $item) {
+            $year = date('Y', strtotime($item['month']));
+            $monthIndex = (int)date('m', strtotime($item['month'])) - 1;
+            $monthKey = $months[$monthIndex];
+
+            if (!isset($formatted[$year])) {
+                foreach ($months as $m) {
+                    $formatted[$year][$m] = ['total' => '0.00'];
+                }
+            }
+
+            $formatted[$year][$monthKey]['total'] = number_format($item['monthly_total'], 2, '.', '');
+        }
+
+        return $formatted;
+    }
 }

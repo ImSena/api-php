@@ -31,9 +31,16 @@ class PaymentsController extends BaseController
         ]);
     }
 
-    public function getPayments($param)
+    public function getReport($param)
     {
+        $service = new PaymentService($this->pdo);
+        $report = $service->getReport();
 
+        if(isset($report['error'])){
+            return $this->errorResponse($report['error']);
+        }
+
+        return $this->successResponse("Faturamento resgatado com sucesso", $report);
     }
 
     public function getDetails($param)

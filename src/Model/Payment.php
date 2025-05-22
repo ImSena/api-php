@@ -45,4 +45,22 @@ class Payment extends BaseModel
 
         return $stmt->rowCount() > 0;
     }
+
+    public function getReport()
+    {
+        $sql = "SELECT 
+                SUM(CASE WHEN status = 'PAID' THEN amount ELSE 0 END) AS total,
+                DATE_FORMAT(payment_date, '%Y-%m') AS month,
+                SUM(CASE WHEN status = 'PAID' THEN amount ELSE 0 END) AS monthly_total
+            FROM payments
+            WHERE status = 'PAID'
+            GROUP BY month
+            ORDER BY month ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
 }
