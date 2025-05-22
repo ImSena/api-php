@@ -82,12 +82,12 @@ class WebhookService extends BaseService
                     $orderResult = $Order->getById($id_order);
 
                     if (isset($orderResult['error'])) {
-                        throw new Exception("Não foi possivel resgatar dados do pedido. Id_pedido:$id_order, Status do pedido: Pago, Email: $email, Id_transação: $id_transaction");
+                        throw new Exception("Não foi possivel resgatar dados do pedido. Id_pedido:$id_order, Status do pedido: Pago, Email: $email, Id_transação: $id_transaction ");
                     }
 
                     $orderResult = $orderResult['content'];
 
-                    $address = $AddressService->getById($orderResult['id_user']);
+                    $address = $AddressService->getById($orderResult['id_address']);
 
                     if (isset($address['error'])) {
                         throw new Exception("Não foi possível resgatar endereço do usuário. Id_pedido:$id_order, Status do pedido: Pago, Email: $email, Id_transação: $id_transaction");

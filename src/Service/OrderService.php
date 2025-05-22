@@ -249,8 +249,8 @@ class OrderService extends BaseService
             $OrderResult['address'] = $address['content'];
             $OrderResult['user'] = $user['content'];
             $OrderResult['total_price'] = number_format($totalPrice, 2, ',', '.');
-            // unset($OrderResult['id_user']);
-            // unset($OrderResult['id_address']);
+            unset($OrderResult['id_user']);
+            unset($OrderResult['id_address']);
 
 
             return [
@@ -322,7 +322,7 @@ class OrderService extends BaseService
                 throw new Exception("Não foi possível alterar o status");
             }
 
-            if ($status == "SHIPPED" || $status == "DELIVERED") {
+            if ($status == "SHIPPED" || $status == "DELIVERED" || $status == "PROCESSING") {
                 $send = $this->sendMailStatus($status, $id_order, $attachment);
 
                 if (isset($send['error'])) {
@@ -355,6 +355,9 @@ class OrderService extends BaseService
                     break;
                 case "DELIVERED":
                     $notificationService->notifyOrderDelivered($dataOrder, $files);
+                    break;
+                case "PROCESSING":
+                    $notificationService->notifyOrderPaySuccess($dataOrder);
                     break;
                 default:
                     throw new Exception("status do pedido inconsistente");

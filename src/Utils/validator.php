@@ -140,11 +140,26 @@ class Validator
 
             throw new Exception($message);
         }
-
+        $fields['gender'] = self::validateGender($fields['gender']);
         $fields['cpf'] = self::validateCPF($fields['cpf']);
         $fields['dt_birth'] = self::validateBirthDate($fields['dt_birth']);
 
         return $fields;
+    }
+
+    public static function validateGender(string $gender)
+    {
+        $genders = [
+            "N/E", 
+            "M", 
+            "F"
+        ];
+
+        if(!in_array($gender, $genders)){
+            throw new Exception("Gênero precisa ter um valor válido");
+        }
+
+        return $gender;
     }
 
     public static function validateBirthDate(string $birthDate): string
@@ -216,9 +231,9 @@ class Validator
             }
         }
 
-        $zip = preg_replace('/\D/', '', $fields['zip_code']); // Remove tudo que não for número
+        $fields['zip_code'] = preg_replace('/\D/', '', $fields['zip_code']); // Remove tudo que não for número
 
-        if (!empty($zip) && !preg_match('/^\d{8}$/', $zip)) {
+        if (!empty($fields['zip_code']) && !preg_match('/^\d{8}$/', $fields['zip_code'])) {
             $errors[] = 'zip_code';
         }
 
@@ -269,7 +284,7 @@ class Validator
             throw new Exception($message);
         }
 
-        self::validateCNPJ($fields['cnpj']);
+        $fields['cnpj'] = self::validateCNPJ($fields['cnpj']);
 
         $corporate_name = self::validateName($fields['corporate_name'], 100);
 
