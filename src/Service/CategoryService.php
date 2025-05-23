@@ -54,12 +54,12 @@ class CategoryService extends BaseService
         });
     }
 
-    public function getAllCategories(): array
+    public function getAllCategories(string $rule): array
     {
-        return $this->execute(function () {
+        return $this->execute(function () use ($rule) {
             $Category = new Category($this->pdo);
-            $categoryParent = $Category->getAllParent();
-            $category = $Category->getAllCategories();
+            $categoryParent = $Category->getAllCategoriesHasProducts($rule == "COMMON", true);
+            $category = $Category->getAllCategoriesHasProducts($rule == "COMMON", false);
 
             $category = array_map(function ($cat) use ($categoryParent) {
                 $cat['parent_category'] = null;

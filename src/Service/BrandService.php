@@ -30,11 +30,11 @@ class BrandService extends BaseService
         });
     }
 
-    public function getAll()
+    public function getAll(string $rule)
     {
-        return $this->execute(function () {
+        return $this->execute(function () use ($rule) {
             $Brand = new Brand($this->pdo);
-            $Brand = $Brand->getAll();
+            $Brand = $rule == "COMMON" ? $Brand->getAllHasProduct() : $Brand->getAll();
 
             return [
                 "message" => "Marcas Resgatadas",

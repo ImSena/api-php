@@ -23,8 +23,9 @@ class CategoriesController extends BaseController
 
     public function getCategories()
     {
+        $rule = $this->request::getRule();
         $category = new CategoryService($this->pdo);
-        $category = $category->getAllCategories();
+        $category = $category->getAllCategories($rule);
 
         if (isset($category['error'])) {
             return $this->errorResponse($category['error']);

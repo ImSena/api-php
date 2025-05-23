@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Model;
+
 use App\Model\Base\BaseModel;
 use App\Model\Database;
 use PDO;
@@ -12,14 +13,14 @@ class Category extends BaseModel
         $hasParentCategory = isset($data['parent_category']);
 
         $sql = $hasParentCategory
-        ? "INSERT INTO categories (name, parent_category_id) VALUES (:name, :parent_category)"
-        : "INSERT INTO categories (name) VALUES (:name)";
-        
+            ? "INSERT INTO categories (name, parent_category_id) VALUES (:name, :parent_category)"
+            : "INSERT INTO categories (name) VALUES (:name)";
+
         $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":name", $data['name'], PDO::PARAM_STR);
 
-        if($hasParentCategory){
+        if ($hasParentCategory) {
             $stmt->bindParam(":parent_category", $data['parent_category'], PDO::PARAM_INT);
         }
 
@@ -50,8 +51,31 @@ class Category extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public function getAllCategoriesHasProducts($verifyItem = false, $isParent = false)
+    {
+        $sql = "SELECT DISTINCT c.id_category, c.name, c.parent_category_id
+                FROM categories c
+                JOIN product_categories pc ON pc.id_category = c.id_category
+                JOIN products p ON p.id_product = pc.id_product
+                JOIN product_variants pv ON pv.id_product = p.id_product
+                WHERE ";
+        
+        $sql .= $isParent ? "parent_category_id IS NULL" : "parent_category_id IS NOT NULL";
+        
+        if($verifyItem){
+            $sql .= " AND pv.qtd_stock > 0";
+        }
 
-    public function update(array $data){
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+
+    public function update(array $data)
+    {
         $sql = "UPDATE categories SET parent_category_id = :parent_category_id, name = :name, updated_at = :updated_at WHERE id_category = :id";
 
         $stmt = $this->pdo->prepare($sql);
@@ -71,7 +95,7 @@ class Category extends BaseModel
 
     public function delete(array $data)
     {
-       $sql = "DELETE FROM categories WHERE id_category = :id_category";
+        $sql = "DELETE FROM categories WHERE id_category = :id_category";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id_category", $data['id_category'], PDO::PARAM_INT);
         $stmt->execute();
@@ -79,7 +103,8 @@ class Category extends BaseModel
         return $stmt->rowCount() > 0;
     }
 
-    public function getCategory(int $id){
+    public function getCategory(int $id)
+    {
         $sql = "SELECT id_category, name FROM categories WHERE id_category = :id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);

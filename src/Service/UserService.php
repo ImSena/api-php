@@ -308,15 +308,25 @@ class UserService extends BaseService
                 }
             }
 
-            $totalUser = $User->getTotalUsers();
+            $totalUserActive = $User->getTotalUsers();
 
-            if (!$totalUser) {
-                throw new Exception("Valor total não resgatado");
+            if ($totalUserActive === false) {
+                throw new Exception("Não foi possível resgatar usuários ativos");
             }
+
+            $totalUserInactive = $User->getTotalUsers(false);
+
+            if($totalUserInactive === false){
+                throw new Exception("Não foi possível resgatar usuários inativos.");
+            }
+
+            $totalUsers = intval($totalUserActive['total']) + intval($totalUserInactive['total']);
 
             $pages = [
                 "limit" => 25,
-                "total" => $totalUser['total']
+                "inactives" => $totalUserInactive['total'],
+                "actives" => $totalUserActive['total'],
+                "total" => $totalUsers
             ];
 
             return ['message' => "Users resgatados", "content" => $user, "pages" => $pages];

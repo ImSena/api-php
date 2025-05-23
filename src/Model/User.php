@@ -214,12 +214,13 @@ class User extends BaseModel
         return $stmt->fetchAll();
     }
 
-    public function getTotalUsers()
+    public function getTotalUsers(bool $status = true)
     {
 
-        $sql = "SELECT COUNT(id_user) AS total FROM users";
-
+        $sql = "SELECT COUNT(id_user) AS total FROM users WHERE status = :status";
         $stmt = $this->pdo->prepare($sql);
+        $status = $status ? "ACTIVE" : "INACTIVE";
+        $stmt->bindValue(":status", $status, PDO::PARAM_STR);
         $stmt->execute();
 
         return $stmt->fetch();

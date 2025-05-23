@@ -23,8 +23,9 @@ class BrandController extends BaseController
 
     public function getAll()
     {
+        $rule = $this->request::getRule();
         $brand = new BrandService($this->pdo);
-        $brand = $brand->getAll();
+        $brand = $brand->getAll($rule);
 
         if(isset($brand['error'])){
             return $this->errorResponse($brand['error']);
