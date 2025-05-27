@@ -30,6 +30,12 @@ class OrderService extends BaseService
                 "shipping_signature" => $data['shipping_signature'] ?? ''
             ]);
 
+            $ids = array_map(fn($item) => $item['id_product_variant'], $fields['order_items']);
+            $duplicates = array_diff_key($ids, array_unique($ids));
+            if (!empty($duplicates)) {
+                throw new Exception("O pedido só pode ser feito entre produtos diferentes");
+            }
+
             $fields['id_user'] = $data['id_user'];
             $fields['id_coupon'] = $data['id_coupon'] ?? null;
 
@@ -146,7 +152,7 @@ class OrderService extends BaseService
                 $item['address_shipped'] = $address['content'];
                 unset($item['id_address']);
 
-                
+
                 foreach ($productItem as $product) {
                     $productData = $Product->getById($product['id_product_variant']);
                     $path = $Media->getPathToFile($productData);
@@ -262,7 +268,7 @@ class OrderService extends BaseService
 
     public function getQtdOrderStatus()
     {
-        return $this->execute(function(){
+        return $this->execute(function () {
             $Orders = new Order($this->pdo);
 
             $status = [
@@ -277,10 +283,10 @@ class OrderService extends BaseService
 
             $orders = [];
 
-            foreach($status as $s){
+            foreach ($status as $s) {
                 $result = $Orders->getQtdStatus($s);
 
-                if($result === false){
+                if ($result === false) {
                     throw new Exception("Ocorreu um erro ao resgatar quantidade dos pedidos");
                 }
 
