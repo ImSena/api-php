@@ -112,10 +112,8 @@ class AdminService extends BaseService
                     $dateNow = new DateTime('now');
                     $diff = $dateCreated->diff($dateNow);
 
-                    if ($diff->i >= 30 || $diff->h > 0 || $diff->days > 0) {
-                        return "Por favor, valide sua conta para que possa usá-la";
-                    } else {
-                        return "Foi enviado um link de ativação para o seu email!";
+                    if ($diff->i < 30 && $diff->h == 0 && $diff->days == 0) {
+                        return "Por favor, valide sua conta para que possa utilizá-la!";
                     }
                 }
             }
@@ -139,9 +137,10 @@ class AdminService extends BaseService
             $info_user = [
                 'name' => $admin['name'],
                 'email' => $admin['email'],
-                'token' => $token
+                'link' => URL_EMAIL . "active-account?token=" . $token
             ];
-            $sendMail = SendEmail::sendMail($info_user, 'active');
+
+            $sendMail = $this->getNotifier()->sendActiveAccount($info_user);
 
             if (!$sendMail) {
                 throw new Exception("Não foi possível enviar o email de recuperação. Tente novamente mais tarde");
@@ -153,7 +152,7 @@ class AdminService extends BaseService
 
     public function forgetPassword(array $data)
     {
-        return $this->execute(function() use ($data){
+        return $this->execute(function () use ($data) {
             $Admin = new Admin($this->pdo);
             $TokenAdmin = new TokenAdmin($this->pdo);
 
@@ -177,7 +176,7 @@ class AdminService extends BaseService
             $info_user = [
                 'name' => $admin['name'],
                 'email' => $admin['email'],
-                'token' => $token,
+                'link' => URL_EMAIL . "active-account?token=" . $token,
                 'type' => 'FORGET'
             ];
 
@@ -191,7 +190,7 @@ class AdminService extends BaseService
                 throw new Exception("Não foi possível gerar o link. Tente novamente mais tarde");
             }
 
-            $sendMail = SendEmail::sendMail($info_user, 'forget');
+            $sendMail = $this->getNotifier()->sendResetPassword($info_user);
 
             if (!$sendMail) {
                 throw new Exception("Não foi possível enviar o email de recuperação. Tente novamente mais tarde");
@@ -205,7 +204,7 @@ class AdminService extends BaseService
     public function getInfoAdmin($permission = 'SUPER')
     {
 
-        return $this->execute(function() use ($permission){
+        return $this->execute(function () use ($permission) {
             $permissions = [
                 'SUPER',
                 'FINANCE',

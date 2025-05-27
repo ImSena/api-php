@@ -65,6 +65,20 @@ class PHPMailerNotifier extends EmailNotifier
         return $this->send($recepientEmail, "Contato da Loja", $body);
     }
 
+    public function sendResetPassword(array $data): bool
+    {
+        $variables = [...$this->var_default_email, ...$data];
+        $body = $this->renderTemplate("reset-pass.twig", $variables);
+        return $this->send($data['email'], "Solicitação de Redefinição de senha", $body);
+    }
+
+    public function sendActiveAccount(array $data): bool
+    {
+        $variables = [...$this->var_default_email, ...$data];
+        $body = $this->renderTemplate("active-account.twig", $variables);
+        return $this->send($data['email'], "Ative sua conta!", $body);
+    }
+
     protected function send(string $to, string $subject, string $body, ?array $attachments = null): bool|array
     {
         try {

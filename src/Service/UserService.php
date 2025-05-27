@@ -12,6 +12,7 @@ use Exception;
 use App\Model\User;
 use DateTime;
 
+require_once __DIR__ . "/../../config.php";
 class UserService extends BaseService
 {
     public function create(array $data)
@@ -198,10 +199,8 @@ class UserService extends BaseService
                     $dateNow = new DateTime('now');
                     $diff = $dateCreated->diff($dateNow);
 
-                    if ($diff->i >= 30 || $diff->h > 0 || $diff->days > 0) {
+                    if ($diff->i < 30 && $diff->h == 0 && $diff->days == 0) {
                         return "Por favor, valide sua conta para que possa usá-la";
-                    } else {
-                        return "Foi enviado um link de ativação para o seu email!";
                     }
                 }
             }
@@ -225,9 +224,10 @@ class UserService extends BaseService
             $info_user = [
                 'name' => $user['username'],
                 'email' => $user['email'],
-                'token' => $token
+                'link' => URL_EMAIL . "reset-password?token=".$token
             ];
-            $sendMail = SendEmail::sendMail($info_user, 'active');
+
+            $sendMail = $this->getNotifier()->sendActiveAccount($info_user);
 
             if (!$sendMail) {
                 throw new Exception("Não foi possível enviar o email de recuperação. Tente novamente mais tarde");
@@ -263,21 +263,15 @@ class UserService extends BaseService
             $info_user = [
                 'name' => $user['username'],
                 'email' => $user['email'],
-                'token' => $token,
+                'link' => URL_EMAIL . "reset-password?token=".$token,
                 'type' => 'FORGET',
             ];
 
             $fields['token'] = $token;
 
             $TokenUser->inactiveAll($fields['id_user'], $fields['type']);
-
-            $token = $TokenUser->create($fields);
-
-            if (!$token) {
-                throw new Exception("Não foi possível gerar o link. Tente novamente mais tarde");
-            }
-
-            $sendMail = SendEmail::sendMail($info_user, 'forget');
+            
+            $sendMail = $this->getNotifier()->sendResetPassword($info_user);
 
             if (!$sendMail) {
                 throw new Exception("Não foi possível enviar o email de recuperação. Tente novamente mais tarde");

@@ -13,5 +13,9 @@ interface INotifier
 
     public function sendError(array $error, string $recipientEmail):bool;
 
-     public function sendStore(array $data, string $recepientEmail): bool;
+    public function sendStore(array $data, string $recepientEmail): bool;
+
+    public function sendResetPassword(array $data):bool;
+
+    public function sendActiveAccount(array $data):bool;
 }

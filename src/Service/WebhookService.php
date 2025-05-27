@@ -98,10 +98,10 @@ class WebhookService extends BaseService
                     $orderData = OrderNotificationFormatter::format($orderResult, $email, $address);
                     $orderData['id'] = $id_order;
                     try {
-                        $sendEmail = $Notification->notifyOrderPaySuccess($orderData);
+                        $sendEmail = $Order->changeStatus('PROCESSING', $id_order);
 
                         if (isset($sendEmail['error'])) {
-                            throw new EmailNotSentException("Não foi possível enviar email de requisição");
+                            throw new EmailNotSentException("Id_pedido:$id_order, Status do pedido: Pago, Email: $email, Id_transação: $id_transaction");
                         }
                     } catch (EmailNotSentException $e) {
                         $error = new ErrorService($this->pdo);
@@ -130,12 +130,6 @@ class WebhookService extends BaseService
                         'payment_date' => $payment_date,
                         'send_email' => $sendEmail
                     ];
-
-                    $orderService = $Order->changeStatus('PROCESSING', $id_order);
-
-                    if (isset($orderService['error'])) {
-                        throw new Exception($orderService['error'].". Id_pedido:$id_order, Status do pedido: Pago, Email: $email, Id_transação: $id_transaction");
-                    }
 
                     $paymentRegistered = $Payment->register($dataService);
 
