@@ -375,6 +375,47 @@ class Product extends BaseModel
 
         return $stmt->fetch();
     }
+
+    public function getByIdStatus(int $id)
+    {
+        $sql = "SELECT 
+                    pv.id_product_variant,
+                    p.name,
+                    pv.sku,
+                    pv.price,
+                    pv.qtd_stock,
+                    pv.discount,
+                    m.id_media,
+                    m.file_type,
+                    b.name AS brand_name,
+                    c.id_category,
+                    c.name AS category_name
+                FROM products AS p
+                LEFT JOIN product_variants AS pv 
+                    ON p.id_product = pv.id_product
+                LEFT JOIN product_pictures AS pp 
+                    ON pv.id_product_variant = pp.id_product_variant 
+                    AND pp.is_main = 1
+                LEFT JOIN media AS m 
+                    ON pp.id_media = m.id_media
+                LEFT JOIN brands AS b
+                    ON p.id_brand = b.id_brand
+                LEFT JOIN product_categories AS pc
+                    ON p.id_product = pc.id_product
+                LEFT JOIN categories AS c
+                    ON pc.id_category = c.id_category
+                WHERE pv.id_product_variant = :id
+                ORDER BY p.id_product, pv.id_product_variant
+                LIMIT 1";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
     public function getAllCategory($params)
     {
         $limit = 40;
@@ -533,7 +574,11 @@ class Product extends BaseModel
                     c.id_category,
                     c.name AS name_category, 
                     p.name AS name, 
-                    p.description
+                    p.description,
+                    p.weight,
+                    p.width,
+                    p.length,
+                    p.height
                 FROM products AS p 
                 LEFT JOIN brands AS b 
                 ON p.id_brand = b.id_brand
@@ -813,5 +858,12 @@ class Product extends BaseModel
         usort($results, fn($a, $b) => $b['score'] <=> $a['score']);
         unset($results['score']);
         return array_slice($results, 0, 20);
+    }
+
+    public function countProducts(){
+        $sql = "SELECT COUNT(id_product) AS total FROM products WHERE status > 0";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetch();
     }
 }

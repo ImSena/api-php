@@ -13,17 +13,17 @@ class AddressStoreService extends BaseService
     {
         return $this->execute(function () use ($data) {
             $fields = Validator::validateAddress([
-                "public_area" => $data['public_area'],
-                "number" => $data['number'],
-                "district" => $data['district'],
-                "city" => $data['city'],
-                "state" => $data['state'],
-                "zip_code" => $data['zip_code'],
-                "is_default" => $data['is_default'],
-                "is_show" => $data['is_show']
+                "public_area" => $data['public_area'] ?? '',
+                "number" => $data['number'] ?? '',
+                "district" => $data['district'] ?? '',
+                "city" => $data['city'] ?? '',
+                "state" => $data['state'] ?? '',
+                "zip_code" => $data['zip_code'] ?? '',
+                "is_default" => $data['is_default'] ?? '',
             ]);
 
             $fields['complement'] = null;
+            $fields['is_show'] = $data['is_show'] ?? true;
 
             if (isset($data['complement']) && !empty($data['complement'])) {
                 $fields['complement'] = $data['complement'];

@@ -10,6 +10,8 @@ use App\Utils\Pagination;
 use App\Utils\Validator;
 use Exception;
 
+require_once __DIR__ . "/../../config.php";
+
 class ProductService extends BaseService
 {
     public function create(array $data)
@@ -20,6 +22,22 @@ class ProductService extends BaseService
                 "id_category" => $data['id_category'] ?? '',
                 "products" => $data['products'] ?? '',
             ]);
+
+            $total = $Product->countProducts();
+
+            $total = intval($total['total']);
+
+            $plano = PLANO;
+
+            if($plano == "BASIC"){
+                if($total == 100){
+                    throw new Exception("Não é possível criar mais produtos, você já possui 100 produtos cadastrados");
+                }
+            }else{
+                if($total == 1000){
+                    throw new Exception("Não é possível criar mais produtos, você já possui 1000 produtos cadastrados");
+                }
+            }
 
             $Product = $Product->create($fields);
 

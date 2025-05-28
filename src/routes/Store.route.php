@@ -10,6 +10,7 @@ Route::group([
 ], function($prefix, $middlewares){
     Route::post("/$prefix/create", [StoreController::class, "createStore"], $middlewares);
     Route::post("/$prefix/onboarding", [StoreController::class, 'initiateOnboarding'], $middlewares);
+    Route::post("/$prefix/address", [StoreController::class, 'insertAddressStore']);
     Route::get("/$prefix/status", [StoreController::class, 'getStatus']);
     // Route::get("/$prefix/stripe", [StoreController::class, "getStripe"]);
     Route::get("/$prefix/login", [StoreController::class, 'login'], $middlewares);

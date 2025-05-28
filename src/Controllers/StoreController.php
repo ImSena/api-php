@@ -206,6 +206,17 @@ class StoreController extends BaseController
 
         $this->successResponse($result['message'], [$result['url']]);
     }
+
+    public function insertAddressStore(){
+        $addressStore = new AddressStoreService($this->pdo);
+
+        $body = $this->request::body();
+
+        $result = $addressStore->createAddress($body);
+
+        echo json_encode($result);
+
+    }
 }
 
 // public function getStripe()

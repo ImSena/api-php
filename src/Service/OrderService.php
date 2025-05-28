@@ -152,9 +152,8 @@ class OrderService extends BaseService
                 $item['address_shipped'] = $address['content'];
                 unset($item['id_address']);
 
-
                 foreach ($productItem as $product) {
-                    $productData = $Product->getById($product['id_product_variant']);
+                    $productData = $Product->getByIdStatus($product['id_product_variant']);
                     $path = $Media->getPathToFile($productData);
                     $extension = $MediaService->getExtension($productData['file_type']);
                     $productData['image_path'] = $path . '.' . $extension;
@@ -219,7 +218,7 @@ class OrderService extends BaseService
 
             $totalPrice = 0.00;
             foreach ($productItems as $productItem) {
-                $product = $Product->getById($productItem['id_product_variant']);
+                $product = $Product->getByIdStatus($productItem['id_product_variant']);
                 $product['category'] = $ProductCategories->getCategoryVariant($productItem['id_product_variant'])['category_name'];
                 $path = $Media->getPathToFile($product);
                 $extension = $MediaService->getExtension($product['file_type']);
@@ -372,7 +371,7 @@ class OrderService extends BaseService
             return true;
         });
     }
-
+    
     public function verifyOrder(int $id)
     {
         return $this->execute(function () use ($id) {

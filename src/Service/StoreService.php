@@ -386,8 +386,8 @@ class StoreService extends BaseService
 
             return [
                 "NAME_STORE" => $result['name'],
-                "THEME" => !empty($result['pallete']) ? $result['pallete'] : 'Gold',
-                "LAYOUT" => !empty($result['template']) ? $result['template'] : 'template01',
+                "THEME" => !empty($result['pallete']) ? $result['pallete'] : 'Gold-10',
+                "LAYOUT" => !empty($result['template']) ? $result['template'] : 'shopster',
                 "ID_ANALITYCS" => $result['id_analitycs'] ?? '',
                 "ID_SEARCH_CONSOLE" => $result['id_search_console'] ?? '',
                 "ID_TAG_MANAGER" => $result['id_tag_manager'] ?? '',
@@ -395,6 +395,7 @@ class StoreService extends BaseService
                 "PHONES" => $resultPhones,
                 "EMAILS" => $resultEmails,
                 "SOCIAIS" => $resultSociais ?? '',
+                "PLAN" => PLANO
             ];
         });
     }
