@@ -12,6 +12,13 @@ class EmailStoreService extends BaseService
     public function createEmail(array $data, ?bool $isTransaction = null)
     {
         return $this->execute(function () use ($data) {
+
+            $fields = Validator::validate([
+                "email" => $data['email'] ?? '',
+                "is_default" => $data['is_default'] ?? '',
+                "is_show" => $data['is_show'] ?? ''
+            ]);
+
             $EmailStore = new EmailStore($this->pdo);
 
             $inactiveResult = $EmailStore->setIsDefault();
@@ -20,7 +27,7 @@ class EmailStoreService extends BaseService
                 throw new Exception("Não foi possível inativar emails.");
             }
 
-            $result = $EmailStore->createEmailStore($data);
+            $result = $EmailStore->createEmailStore($fields);
 
             if (!$result) {
                 throw new Exception("Não foi possível criar email para a loja.");
@@ -72,6 +79,12 @@ class EmailStoreService extends BaseService
 
             $EmailStore = new EmailStore($this->pdo);
 
+            $email = $EmailStore->getEmail(intval($data['id']));
+
+            if(!$fields['is_default'] && $email['is_default']){
+                throw new Exception("É necessário que haja pelo menos um e-mail padrão");
+            }
+
             if ($fields['is_default']) {
                 $inactiveResult = $EmailStore->setIsDefault();
 
@@ -87,6 +100,30 @@ class EmailStoreService extends BaseService
             }
 
             return "E-mail editado com sucesso.";
+        });
+    }
+
+    public function delete(int $id){
+        return $this->execute(function() use ($id){
+            $EmailStore = new EmailStore($this->pdo);
+
+            $email = $EmailStore->getEmail($id);
+
+            if(!$email){
+                throw new Exception("Não foi possível buscar endereço");
+            }
+
+            if($email['is_default']){
+                throw new Exception("Não foi possível deletar endereço padrão");
+            }
+
+            $result = $EmailStore->delete($id);
+
+            if(!$result){
+                throw new Exception("Não foi possível deletar endereço");
+            }
+
+            return "E-mail deletado com sucesso";
         });
     }
 }

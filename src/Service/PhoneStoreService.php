@@ -15,6 +15,14 @@ class PhoneStoreService extends BaseService
     {
 
         return $this->execute(function () use ($data) {
+
+            $fields = Validator::validatePhone([
+                "type" => $data['type'] ?? '',
+                "number" => $data['number'] ?? '',
+                "is_default" => $data['is_default'] ?? '',
+                "is_show" => $data['is_show'] ?? ''
+            ]);
+
             $PhoneStore = new PhoneStore($this->pdo);
 
             $resultInactive = $PhoneStore->setIsDefault();
@@ -23,7 +31,7 @@ class PhoneStoreService extends BaseService
                 throw new Exception("Não foi possível inativar contato.");
             }
 
-            $result = $PhoneStore->createPhone($data);
+            $result = $PhoneStore->createPhone($fields);
 
             if (!$result) {
                 throw new Exception("Não foi possível inserir novo contato.");
@@ -51,7 +59,7 @@ class PhoneStoreService extends BaseService
     public function update(array $data)
     {
         return $this->execute(function () use ($data) {
-            $fields = Validator::validate([
+            $fields = Validator::validatePhone([
                 "type" => $data['type'] ?? '',
                 "number" => $data['number'] ?? '',
                 "is_default" => $data['is_default'] ?? '',
@@ -60,6 +68,12 @@ class PhoneStoreService extends BaseService
             ]);
 
             $PhoneStore = new PhoneStore($this->pdo);
+
+            $phone = $PhoneStore->getPhone(intval($fields['id']));
+
+            if(!$fields['is_default'] && $phone['is_default']){
+                throw new Exception("É necesário ter pelo menos um endereço padrão");
+            }
 
             if ($fields['is_default']) {
                 $resultInactive = $PhoneStore->setIsDefault();
@@ -76,6 +90,26 @@ class PhoneStoreService extends BaseService
             }
 
             return "Contato atualizado com sucesso.";
+        });
+    }
+
+    public function delete(int $id){
+        return $this->execute(function() use ($id){
+            $phoneStore = new PhoneStore($this->pdo);
+
+            $phone = $phoneStore->getPhone($id);
+
+            if($phone['is_default']){
+                throw new Exception("Não é possível deletar o contato padrão");
+            }
+
+            $result = $phoneStore->delete(intval($id));
+
+            if(!$result){
+                throw new Exception("Não foi possível deletar telefone");
+            }
+
+            return "Contato deletado com sucesso.";
         });
     }
 }

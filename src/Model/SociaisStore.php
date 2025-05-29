@@ -19,7 +19,7 @@ class SociaisStore extends BaseModel
         return $stmt->rowCount() > 0;
     }
 
-    public function findByType(string $type): ?array
+    public function findByType(string $type)
     {
         $sql = "SELECT * FROM sociais_midias WHERE type = :type LIMIT 1";
         $stmt = $this->pdo->prepare($sql);
@@ -39,6 +39,19 @@ class SociaisStore extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public function getSocial($type)
+    {
+        $sql = "SELECT type, link FROM sociais_midias WHERE type = :type";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindValue(":type", $type, PDO::PARAM_STR);
+
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
     public function updateSocial(array $data):bool
     {
         $sql = "UPDATE sociais_midias SET link = :link, updated_at = :updated_at WHERE type = :type";
@@ -47,5 +60,15 @@ class SociaisStore extends BaseModel
         $stmt->bindParam("type", $data['type'], PDO::PARAM_STR);
         $stmt->bindParam(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         return $stmt->execute();
+    }
+
+    public function delete(string $type)
+    {
+        $sql = "DELETE FROM sociais_midias WHERE type = :type";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(":type", $type, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
     }
 }

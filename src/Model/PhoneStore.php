@@ -42,6 +42,18 @@ class PhoneStore extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public function getPhone(int $id){
+        $sql = "SELECT id_phone_store, type, number, is_default, is_show FROM phones_store WHERE id_phone_store = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
     public function updatePhones(array $data) 
     {
         $sql = "UPDATE phones_store SET 
@@ -62,5 +74,18 @@ class PhoneStore extends BaseModel
         $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
 
         return $stmt->execute();
+    }
+
+    public function delete(int $id)
+    {
+        $sql = "DELETE FROM phones_store WHERE id_phone_store = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
     }
 }

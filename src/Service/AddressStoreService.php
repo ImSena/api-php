@@ -39,7 +39,7 @@ class AddressStoreService extends BaseService
                 }
             }
 
-            $resultAddress = $AddressStore->createAddress($data);
+            $resultAddress = $AddressStore->createAddress($fields);
 
             if (!$resultAddress) {
                 throw new Exception("Não foi possível cadastrar endereço");
@@ -75,9 +75,9 @@ class AddressStoreService extends BaseService
                 "city" => $data['city'] ?? '',
                 "state" => $data['state'] ?? '',
                 "zip_code" => $data['zip_code'] ?? '',
-                "is_default" => $data['is_default'] ?? '',
                 "is_show" => $data['is_show'] ?? '',
-                "id" => $data['id'] ?? ''
+                "is_default" => $data['is_default'] ?? '',
+                "id" =>  $data['id'] ?? ''
             ]);
 
             if (isset($data['complement'])) {
@@ -85,6 +85,14 @@ class AddressStoreService extends BaseService
             }
 
             $AddressStore = new AddressStore($this->pdo);
+            $address = $AddressStore->getAddress(intval($fields['id']));
+            if(!$address){
+                throw new Exception("Não foi possível resgatar endereço");
+            }
+
+            if(!$fields['is_default'] && $address['is_default']){
+                throw new Exception("É necessário que pelo menos um endereço seja padrão");
+            }
 
             if ($fields['is_default']) {
                 $result = $AddressStore->setIsDefault();
@@ -101,6 +109,31 @@ class AddressStoreService extends BaseService
             }
 
             return "Endereço atualizado com sucesso";
+        });
+    }
+
+    public function deleteAddress(int $id){
+        return $this->execute(function () use ($id){
+            $AddressStore = new AddressStore($this->pdo);
+
+            $address = $AddressStore->getAddress($id);
+
+            if(!$address){
+                throw new Exception("Não foi possível encontrar endereço");
+            }
+
+            if($address['is_default']){
+                throw new Exception("Não é possível deletar um endereço padrão");
+            }
+
+            $result = $AddressStore->deleteAddress($id);
+
+            if(!$result){
+                throw new Exception("Não foi possível deletar endereço");
+            }
+
+            return "Endereço deletado com sucesso";
+            
         });
     }
 }

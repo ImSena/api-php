@@ -30,6 +30,16 @@ class EmailStore extends BaseModel
         return $stmt->execute();
     }
 
+    public function getEmail(int $id){
+        $sql = "SELECT id_email_store, email, is_default, is_show FROM emails_store WHERE id_email_store = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
     public function getEmails()
     {
         $sql = "SELECT id_email_store, email, is_default, is_show FROM emails_store";
@@ -66,5 +76,17 @@ class EmailStore extends BaseModel
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetch();
+    }
+
+    public function delete(int $id)
+    {
+        $sql = "DELETE FROM emails_store WHERE id_email_store = :id";
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
     }
 }

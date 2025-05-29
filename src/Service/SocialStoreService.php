@@ -21,6 +21,17 @@ class SocialStoreService extends BaseService
     public function createSocial(array $data, bool $isTransaction = false)
     {
         return $this->execute(function () use ($data) {
+
+            $fields = Validator::validate([
+                "type" => $data['type'] ?? '',
+                "link" => $data['link'] ?? ''
+            ]);
+
+             if (!in_array($fields['type'], $this->ITypeSociais)) {
+                $types = implode(", ", $this->ITypeSociais);
+                throw new Exception("Tipo de phone está incorreto! Tipos permitidos [" . $types . "]");
+            }
+
             $SocialStore = new SociaisStore($this->pdo);
 
             $find = $SocialStore->findByType($data['type']);
@@ -63,14 +74,20 @@ class SocialStoreService extends BaseService
                 "link" => $data['link'] ?? ''
             ]);
 
+            $fields['type'] = strtoupper($fields['type']);
+
             if (!in_array($fields['type'], $this->ITypeSociais)) {
                 $types = implode(", ", $this->ITypeSociais);
                 throw new Exception("Tipo de phone está incorreto! Tipos permitidos [" . $types . "]");
             }
-
-
             $SocialStore = new SociaisStore($this->pdo);
 
+            $result = $SocialStore->getSocial(strtoupper($fields['type']));
+
+            if(!$result){
+                throw new Exception("Não foi possível encontrar a rede social");
+            }
+            
             $result = $SocialStore->updateSocial($data);
 
             if (!$result) {
@@ -78,6 +95,36 @@ class SocialStoreService extends BaseService
             }
 
             return "Social Midia atualizada com sucesso.";
+        });
+    }
+
+    public function delete(string $type)
+    {
+        return $this->execute(function() use ($type){
+
+            $type = strtoupper($type);
+
+            if (!in_array($type, $this->ITypeSociais)) {
+                $types = implode(", ", $this->ITypeSociais);
+                throw new Exception("Tipo de phone está incorreto! Tipos permitidos [" . $types . "]");
+            }
+
+            $StoreSocial = new SociaisStore($this->pdo);
+
+            $result = $StoreSocial->getSocial($type);
+
+            if(!$result){
+                throw new Exception("Não foi possível encontrar rede social");
+            }
+
+            $resultDelete = $StoreSocial->delete($type);
+
+            if(!$resultDelete){
+                throw new Exception("Não foi possível deletar a social midia");
+            }
+
+            return "Social midia deletada com sucesso.";
+
         });
     }
 }

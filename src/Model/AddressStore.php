@@ -61,6 +61,29 @@ class AddressStore extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public function getAddress(int $id)
+    {
+        $sql = "SELECT 
+                public_area, 
+                number, 
+                complement, 
+                district, 
+                city, 
+                state, 
+                zip_code,
+                is_default,
+                is_show
+                FROM address_store WHERE id_address_store = :id
+                ";
+        
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch();
+    }
+
     public function updateStore(array $data)
     {
         $sql = "UPDATE address_store SET
@@ -90,6 +113,19 @@ class AddressStore extends BaseModel
         $stmt->bindParam(":is_show", $data['is_show'], PDO::PARAM_BOOL);
         $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function deleteAddress(int $id)
+    {
+        $sql = "DELETE FROM address_store WHERE id_address_store = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindValue(":id", $id, PDO::PARAM_INT);
 
         $stmt->execute();
 

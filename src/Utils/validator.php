@@ -73,11 +73,15 @@ class Validator
         $errors = [];
 
         foreach ($phone as $field => $value) {
-            if (empty(trim($value))) {
+            if (is_string($value)) {
+                if (trim($value) === '') {
+                    $errors[] = $field;
+                }
+            } elseif (is_null($value)) {
                 $errors[] = $field;
             }
         }
-
+        
         if (!empty($errors)) {
             $qtdErrors = count($errors);
 
@@ -150,12 +154,12 @@ class Validator
     public static function validateGender(string $gender)
     {
         $genders = [
-            "N/E", 
-            "M", 
+            "N/E",
+            "M",
             "F"
         ];
 
-        if(!in_array($gender, $genders)){
+        if (!in_array($gender, $genders)) {
             throw new Exception("Gênero precisa ter um valor válido");
         }
 
@@ -226,12 +230,16 @@ class Validator
         $errors = [];
 
         foreach ($fields as $field => $value) {
-            if (empty(trim($value))) {
+            if (is_string($value)) {
+                if (trim($value) === '') {
+                    $errors[] = $field;
+                }
+            } elseif (is_null($value)) {
                 $errors[] = $field;
             }
         }
 
-        $fields['zip_code'] = preg_replace('/\D/', '', $fields['zip_code']); // Remove tudo que não for número
+        $fields['zip_code'] = preg_replace('/\D/', '', $fields['zip_code']);
 
         if (!empty($fields['zip_code']) && !preg_match('/^\d{8}$/', $fields['zip_code'])) {
             $errors[] = 'zip_code';
@@ -246,20 +254,15 @@ class Validator
         }
 
         if (!empty($errors)) {
-            $qtdErrors = count($errors);
-
-            if ($qtdErrors > 1) {
-                $message = "Os campos [" . implode(", ", $errors) . "] são obrigatórios ou inválidos";
-            } else {
-                $message = "O campo [" . implode(", ", $errors) . "] é obrigatório ou inválido";
-            }
+            $message = count($errors) > 1
+                ? "Os campos [" . implode(", ", $errors) . "] são obrigatórios ou inválidos"
+                : "O campo [" . implode(", ", $errors) . "] é obrigatório ou inválido";
 
             throw new Exception($message);
         }
 
         return $fields;
     }
-
 
     public static function validateLegalPerson(array $fields)
     {

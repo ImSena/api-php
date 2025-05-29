@@ -356,30 +356,17 @@ class StoreService extends BaseService
             $resultSociais = $SocialStore->getSocial();
 
 
-            if (!isset($resultAddress['error'])) {
-                $resultAddress = array_filter($resultAddress, function ($address) {
-                    return $address['is_show'];
-                });
-            } else {
+            if (isset($resultAddress['error'])) {
                 $resultAddress = "";
             }
 
-            if (!isset($resultPhones['error'])) {
-                $resultPhones = array_filter($resultPhones, function ($phones) {
-                    return $phones['is_show'];
-                });
-            } else {
+            if (isset($resultPhones['error'])) {
                 $resultAddress = "";
             }
 
-            if (!isset($resultEmails['error'])) {
-                $resultEmails = array_filter($resultEmails, function ($email) {
-                    return $email['is_show'];
-                });
-            } else {
-                $resultEmails = "";
+            if (isset($resultEmails['error'])) {
+                $resultEmails = ""; 
             }
-
             if (isset($resultSociais['error'])) {
                 $resultSociais = "";
             }

@@ -113,6 +113,21 @@ class StoreController extends BaseController
         $this->successResponse($result);
     }
 
+    public function insertAddressStore()
+    {
+        $addressStore = new AddressStoreService($this->pdo);
+
+        $body = $this->request::body();
+
+        $result = $addressStore->createAddress($body);
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+    }
+
     public function updateAddress($params)
     {
         $id = $params[0];
@@ -130,9 +145,38 @@ class StoreController extends BaseController
         $this->successResponse($result);
     }
 
+    public function deleteAddress($param)
+    {
+        $addressStore = new AddressStoreService($this->pdo);
+
+        $id = $param[0];
+        $result = $addressStore->deleteAddress($id);
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+    }
+    //telefone
+    public function insertPhone()
+    {
+        $body = $this->request::body();
+        
+        $phoneService = new PhoneStoreService($this->pdo);
+
+        $result = $phoneService->createPhoneStore($body);
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+    }
+
     public function updatePhone($params)
     {
-        $id = $params[0];
+        $id = intval($params[0]);
         $body = $this->request::body();
         $body['id'] = $id;
         $phoneService = new PhoneStoreService($this->pdo);
@@ -146,14 +190,30 @@ class StoreController extends BaseController
         $this->successResponse($result);
     }
 
-    public function updateTheme()
+    public function deletePhone($params)
+    {
+        $id = intval($params[0]);
+        $phoneService = new PhoneStoreService($this->pdo);
+
+        $result = $phoneService->delete($id);
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+    }
+
+    //email
+
+    public function insertEmail()
     {
         $body = $this->request::body();
+        $emailService = new EmailStoreService($this->pdo);
 
-        $storeService = new StoreService($this->pdo);
-        $result = $storeService->updateTheme($body);
+        $result = $emailService->createEmail($body);
 
-        if (isset($result['error'])) {
+        if(isset($result['error'])){
             return $this->errorResponse($result['error']);
         }
 
@@ -179,15 +239,64 @@ class StoreController extends BaseController
         $this->successResponse($result);
     }
 
-    public function updateSociais()
+    public function deleteEmail($params)
+    {
+        $id = intval($params[0]);
+
+        $emailStoreService = new EmailStoreService($this->pdo);
+
+        $result = $emailStoreService->delete($id);
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+    }
+
+    //redes sociais
+
+    public function insertSocial()
     {
         $body = $this->request::body();
+
+        $SocialService = new SocialStoreService($this->pdo);
+
+        $result = $SocialService->createSocial($body);
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+
+    }
+
+    public function updateSocial($params)
+    {
+        $type = $params[0];
+        $body = $this->request::body();
+        $body['type'] = $type;
 
         $socialService = new SocialStoreService($this->pdo);
 
         $result = $socialService->update($body);
 
         if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        $this->successResponse($result);
+    }
+
+    public function deleteSocial($param){
+        $type = $param[0];
+
+        $SocialService = new SocialStoreService($this->pdo);
+
+        $result = $SocialService->delete($type);
+
+        if(isset($result['error'])){
             return $this->errorResponse($result['error']);
         }
 
@@ -207,23 +316,17 @@ class StoreController extends BaseController
         $this->successResponse($result['message'], [$result['url']]);
     }
 
-    public function insertAddressStore(){
-        $addressStore = new AddressStoreService($this->pdo);
-
+    public function updateTheme()
+    {
         $body = $this->request::body();
 
-        $result = $addressStore->createAddress($body);
+        $storeService = new StoreService($this->pdo);
+        $result = $storeService->updateTheme($body);
 
-        echo json_encode($result);
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
 
+        $this->successResponse($result);
     }
 }
-
-// public function getStripe()
-// {
-//     $storeService = new StoreService($this->pdo);
-
-//     $result = $storeService->getStatusStripe();
-
-//     echo json_encode($result);
-// }
