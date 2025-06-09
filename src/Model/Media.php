@@ -321,7 +321,7 @@ class Media extends BaseModel
 
         $stmt = $this->pdo->prepare($sql);
 
-        $stmt->bindParam(":id_folder", $id_folder, PDO::PARAM_INT);
+        $stmt->bindValue(":id_folder", $id_folder);
 
         $stmt->execute();
 

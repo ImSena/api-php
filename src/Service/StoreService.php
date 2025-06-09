@@ -131,8 +131,8 @@ class StoreService extends BaseService
     {
         $fields = Validator::validate([
             "name" => $data['name'] ?? '',
-            "template" => $data['template'] ?? 'template01',
-            "pallete" => $data['pallete'] ?? "Gold",
+            "template" => $data['template'] ?? 'shopster',
+            "pallete" => $data['pallete'] ?? "Gold-01",
         ]);
 
         $fields['addresses'] = null;
@@ -298,8 +298,8 @@ class StoreService extends BaseService
 
             $accountLink = AccountLink::create([
                 'account' => $accountId,
-                'refresh_url' => URL_STORE.'/administrativo',
-                'return_url' => URL_STORE.'/administrativo',
+                'refresh_url' => URL_STORE . '/administrativo',
+                'return_url' => URL_STORE . '/administrativo',
                 'type' => 'account_onboarding',
             ]);
 
@@ -365,7 +365,7 @@ class StoreService extends BaseService
             }
 
             if (isset($resultEmails['error'])) {
-                $resultEmails = ""; 
+                $resultEmails = "";
             }
             if (isset($resultSociais['error'])) {
                 $resultSociais = "";
@@ -399,8 +399,10 @@ class StoreService extends BaseService
                 return [
                     "is_locked" => true,
                     "locked_reasons" => [
-                        'code' => 'STORE_NOT_FOUND',
-                        'message' => "Loja não está cadastrada"
+                        [
+                            'code' => 'STORE_NOT_FOUND',
+                            'message' => "Loja não está cadastrada"
+                        ]
                     ]
                 ];
             }
@@ -409,8 +411,10 @@ class StoreService extends BaseService
                 return [
                     "is_locked" => true,
                     "locked_reasons" => [
-                        'code' => 'STRIPE_ACCOUNT_MISSING',
-                        'message' => 'Loja sem sistema de pagamento configurado.'
+                        [
+                            'code' => 'STRIPE_ACCOUNT_MISSING',
+                            'message' => 'Loja sem sistema de pagamento configurado.'
+                        ]
                     ]
                 ];
             }

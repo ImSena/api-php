@@ -55,14 +55,14 @@ class Category extends BaseModel
     {
         $sql = "SELECT DISTINCT c.id_category, c.name, c.parent_category_id
                 FROM categories c
-                JOIN product_categories pc ON pc.id_category = c.id_category
-                JOIN products p ON p.id_product = pc.id_product
-                JOIN product_variants pv ON pv.id_product = p.id_product
+                LEFT JOIN product_categories pc ON pc.id_category = c.id_category
+                LEFT JOIN products p ON p.id_product = pc.id_product
+                LEFT JOIN product_variants pv ON pv.id_product = p.id_product
                 WHERE ";
         
         $sql .= $isParent ? "parent_category_id IS NULL" : "parent_category_id IS NOT NULL";
         
-        if($verifyItem){
+        if(!$verifyItem){
             $sql .= " AND pv.qtd_stock > 0";
         }
 

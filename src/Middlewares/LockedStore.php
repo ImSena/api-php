@@ -26,10 +26,10 @@ class LockedStore extends BaseMiddleware{
             }
 
             if($result['is_locked']){
-                $reasons = implode(",", $result['locked_reasons']);
-                $reasons = str_replace(".", "", $reasons);
+                // $reasons = implode(",", $result['locked_reasons']);
+                // $reasons = str_replace(".", "", $reasons);
 
-                return $this->denyAccess($response, "Loja incompleta para realizar requisição. Motivos: ".$reasons, 400);
+                return $this->denyAccess($response, "Loja incompleta para realizar requisição. Motivos: ", 400);
             }
 
             return true;

@@ -58,6 +58,7 @@ class CategoryService extends BaseService
     {
         return $this->execute(function () use ($rule) {
             $Category = new Category($this->pdo);
+            echo json_encode($rule);
             $categoryParent = $Category->getAllCategoriesHasProducts($rule == "COMMON", true);
             $category = $Category->getAllCategoriesHasProducts($rule == "COMMON", false);
 

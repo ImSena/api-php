@@ -254,8 +254,8 @@ class OrderService extends BaseService
             $OrderResult['address'] = $address['content'];
             $OrderResult['user'] = $user['content'];
             $OrderResult['total_price'] = number_format($totalPrice, 2, ',', '.');
-            unset($OrderResult['id_user']);
-            unset($OrderResult['id_address']);
+            // unset($OrderResult['id_user']);
+            // unset($OrderResult['id_address']);
 
 
             return [
