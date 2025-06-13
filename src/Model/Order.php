@@ -194,7 +194,7 @@ class Order extends BaseModel
     {
 
 
-        if ($permissions['rule'] = 'user') {
+        if ($permissions['rule'] === 'user') {
             return $this->getTotalOrdersUser($permissions['id_user'], $this->pdo);
         } else {
             return $this->getTotalOrdersAdmin($this->pdo);
