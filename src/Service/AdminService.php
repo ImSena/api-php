@@ -176,7 +176,7 @@ class AdminService extends BaseService
             $info_user = [
                 'name' => $admin['name'],
                 'email' => $admin['email'],
-                'link' => URL_EMAIL . "active-account?token=" . $token,
+                'link' => URL_EMAIL . "administrativo/reset-password?token=" . $token,
                 'type' => 'FORGET'
             ];
 

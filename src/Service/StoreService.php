@@ -277,7 +277,7 @@ class StoreService extends BaseService
 
             if (empty($store['stripe_account_id'])) {
                 $account = Account::create([
-                    'type' => 'express',
+                    'type' => 'standard',
                     'country' => 'BR',
                     'capabilities' => [
                         'card_payments' => ['requested' => true],
