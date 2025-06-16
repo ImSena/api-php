@@ -224,7 +224,7 @@ class UserService extends BaseService
             $info_user = [
                 'name' => $user['username'],
                 'email' => $user['email'],
-                'link' => URL_EMAIL . "reset-password?token=".$token
+                'link' => URL_EMAIL . "active-account?token=".$token
             ];
 
             $sendMail = $this->getNotifier()->sendActiveAccount($info_user);
