@@ -81,7 +81,7 @@ class Order extends BaseModel
     }
     private function hasSufficientStock(array $orderItems, $pdo)
     {
-        $sql = "SELECT qtd_stock FROM product_variants WHERE id_product_variant = :id_product_variant";
+        $sql = "SELECT qtd_stock FROM product_variants WHERE id_product_variant = :id_product_variant FOR UPDATE";
         $stmt = $pdo->prepare($sql);
 
         foreach ($orderItems as $item) {
@@ -98,7 +98,10 @@ class Order extends BaseModel
     }
     private function updateProductStock(array $orderItems, $pdo)
     {
-        $sql = "UPDATE product_variants SET qtd_stock = qtd_stock - :quantity, updated_at = :updated_at WHERE id_product_variant = :id_product_variant";
+        $sql = "UPDATE product_variants
+        SET qtd_stock = qtd_stock - :quantity, updated_at = :updated_at 
+        WHERE id_product_variant = :id_product_variant
+        AND qtd_stock >= :quantity";
         $stmt = $pdo->prepare($sql);
 
         foreach ($orderItems as $item) {
@@ -216,7 +219,6 @@ class Order extends BaseModel
         $sql = "SELECT COUNT(id_order) AS total 
                 FROM orders";
         $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":id", $id_user, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetch();

@@ -346,7 +346,6 @@ class OrderService extends BaseService
         });
     }
 
-
     private function sendMailStatus(string $status, int $id_order, ?array $files = null)
     {
         return $this->execute(function () use ($status, $id_order, $files) {
