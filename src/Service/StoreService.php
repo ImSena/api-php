@@ -318,9 +318,9 @@ class StoreService extends BaseService
                 throw new Exception("Não foi possível encontrar lojista");
             }
 
-            $loginLink = Account::createLoginLink($store['stripe_account_id']);
+            // $loginLink = Account::createLoginLink($store['stripe_account_id']);
 
-            return ['url' => $loginLink->url, 'message' => "Link gerado com sucesso"];
+            return ['url' => 'https://stripe.com', 'message' => "Link gerado com sucesso"];
         });
     }
     public function getInfoStore()
