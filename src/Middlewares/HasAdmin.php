@@ -34,6 +34,6 @@ class HasAdmin extends BaseMiddleware{
         }else{
             $request::setRule("COMMON");
         }
-        return false;
+        return true;
     }
 }
