@@ -11,6 +11,8 @@ use App\Service\Base\BaseService;
 use App\Utils\Pagination;
 use App\Utils\Validator;
 use Exception;
+use PDO;
+use PDOException;
 use Stripe\File;
 
 require_once __DIR__ . '/../../config.php';
@@ -319,7 +321,12 @@ class OrderService extends BaseService
                 throw new Exception("Status inválido: $status");
             }
 
+
             $Order = new Order($this->pdo);
+
+            if($status == "CANCELLED"){
+                $this->cancellOrderAndInsertProduct($id_order, $this->pdo);
+            }
 
             $result = $Order->changeStatus($status, $id_order);
 
@@ -371,7 +378,7 @@ class OrderService extends BaseService
             return true;
         });
     }
-    
+
     public function verifyOrder(int $id)
     {
         return $this->execute(function () use ($id) {
@@ -409,29 +416,34 @@ class OrderService extends BaseService
     public function cancellPayment(int $id)
     {
         return $this->execute(function () use ($id) {
-            $Order = new Order($this->pdo);
-            $ProductService = new ProductService($this->pdo);
-
-            $items = $Order->getOrderIdProductItems($id);
-
-            foreach ($items as $item) {
-                $data = [
-                    "id" => $item['id_product_variant'],
-                    "quantity" => $item['quantity']
-                ];
-
-                $result = $ProductService->insertQuantity($data);
-
-                if (isset($result['error'])) {
-                    throw new Exception("Não foi possível cancelar pedido.");
-                }
-            }
-
             $result = $this->changeStatus("CANCELLED", $id);
 
             if (isset($result['error'])) {
                 throw new Exception("Não foi possível cancelar pedido.");
             }
         }, true);
+    }
+
+    private function cancellOrderAndInsertProduct(int $id_order, PDO $pdo)
+    {
+        $Order = new Order($this->pdo);
+        $ProductService = new ProductService($pdo);
+
+        $items = $Order->getOrderIdProductItems($id_order);
+
+        foreach ($items as $item) {
+            $data = [
+                "id" => $item['id_product_variant'],
+                "quantity" => $item['quantity']
+            ];
+
+            $result = $ProductService->insertQuantity($data);
+
+            if (isset($result['error'])) {
+                throw new Exception("Não foi possível cancelar pedido");
+            }
+        }
+
+        return ["success" => true];
     }
 }
