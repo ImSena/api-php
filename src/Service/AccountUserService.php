@@ -2,25 +2,19 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Jwt\JwtAuth;
 use App\Model\TokenUser;
+use App\Service\Base\BaseService;
 use App\Utils\Validator;
 use Exception;
-use PDOException;
 use App\Model\User;
-use PDO;
 
-class AccountUserService
+class AccountUserService extends BaseService
 {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
     public function resetPassword(array $data)
     {
-        try {
+
+        return $this->execute(function () use ($data) {
             $TokenUser = new TokenUser($this->pdo);
             $User = new User($this->pdo);
             $fields = Validator::validate([
@@ -49,17 +43,13 @@ class AccountUserService
             $tokenModel = $TokenUser->inactiveToken($data['token']);
 
             return "Senha alterada com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function activeAccount(array $data)
     {
-        try {
 
+        return $this->execute(function () use ($data) {
             $TokenUser = new TokenUser($this->pdo);
             $User = new User($this->pdo);
 
@@ -89,10 +79,6 @@ class AccountUserService
             $tokenModel = $TokenUser->inactiveToken($data['token']);
 
             return "Conta ativada com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 }

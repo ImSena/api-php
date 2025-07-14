@@ -2,60 +2,43 @@
 
 namespace App\Controllers;
 
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
+use App\Controllers\Base\BaseController;
 use App\Service\AccountUserService;
 use App\Service\UserService;
-use PDO;
 
-define('ROOT_PATH', realpath(__DIR__ .'/../..'));
+// define('ROOT_PATH', realpath(__DIR__ .'/../..'));
 
-require_once ROOT_PATH . '/config.php';
+// require_once ROOT_PATH . "/config.php";
 
-class UserController
+class UserController extends BaseController
 {
-    private PDO $pdo;
-
-    public function __construct(){
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-    public function register(Request $request, Response $response)
+    public function register()
     {
-        $data = $request::body();
+        $data = $this->request::body();
 
         $userService = new UserService($this->pdo);
         $userService = $userService->create($data);
 
         if(isset($userService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $userService['error']
-            ], 400);
+            return $this->errorResponse($userService['error']);
         }
 
-        return $response::json([
-            'success' => true,
-            'message' => $userService
-        ]);
+        return $this->successResponse($userService);
     }
 
-    public function login(Request $request, Response $response)
+    public function login()
     {
-        $data = $request::body();
+        $data = $this->request::body();
 
         $userService = new UserService($this->pdo);
         $userService = $userService->login($data);
 
         if(isset($userService['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $userService['error']
-            ], 400);
+            return $this->errorResponse($userService['error']);
         }
 
         if(isset($userService['firstAccess'])){
-            return $response::json([
+            return $this->response::json([
                 "success" => true,
                 "message" => $userService['message'],
                 "firstAccess" => true,
@@ -63,7 +46,7 @@ class UserController
             ], 200);
         }
 
-        $response::json([
+        $this->response::json([
             "success" => true,
             "message" => $userService['message'],
             "status" => $userService['status'],
@@ -73,91 +56,79 @@ class UserController
         ], 200);
     }
 
-    public function forgetAccess(Request $request, Response $response)
+    public function forgetAccess()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $userService = new UserService($this->pdo);
         $userService = $userService->forgetPassword($body);
 
         if(isset($userService['error'])){
-            return $response::json([
-                'success' => false,
-                'message' => $userService['error']
-            ], 400);
+            return $this->errorResponse($userService['error']);
         }
 
-        $response::json([
+        $this->response::json([
             'success' => true,
             'message' => $userService,
             "type" => "USER"
         ], 200);
     }
 
-    public function resetPassword(Request $request, Response $response)
+    public function resetPassword()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $accountService = new AccountUserService($this->pdo);
         $accountService = $accountService->resetPassword($body);
 
         if(isset($accountService['error'])){
-            return $response::json([
-                'success' => false,
-                'message' => $accountService['error']
-            ], 400);
+            return $this->errorResponse($accountService['error']);
         }
 
-        $response::json([
+        $this->response::json([
             'success' => true,
             'message' => $accountService,
             "type" => "USER"
         ], 200);
     }
 
-    public function sendActiveUser(Request $request, Response $response)
+    public function sendActiveUser()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $userService = new UserService($this->pdo);
         $userService = $userService->activeAccountLink($body);
 
         if(isset($userService['error'])){
-            return $response::json([
-                'success' => false,
-                'message' => $userService['error']
-            ], 400);
+            return $this->errorResponse($userService['error']);
         }
 
-        $response::json([
+        $this->response::json([
             'sucess' => true,
             'message' => $userService,
             "type" => "USER"
         ], 200);
     }
 
-    public function activeAccount(Request $request, Response $response)
+    public function activeAccount()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $userAccount = new AccountUserService($this->pdo);
         $userAccount = $userAccount->activeAccount($body);
 
         if(isset($userAccount['error'])){
-            return $response::json([
-                'success' => false,
-                'message' => $userAccount['error']
-            ], 400);
+            return $this->errorResponse($userAccount['error']);
         }
 
-        $response::json([
+        $this->response::json([
             'success' => true,
             'message' => $userAccount,
             "type" => "USER"
         ], 200);
     }
 
-    public function getAll(Request $request, Response $response, $id)
+    public function getAll($id)
     {
 
         $id = isset($id[0]) ? $id[0] : 1;
@@ -166,13 +137,10 @@ class UserController
         $userService = $userService->getAllUsers($id);
 
         if(isset($userService['error'])){
-            return $response::json([
-                'success' => false,
-                'message' => $userService['error']
-            ], 400);
+            return $this->errorResponse($userService['error']);
         }
 
-        $response::json([
+        $this->response::json([
             'success' => true,
             'message' => $userService['message'],
             'content' => $userService['content'],
@@ -180,5 +148,35 @@ class UserController
         ], 200);
     }
 
+    public function getById()
+    {
+        $id_user = $this->request::getUserId();
+
+        $userService = new UserService($this->pdo);
+        $userResult = $userService->getById($id_user);
+
+        if(isset($userResult['error'])){
+            $this->errorResponse($userResult['error']);
+        }
+
+        return $this->successResponse("Usuário resgatado com sucesso", $userResult['content']);
+    }
+
+    public function edit()
+    {
+        $body = $this->request::body();
+        $body['id_user'] = $this->request::getUserId();
+
+        $userService = new UserService($this->pdo);
+        $userResult = $userService->editUser($body);
+
+        if(isset($userResult['error'])){
+            $this->errorResponse($userResult['error']);
+        }
+
+        return $this->successResponse("Usuário editado com sucesso.");
+
+        
+    }
     
 }

@@ -11,8 +11,7 @@ class User extends BaseModel
 {
     public function create(array $data)
     {
-        $pdo = $this->getPdo();
-        $pdo->beginTransaction();
+        $this->pdo->beginTransaction();
 
         try {
             $person_type = $data['type'];
@@ -24,7 +23,7 @@ class User extends BaseModel
                 ? "INSERT INTO legal_people (cnpj, corporate_name, trade_name, state_registration) VALUES (:cnpj, :corporate_name, :trade_name, :state_registration)"
                 : "INSERT INTO natural_people (cpf, dt_birth, gender) VALUES(:cpf, :dt_birth, :gender)";
 
-            $stmt = $pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
             if ($person_type == 'LEGAL') {
                 $stmt->bindParam(":cnpj", $person['cnpj'], PDO::PARAM_STR);
                 $stmt->bindParam(":corporate_name", $person['corporate_name'], PDO::PARAM_STR);
@@ -38,7 +37,7 @@ class User extends BaseModel
 
             $stmt->execute();
 
-            $person_id = $pdo->lastInsertId();
+            $person_id = $this->pdo->lastInsertId();
 
             if (!$person_id) {
                 throw new Exception("Não foi possível criar a conta pois não foi possível cadastrar pessoa. Tente novamente mais tarde");
@@ -48,7 +47,7 @@ class User extends BaseModel
                 ? "INSERT INTO users (username, email, password, id_legal_person) VALUES (:username, :email, :password, :id_person)"
                 : "INSERT INTO users (username, email, password, id_natural_person) VALUES (:username, :email, :password, :id_person)";
 
-            $stmt = $pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(":username", $data['username'], PDO::PARAM_STR);
             $stmt->bindParam(":email", $data['email'], PDO::PARAM_STR);
             $stmt->bindParam(":password", $data['password'], PDO::PARAM_STR);
@@ -56,35 +55,35 @@ class User extends BaseModel
 
             $stmt->execute();
 
-            $user_id = $pdo->lastInsertId();
+            $user_id = $this->pdo->lastInsertId();
 
             if (!$user_id) {
                 throw new Exception("Não foi possível criar a conta pois não foi possível cadastrar usuário. Tente novamente mais tarde");
             }
 
-            $address = $this->registerAddress($address, $user_id, $pdo);
+            $address = $this->registerAddress($address, $user_id, $this->pdo);
 
             if (!$address) {
                 throw new Exception("Não foi possível criar uma conta, pois o endereço está com erro. Tente novamente mais tarde");
             }
 
-            $phone = $this->registerPhone($phone, $user_id, $pdo);
+            $phone = $this->registerPhone($phone, $user_id, $this->pdo);
 
             if (!$phone) {
                 throw new Exception("Não foi possível criar a conta, pois telefone está com erro. Tente novamente mais tarde.");
             }
 
-            $pdo->commit();
+            $this->pdo->commit();
 
             return $user_id;
         } catch (Exception $e) {
-            $pdo->rollBack();
+            $this->pdo->rollBack();
             return ['error' => $e->getMessage()];
         }
     }
     public function registerAddress(array $data, int $user_id, ?PDO $pdo = null)
     {
-        $pdo = $pdo ?? $this->getPdo();
+        $pdo = $pdo ?? $this->pdo;
 
         $sql = "INSERT INTO addresses (id_user, public_area, number, complement, district, city, state, zip_code) VALUES (:id_user, :public_area, :number, :complement,:district, :city, :state, :zip_code)";
 
@@ -106,7 +105,7 @@ class User extends BaseModel
 
     public function registerPhone(array $data, int $user_id, ?PDO $pdo = null)
     {
-        $pdo = $pdo ?? $this->getPdo();
+        $pdo = $pdo ?? $this->pdo;
 
         $sql = "INSERT INTO phones (id_user, type, number) VALUES (:id_user, :type, :number)";
 
@@ -123,7 +122,6 @@ class User extends BaseModel
 
     public function select(array $data)
     {
-        $pdo = $this->getPdo();
 
         $sql = "SELECT 
                 u.*, 
@@ -132,13 +130,13 @@ class User extends BaseModel
                     WHEN lp.id_legal_person IS NOT NULL THEN 'Jurídica' 
                     ELSE NULL 
                 END AS person_type
-            FROM ecommerce.users u
-            LEFT JOIN ecommerce.natural_people np ON u.id_natural_person = np.id_natural_person
-            LEFT JOIN ecommerce.legal_people lp ON u.id_legal_person = lp.id_legal_person
+            FROM ".$this->database.".users u
+            LEFT JOIN ".$this->database.".natural_people np ON u.id_natural_person = np.id_natural_person
+            LEFT JOIN ".$this->database.".legal_people lp ON u.id_legal_person = lp.id_legal_person
             WHERE (np.cpf = :login OR lp.cnpj = :login OR u.email = :login)
             LIMIT 1";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":login", $data['login'], PDO::PARAM_STR);
         $stmt->execute();
 
@@ -147,11 +145,11 @@ class User extends BaseModel
 
     public function updateAccess($data, $id)
     {
-        $pdo = $this->getPdo();
-        $sql = "UPDATE users SET password = :password WHERE id_user = :id";
+        $sql = "UPDATE users SET password = :password, updated_at = :updated_at WHERE id_user = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":password", $data['password'], PDO::PARAM_STR);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
 
         $stmt->execute();
@@ -161,12 +159,12 @@ class User extends BaseModel
 
     public function activeUser($status, $id)
     {
-        $pdo = $this->getPdo();
 
-        $sql = "UPDATE users SET status = :status WHERE id_user = :id";
+        $sql = "UPDATE users SET status = :status, updated_at = :updated_at WHERE id_user = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":status", $status, PDO::PARAM_STR);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
 
         $stmt->execute();
@@ -181,7 +179,6 @@ class User extends BaseModel
         $page = isset($page) ? (int) $page : 1;
         $offset = ($page - 1) * $limit;
 
-        $pdo = $this->getPdo();
 
         $sql = "SELECT 
                 u.username,
@@ -199,17 +196,17 @@ class User extends BaseModel
                 np.gender,
                 lp.corporate_name,
                 lp.trade_name
-            FROM ecommerce.users u
-            LEFT JOIN ecommerce.natural_people np ON u.id_natural_person = np.id_natural_person
-            LEFT JOIN ecommerce.legal_people lp ON u.id_legal_person = lp.id_legal_person
-            LEFT JOIN ecommerce.phones p ON u.id_user = p.id_user
-            LEFT JOIN ecommerce.addresses a ON u.id_user = a.id_user
+            FROM ".$this->database.".users u
+            LEFT JOIN ".$this->database.".natural_people np ON u.id_natural_person = np.id_natural_person
+            LEFT JOIN ".$this->database.".legal_people lp ON u.id_legal_person = lp.id_legal_person
+            LEFT JOIN ".$this->database.".phones p ON u.id_user = p.id_user
+            LEFT JOIN ".$this->database.".addresses a ON u.id_user = a.id_user
             GROUP BY u.id_user
             ORDER BY u.created_at DESC
             LIMIT :limit OFFSET :offset;
             ";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
         $stmt->bindParam(":offset", $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -217,13 +214,13 @@ class User extends BaseModel
         return $stmt->fetchAll();
     }
 
-    public function getTotalUsers()
+    public function getTotalUsers(bool $status = true)
     {
-        $pdo = $this->getPdo();
 
-        $sql = "SELECT COUNT(id_user) AS total FROM users";
-
-        $stmt = $pdo->prepare($sql);
+        $sql = "SELECT COUNT(id_user) AS total FROM users WHERE status = :status";
+        $stmt = $this->pdo->prepare($sql);
+        $status = $status ? "ACTIVE" : "INACTIVE";
+        $stmt->bindValue(":status", $status, PDO::PARAM_STR);
         $stmt->execute();
 
         return $stmt->fetch();
@@ -231,7 +228,6 @@ class User extends BaseModel
 
     public function getById(int $id)
     {
-        $pdo = $this->getPdo();
 
         $sql = "SELECT 
                 u.id_user,
@@ -242,6 +238,10 @@ class User extends BaseModel
                     WHEN lp.id_legal_person IS NOT NULL THEN 'Jurídica' 
                     ELSE NULL 
                 END AS person_type,
+                CASE 
+                    WHEN np.id_natural_person IS NOT NULL THEN np.id_natural_person
+                    WHEN lp.id_legal_person IS NOT NULL THEN lp.id_legal_person
+                END AS id_person,
                 CASE
                     WHEN np.id_natural_person IS NOT NULL THEN np.cpf
                     ELSE NULL
@@ -271,14 +271,71 @@ class User extends BaseModel
                     ELSE NULL
                 END AS state_registration
             FROM users u
-            LEFT JOIN ecommerce.natural_people np ON u.id_natural_person = np.id_natural_person
-            LEFT JOIN ecommerce.legal_people lp ON u.id_legal_person = lp.id_legal_person
+            LEFT JOIN ".$this->database.".natural_people np ON u.id_natural_person = np.id_natural_person
+            LEFT JOIN ".$this->database.".legal_people lp ON u.id_legal_person = lp.id_legal_person
             WHERE u.id_user = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
     
-        return  $stmt->fetch();
+        return $stmt->fetch();
+    }
+
+    public function updateUser(array $data)
+    {
+        $sql = "UPDATE users SET username = :username WHERE id_user = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindParam(":username", $data['username'], PDO::PARAM_STR);
+        $stmt->bindParam(":id", $data['id_user'], PDO::PARAM_INT);
+
+        if($stmt->execute()){
+            if($data['type'] == "LEGAL"){
+                return $this->updateLegalPerson($data['person']);
+            }else{
+                return $this->updateNaturalPerson($data['person']);
+            }
+        }else{
+            return false;
+        }
+    }
+
+    private function updateLegalPerson(array $person)
+    {
+        $sql = "UPDATE legal_people
+                SET cnpj = :cnpj, 
+                corporate_name = :corporate_name, 
+                trade_name = :trade_name, 
+                state_registration = :state_registration
+                WHERE id_legal_person = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindParam(":cnpj", $person['cnpj'], PDO::PARAM_STR);
+        $stmt->bindParam(":corporate_name", $person['corporate_name'], PDO::PARAM_STR);
+        $stmt->bindParam(":trade_name", $person['trade_name'], PDO::PARAM_STR);
+        $stmt->bindParam(":state_registration", $person['state_registration'], PDO::PARAM_STR);
+        $stmt->bindParam(":id", $person['id'], PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
+
+    private function updateNaturalPerson(array $person)
+    {
+        $sql = "UPDATE natural_people
+                SET cpf = :cpf,
+                dt_birth = :dt_birth,
+                gender = :gender
+                WHERE id_natural_person = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(":cpf", $person['cpf'], PDO::PARAM_STR);
+        $stmt->bindParam("dt_birth", $person['dt_birth'], PDO::PARAM_STR);
+        $stmt->bindParam(":gender", $person['gender'], PDO::PARAM_STR);
+        $stmt->bindParam(":id", $person['id'], PDO::PARAM_INT);
+
+        return $stmt->execute();
     }
 }

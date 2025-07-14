@@ -1,17 +1,11 @@
 <?php
 
 namespace App\Controllers;
-use App\Http\Request;
-use App\Http\Response;
 
-class NotFoundController
+class NotFoundController extends BannerController
 {
-    public function index(Request $request, Response $response)
+    public function index()
     {
-       $response::json([
-        'success' => false,
-        'message' => "Desculpe, rota não encontrada."
-       ], 404);
-       return;
+       return $this->errorResponse("Não foi possível encontrar rota", 404);
     }
 }

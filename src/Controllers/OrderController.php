@@ -2,69 +2,54 @@
 
 namespace App\Controllers;
 
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
+use App\Controllers\Base\BaseController;
 use App\Service\OrderService;
-use PDO;
 
-class OrderController
+class OrderController extends BaseController
 {
-
-    private PDO $pdo;
-
-    public function __construct(){
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-    public function create(Request $request, Response $response)
+    public function create()
     {
-        $body = $request::body();
-        $body['id_user'] = $request::getUserId();
+        $body = $this->request::body();
+        $body['id_user'] = $this->request::getUserId();
     
         $orderService = new OrderService($this->pdo);
         $orderService = $orderService->create($body);
 
         if(isset($orderService['error'])){
-            return $response::json([
-                'success' => false,
-                "message" => $orderService['error']
-            ], 400);
+            return $this->errorResponse($orderService['error']);
         }
 
-        $response::json([
+        $this->response::json([
             "success" => true,
             "message" => $orderService['message'],
             "id_order" => $orderService['id_order']
         ]);
     }
 
-    public function getAll(Request $request, Response $response, $param)
+    public function getAll($param)
     {
 
         $params = [];
         if(count($param) > 1){
-            $params['status'] = isset($param[0]) ? $param[0] : "DELIVERED";
+            $params['status'] = isset($param[0]) ? $param[0] : "all";
             $params['page'] = isset($param[1]) ? intval($param[1]) : 1;
         }else{
             $params['page'] = isset($param[0]) ? intval($param[0]) : 1;
         }
 
         $data = [];
-        $data['id_user'] = $request::getUserId();
-        $data['rule'] = $request::getRule();
+        $data['id_user'] = $this->request::getUserId();
+        $data['rule'] = $this->request::getRule();
         $data['params'] = $params;
 
         $orderService = new OrderService($this->pdo);
         $orderService = $orderService->getAll($data);
 
         if(isset($orderService['error'])){
-            return $response::json([
-                'success' => false,
-                "message" => $orderService['error']
-            ], 400);
+            return $this->errorResponse($orderService['error']);
         }
 
-        $response::json([
+        $this->response::json([
             "success" => true,
             "message" => $orderService['message'],
             "content" => $orderService['content'],
@@ -72,7 +57,19 @@ class OrderController
         ]);
     }
 
-    public function getById(Request $request, Response $response, $id)
+    public function getQtdOrderStatus()
+    {
+        $orderService = new OrderService($this->pdo);
+        $orders = $orderService->getQtdOrderStatus();
+
+        if(isset($orders['error'])){
+            return $this->errorResponse($orders['error']);
+        }
+
+        return $this->successResponse("Quantidade resgatadas com sucesso.", $orders);
+    }
+
+    public function getById($id)
     {
         $id = intval($id[0]);
 
@@ -80,17 +77,27 @@ class OrderController
         $orderService = $orderService->getById($id);
 
         if(isset($orderService['error'])){
-            return $response::json([
-                'success' => false,
-                "message" => $orderService['error']
-            ], 400);
+            return $this->errorResponse($orderService['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $orderService['message'],
-            "content" => $orderService['content']
-        ]);
+        return $this->successResponse($orderService['message'], $orderService['content']);
+    }
+
+    public function changeStatus($id)
+    {
+        $id = intval($id[0]);
+        $body = $this->request::body();
+        $files = $this->request::files();
+        $status = $body['status'];
+        
+        $orderService = new OrderService($this->pdo);
+        $orderService = $orderService->changeStatus($status, $id, $files);
+
+        if(isset($orderService['error'])){
+            return $this->errorResponse($orderService['error']);
+        }
+
+        return $this->successResponse("Status do pedido alterado com sucesso.");
     }
 
 }

@@ -73,11 +73,15 @@ class Validator
         $errors = [];
 
         foreach ($phone as $field => $value) {
-            if (empty(trim($value))) {
+            if (is_string($value)) {
+                if (trim($value) === '') {
+                    $errors[] = $field;
+                }
+            } elseif (is_null($value)) {
                 $errors[] = $field;
             }
         }
-
+        
         if (!empty($errors)) {
             $qtdErrors = count($errors);
 
@@ -89,6 +93,8 @@ class Validator
 
             throw new Exception($message);
         }
+
+        $phone['number'] = preg_replace('/\D/', '', $phone['number']);
 
         switch ($phone['type']) {
             case "WHATSAPP":
@@ -138,11 +144,26 @@ class Validator
 
             throw new Exception($message);
         }
-
-        self::validateCPF($fields['cpf']);
-        self::validateBirthDate($fields['dt_birth']);
+        $fields['gender'] = self::validateGender($fields['gender']);
+        $fields['cpf'] = self::validateCPF($fields['cpf']);
+        $fields['dt_birth'] = self::validateBirthDate($fields['dt_birth']);
 
         return $fields;
+    }
+
+    public static function validateGender(string $gender)
+    {
+        $genders = [
+            "N/E",
+            "M",
+            "F"
+        ];
+
+        if (!in_array($gender, $genders)) {
+            throw new Exception("Gênero precisa ter um valor válido");
+        }
+
+        return $gender;
     }
 
     public static function validateBirthDate(string $birthDate): string
@@ -209,10 +230,16 @@ class Validator
         $errors = [];
 
         foreach ($fields as $field => $value) {
-            if (empty(trim($value))) {
+            if (is_string($value)) {
+                if (trim($value) === '') {
+                    $errors[] = $field;
+                }
+            } elseif (is_null($value)) {
                 $errors[] = $field;
             }
         }
+
+        $fields['zip_code'] = preg_replace('/\D/', '', $fields['zip_code']);
 
         if (!empty($fields['zip_code']) && !preg_match('/^\d{8}$/', $fields['zip_code'])) {
             $errors[] = 'zip_code';
@@ -227,20 +254,15 @@ class Validator
         }
 
         if (!empty($errors)) {
-            $qtdErrors = count($errors);
-
-            if ($qtdErrors > 1) {
-                $message = "Os campos [" . implode(", ", $errors) . "] são obrigatórios ou inválidos";
-            } else {
-                $message = "O campo [" . implode(", ", $errors) . "] é obrigatório ou inválido";
-            }
+            $message = count($errors) > 1
+                ? "Os campos [" . implode(", ", $errors) . "] são obrigatórios ou inválidos"
+                : "O campo [" . implode(", ", $errors) . "] é obrigatório ou inválido";
 
             throw new Exception($message);
         }
 
         return $fields;
     }
-
 
     public static function validateLegalPerson(array $fields)
     {
@@ -265,7 +287,7 @@ class Validator
             throw new Exception($message);
         }
 
-        self::validateCNPJ($fields['cnpj']);
+        $fields['cnpj'] = self::validateCNPJ($fields['cnpj']);
 
         $corporate_name = self::validateName($fields['corporate_name'], 100);
 
@@ -279,7 +301,7 @@ class Validator
             throw new Exception("Nome fantasia deve ser válido.");
         }
 
-        $state_registration = self::validateName($fields['state_registration'], 20);
+        $state_registration = self::validateName($fields['state_registration'] ?? 'ISENTO', 20);
 
         if (!$state_registration) {
             throw new Exception("A inscrição estadual deve ser válida.");

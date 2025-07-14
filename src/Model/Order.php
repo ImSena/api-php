@@ -11,8 +11,6 @@ class Order extends BaseModel
 {
     public function create(array $data)
     {
-        $pdo = $this->getPdo();
-        $pdo->beginTransaction();
         try {
 
             $sql = "INSERT INTO orders (id_user, id_address";
@@ -25,7 +23,7 @@ class Order extends BaseModel
 
             $sql .= ") " . $values . ")";
 
-            $stmt = $pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(":id_user", $data['id_user'], PDO::PARAM_INT);
             $stmt->bindParam(":id_address", $data['id_address'], PDO::PARAM_INT);
 
@@ -34,30 +32,27 @@ class Order extends BaseModel
             }
 
             $stmt->execute();
-            $orderId = $pdo->lastInsertId();
+            $orderId = $this->pdo->lastInsertId();
 
             if (empty($orderId)) {
                 throw new Exception("Erro ao criar pedido");
             }
 
-            $orderItems = $this->createOrderItems($data['order_items'], $orderId, $pdo);
+            $orderItems = $this->createOrderItems($data['order_items'], $orderId, $this->pdo);
             if (!$orderItems) {
                 throw new Exception("Erro ao criar item do pedido");
             }
 
-            $orderStatus = $this->createOrderStatus($orderId, $pdo);
+            $orderStatus = $this->createOrderStatus($orderId, $this->pdo);
             if (!$orderStatus) {
                 throw new Exception("Erro ao criar status do pedido");
             }
 
-            $pdo->commit();
             return $orderId;
         } catch (PDOException $e) {
-            $pdo->rollBack();
-            return false;
+            throw new Exception("Erro PDO na criação do pedido: " . $e->getMessage());
         } catch (Exception $e) {
-            $pdo->rollBack();
-            return false;
+            throw new Exception("Erro geral na criação do pedido: " . $e->getMessage());
         }
     }
     private function createOrderItems(array $orderItems, int $orderId, $pdo)
@@ -86,13 +81,14 @@ class Order extends BaseModel
     }
     private function hasSufficientStock(array $orderItems, $pdo)
     {
-        $sql = "SELECT qtd_stock FROM product_variants WHERE id_product_variant = :id_product_variant";
+        $sql = "SELECT qtd_stock FROM product_variants WHERE id_product_variant = :id_product_variant FOR UPDATE";
         $stmt = $pdo->prepare($sql);
 
         foreach ($orderItems as $item) {
-            $stmt->bindParam(":id_product_variant", $item['id_product_variant'], PDO::PARAM_INT);
+            $stmt->bindValue(":id_product_variant", $item['id_product_variant'], PDO::PARAM_INT);
             $stmt->execute();
             $stock = $stmt->fetchColumn();
+
 
             if ($stock === false || $stock < $item['quantity']) {
                 return false;
@@ -102,12 +98,16 @@ class Order extends BaseModel
     }
     private function updateProductStock(array $orderItems, $pdo)
     {
-        $sql = "UPDATE product_variants SET qtd_stock = qtd_stock - :quantity WHERE id_product_variant = :id_product_variant";
+        $sql = "UPDATE product_variants
+        SET qtd_stock = qtd_stock - :quantity, updated_at = :updated_at 
+        WHERE id_product_variant = :id_product_variant
+        AND qtd_stock >= :quantity";
         $stmt = $pdo->prepare($sql);
 
         foreach ($orderItems as $item) {
             $stmt->bindParam(":quantity", $item['quantity'], PDO::PARAM_INT);
             $stmt->bindParam(":id_product_variant", $item['id_product_variant'], PDO::PARAM_INT);
+            $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
             $stmt->execute();
 
             if ($stmt->rowCount() === 0) {
@@ -129,12 +129,11 @@ class Order extends BaseModel
     }
     public function getAll(array $data)
     {
-        $pdo = $this->getPdo();
 
         if ($data['rule'] == 'user') {
-            return $this->getOrdersUser($data, $pdo);
+            return $this->getOrdersUser($data, $this->pdo);
         } else {
-            return $this->getOrders($data, $pdo);
+            return $this->getOrders($data, $this->pdo);
         }
     }
     private function getOrdersUser(array $permissions, PDO $pdo)
@@ -197,12 +196,11 @@ class Order extends BaseModel
     public function getTotalOrders($permissions)
     {
 
-        $pdo = $this->getPdo();
 
-        if ($permissions['rule'] = 'user') {
-            return $this->getTotalOrdersUser($permissions['id_user'], $pdo);
+        if ($permissions['rule'] === 'user') {
+            return $this->getTotalOrdersUser($permissions['id_user'], $this->pdo);
         } else {
-            return $this->getTotalOrdersAdmin($pdo);
+            return $this->getTotalOrdersAdmin($this->pdo);
         }
     }
     private function getTotalOrdersUser(int $id_user, PDO $pdo)
@@ -221,14 +219,12 @@ class Order extends BaseModel
         $sql = "SELECT COUNT(id_order) AS total 
                 FROM orders";
         $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(":id", $id_user, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetch();
     }
     public function getAllStatus(array $data)
     {
-        $pdo = $this->getPdo();
 
         $limit = 0;
         $sql = '';
@@ -270,7 +266,7 @@ class Order extends BaseModel
         $page = isset($data['params']['page']) ? (int) $data['params']['page'] : 1;
         $offset = ($page - 1) * $limit;
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->bindValue(":status", $data['params']['status'], PDO::PARAM_STR);
@@ -283,10 +279,8 @@ class Order extends BaseModel
 
         return $stmt->fetchAll();
     }
-
     public function getTotalStatus(array $data)
     {
-        $pdo = $this->getPdo();
 
         $limit = 0;
         $sql = '';
@@ -328,7 +322,7 @@ class Order extends BaseModel
         $page = isset($data['params']['page']) ? (int) $data['params']['page'] : 1;
         $offset = ($page - 1) * $limit;
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->bindValue(":status", $data['params']['status'], PDO::PARAM_STR);
@@ -344,9 +338,8 @@ class Order extends BaseModel
 
     public function getById(int $id)
     {
-        $pdo = $this->getPdo();
-        $sql = "SELECT * FROM ORDERS WHERE id_order = :id";
-        $stmt = $pdo->prepare($sql);
+        $sql = "SELECT * FROM orders WHERE id_order = :id";
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -354,11 +347,10 @@ class Order extends BaseModel
 
     public function getOrderIdProductItems(int $id)
     {
-        $pdo = $this->getPdo();
 
         $sql = "SELECT id_product_variant, quantity FROM order_item WHERE id_order = :id";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
 
@@ -367,11 +359,31 @@ class Order extends BaseModel
         return $stmt->fetchAll();
     }
 
+    public function getQtdStatus(string $status){
+        $sql = "SELECT COUNT(*) AS total FROM orders o 
+        INNER JOIN ( 
+            SELECT os1.id_order, os1.status FROM order_status os1 
+            INNER JOIN ( 
+                SELECT id_order, MAX(created_at) AS max_created_at FROM order_status GROUP BY id_order 
+            ) os2 ON os1.id_order = os2.id_order AND os1.created_at = os2.max_created_at 
+        ) latest_status ON o.id_order = latest_status.id_order 
+        WHERE latest_status.status = :status";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindValue(":status", $status, PDO::PARAM_STR);
+
+        if(!$stmt->execute()){
+            return false;
+        }
+
+        return $stmt->fetch();
+    }
+
     public function changeStatus(string $status, int $id_order)
     {
-        $pdo = $this->getPdo();
         $sql = "INSERT INTO order_status (id_order, status) VALUES (:id_order, :status)";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':id_order', $id_order, PDO::PARAM_INT);
         $stmt->bindParam(":status", $status, PDO::PARAM_STR);
         $stmt->execute();
@@ -380,11 +392,33 @@ class Order extends BaseModel
     }
 
     public function verifyStatus(int $id){
-        $pdo = $this->getPdo();
         $sql = "SELECT status FROM order_status WHERE id_order = :id ORDER BY id_order_status DESC LIMIT 1";
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    public function insertPayment(array $data)
+    {
+        $sql = "UPDATE orders SET payment_url = :payment_url, payment_expires_at = :payment_expires_at, updated_at = :updated_at WHERE id_order = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(":payment_url", $data['payment_url'], PDO::PARAM_STR);
+        $stmt->bindParam(":payment_expires_at", $data['payment_expires_at'], PDO::PARAM_STR);
+        $stmt->bindValue(":updated_at", $this->currentDatetime, PDO::PARAM_STR);
+        $stmt->bindParam(":id", $data['id'], PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function getLinkPayment(int $id)
+    {
+        $sql = "SELECT payment_url, payment_expires_at FROM orders WHERE id_order = :id LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(":id", $id, PDO::PARAM_INT);
+        $stmt->execute();
+        
         return $stmt->fetch();
     }
 }

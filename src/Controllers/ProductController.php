@@ -2,39 +2,25 @@
 
 namespace App\Controllers;
 
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
+use App\Controllers\Base\BaseController;
 use App\Service\ProductService;
-use PDO;
 
-class ProductController
+class ProductController extends BaseController
 {
-    private PDO $pdo;
-
-    public function __construct(){
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-    public function create(Request $request, Response $response)
+    public function create()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $productService = new ProductService($this->pdo);
         $productService = $productService->create($body);
 
         if (isset($productService['error'])) {
-            return $response::json([
-                'success' => false,
-                'message' => $productService['error'],
-            ], 400);
+            return $this->errorResponse($productService['error']);
         }
 
-        $response::json([
-            'success' => true,
-            'message' => $productService
-        ], 200);
+        return $this->successResponse($productService);
     }
-    public function getAll(Request $request, Response $response, $param)
+    public function getAll($param)
     {
         $params['page'] = isset($param[0]) ? intval($param[0]) : 1;
 
@@ -42,20 +28,17 @@ class ProductController
         $productService = $productService->getAll($params['page']);
 
         if (isset($productService['error'])) {
-            return $response::json([
-                'success' => false,
-                'message' => $productService['error'],
-            ], 400);
+            return $this->errorResponse($productService['error']);
         }
 
-        $response::json([
+        $this->response::json([
             'success' => true,
             'message' => $productService['message'],
             'content' => $productService['content'],
             'page' => $productService['page'],
         ], 200);
     }
-    public function getAllCategory(Request $request, Response $response, $param)
+    public function getAllCategory($param)
     {
         $params = [];
         $params['id_category'] = isset($param[0]) ? $param[0] : 1;
@@ -65,21 +48,17 @@ class ProductController
         $productService = $productService->getAllCategory($params);
 
         if (isset($productService['error'])) {
-            return $response::json([
-                'success' => false,
-                'message' => $productService['error'],
-            ], 400);
+            return $this->errorResponse($productService['error']);
         }
 
-        $response::json([
+        $this->response::json([
             'success' => true,
             'message' => $productService['message'],
             'content' => $productService['content'],
             'page' => $productService['page'],
         ], 200);
     }
-
-    public function getAllBy(Request $request, Response $response, $param)
+    public function getAllBy($param)
     {
         $params = [];
         $params['type_by'] = isset($param[0]) ? $param[0] : 'category';
@@ -89,21 +68,17 @@ class ProductController
         $productService = new ProductService($this->pdo);
         $productService = $productService->getAllBy($params);
 
-        if(isset($productService['error'])){
-            return $response::json([
-                'success' => false,
-                'message' => $productService['error']
-            ], 400);
+        if (isset($productService['error'])) {
+            return $this->errorResponse($productService['error']);
         }
-        $response::json([
+        $this->response::json([
             'success' => true,
             'message' => $productService['message'],
             'content' => $productService['content'],
             'page' => $productService['page'],
         ]);
     }
-
-    public function getById(Request $request, Response $response, $param)
+    public function getById($param)
     {
         $params = [];
         $params['id_product'] = isset($param[0]) ? (int) $param[0] : 1;
@@ -111,17 +86,78 @@ class ProductController
         $productService = new ProductService($this->pdo);
         $productService = $productService->getProductAndVariations($params);
 
-        if(isset($productService['error'])){
-            return $response::json([
-                'success' => false,
-                'message' => $productService['error']
-            ], 400);
+        if (isset($productService['error'])) {
+            return $this->errorResponse($productService['error']);
         }
 
-        $response::json([
-            'success' => true,
-            'message' => "Produto resgatado com sucesso.",
-            'content' => $productService,
-        ]);
+        return $this->successResponse("Produto resgatado com sucesso.", $productService);
     }
+
+
+    public function getRecents()
+    {
+        $productService = new ProductService($this->pdo);
+        $result = $productService->getRecents();
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse($result['message'], $result['content']);
+    }
+
+    public function getPopular()
+    {
+        $productService = new ProductService($this->pdo);
+        $result = $productService->getPopular();
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse($result['message'], $result['content']);
+    }
+    
+    public function search($param)
+    {
+        $search = $param[0];
+
+        $productService = new ProductService($this->pdo);
+        $result = $productService->searchProduct($search);
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse("Pesquisa realizada.", $result);
+    }
+    public function update($param)
+    {
+        $body = $this->request::body();
+        $id_product = (int) $param[0];
+        $body['id_product'] = $id_product;
+
+        $productService = new ProductService($this->pdo);
+        $result = $productService->editProduct($body);
+
+        if (isset($result['error'])) {
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse("Produto editado com sucesso.", [], 204);
+    }
+
+    public function delete($param)
+    {
+        $id_product = (int) $param[0];
+        $productService = new ProductService($this->pdo);
+        $result = $productService->delete($id_product);
+
+        if(isset($result['error'])){
+            return $this->errorResponse($result['error']);
+        }
+
+        return $this->successResponse("", [], 204);
+    }
+
 }

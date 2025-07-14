@@ -2,33 +2,42 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Media;
 use App\Model\Product;
 use App\Model\ProductCategory;
+use App\Service\Base\BaseService;
 use App\Utils\Pagination;
 use App\Utils\Validator;
 use Exception;
-use PDO;
-use PDOException;
 
-class ProductService
+require_once __DIR__ . "/../../config.php";
+
+class ProductService extends BaseService
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
     public function create(array $data)
     {
-        try {
+        return $this->execute(function () use ($data) {
             $Product = new Product($this->pdo);
             $fields = Validator::validate([
                 "id_category" => $data['id_category'] ?? '',
                 "products" => $data['products'] ?? '',
             ]);
+
+            $total = $Product->countProducts();
+
+            $total = intval($total['total']);
+
+            $plano = PLANO;
+
+            if($plano == "BASIC"){
+                if($total == 100){
+                    throw new Exception("Não é possível criar mais produtos, você já possui 100 produtos cadastrados");
+                }
+            }else{
+                if($total == 1000){
+                    throw new Exception("Não é possível criar mais produtos, você já possui 1000 produtos cadastrados");
+                }
+            }
 
             $Product = $Product->create($fields);
 
@@ -37,11 +46,7 @@ class ProductService
             }
 
             return "Produto cadastrado com sucesso";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     /**
@@ -50,7 +55,7 @@ class ProductService
 
     public function getAll($page)
     {
-        try {
+        return $this->execute(function () use ($page) {
             $Product = new Product($this->pdo);
             $Products = $Product->getAll($page);
             $Media = new Media($this->pdo);
@@ -64,7 +69,7 @@ class ProductService
 
             $totalProducts = $Product->getTotalProducts();
 
-            if(!$totalProducts){
+            if (!$totalProducts) {
                 throw new Exception("Não foi possível encontrar o total de produtos");
             }
 
@@ -95,6 +100,7 @@ class ProductService
                     'price' => $product['price'],
                     'qtd_stock' => $product['qtd_stock'],
                     'discount' => $product['discount'],
+                    'price_discount' => '0.00',
                     'image_path' => $product['image_path'] ?? null,
                     "is_default" => $product['is_default'] ?? null
                 ];
@@ -112,32 +118,37 @@ class ProductService
             $formattedResult = array_values($result);
 
             return ['message' => "Produtos Resgatados", 'content' => $formattedResult, 'page' => $pages];
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
-    public function getAllCategory(array $params)
+
+    public function getRecents()
     {
-        try {
+        return $this->execute(function () {
             $Product = new Product($this->pdo);
+            $Products = $Product->getAllRecents();
             $Media = new Media($this->pdo);
-            $Products = $Product->getAllCategory($params);
             $MediaService = new MediaService($this->pdo);
+            $ProductCategories = new ProductCategory($this->pdo);
+            $Category = new CategoryService($this->pdo);
 
             if (!$Products) {
-                throw new Exception("Não há produtos cadastrados nessa categoria");
+                throw new Exception("Não foi encontrado nenhum produto.");
             }
 
             $result = [];
             foreach ($Products as $product) {
                 $id_product = $product['id_product'];
+                $id_category = $ProductCategories->getCategory($id_product);
+                $id_category = $id_category['id_category'];
+                $name_category = $Category->getCategory($id_category);
+                $name_category = $name_category['name'];
+
                 if (!isset($result[$id_product])) {
                     $result[$id_product] = [
                         'id_product' => $product['id_product'],
                         'brand' => $product['brand_name'],
                         'name' => $product['name'],
+                        'category' => $name_category,
                         'variations' => []
                     ];
                 }
@@ -151,6 +162,112 @@ class ProductService
                     'price' => $product['price'],
                     'qtd_stock' => $product['qtd_stock'],
                     'discount' => $product['discount'],
+                    'price_discount' => '0.00',
+                    'image_path' => $product['image_path'] ?? null,
+                    "is_default" => $product['is_default'] ?? null
+                ];
+            }
+
+            $formattedResult = array_values($result);
+
+            return ['message' => "Produtos Resgatados", 'content' => $formattedResult];
+        });
+    }
+
+    public function getPopular()
+    {
+        return $this->execute(function () {
+            $Product = new Product($this->pdo);
+            $Products = $Product->getAllPopular();
+            $Media = new Media($this->pdo);
+            $MediaService = new MediaService($this->pdo);
+            $ProductCategories = new ProductCategory($this->pdo);
+            $Category = new CategoryService($this->pdo);
+
+            if (!$Products) {
+                throw new Exception("Não foi encontrado nenhum produto.");
+            }
+
+            $result = [];
+            foreach ($Products as $product) {
+                $id_product = $product['id_product'];
+                $id_category = $ProductCategories->getCategory($id_product);
+                $id_category = $id_category['id_category'];
+                $name_category = $Category->getCategory($id_category);
+                $name_category = $name_category['name'];
+
+                if (!isset($result[$id_product])) {
+                    $result[$id_product] = [
+                        'id_product' => $product['id_product'],
+                        'brand' => $product['brand_name'],
+                        'name' => $product['name'],
+                        'category' => $name_category,
+                        'variations' => []
+                    ];
+                }
+
+                $path = $Media->getPathToFile($product);
+                $extension = $MediaService->getExtension($product['file_type']);
+                $product['image_path'] = $path . '.' . $extension;
+                $result[$id_product]['variations'][] = [
+                    'id_product_variant' => $product['id_product_variant'],
+                    'sku' => $product['sku'],
+                    'price' => $product['price'],
+                    'qtd_stock' => $product['qtd_stock'],
+                    'discount' => $product['discount'],
+                    'price_discount' => '0.00',
+                    'image_path' => $product['image_path'] ?? null,
+                    "is_default" => $product['is_default'] ?? null
+                ];
+            }
+
+            $formattedResult = array_values($result);
+
+            return ['message' => "Produtos Resgatados", 'content' => $formattedResult];
+        });
+    }
+
+    public function getAllCategory(array $params)
+    {
+        return $this->execute(function () use ($params) {
+            $Product = new Product($this->pdo);
+            $Media = new Media($this->pdo);
+            $Products = $Product->getAllCategory($params);
+            $MediaService = new MediaService($this->pdo);
+            $ProductCategories = new ProductCategory($this->pdo);
+            $Category = new CategoryService($this->pdo);
+
+            if (!$Products) {
+                throw new Exception("Não há produtos cadastrados nessa categoria");
+            }
+
+            $result = [];
+            foreach ($Products as $product) {
+                $id_product = $product['id_product'];
+                $id_category = $ProductCategories->getCategory($id_product);
+                $id_category = $id_category['id_category'];
+                $name_category = $Category->getCategory($id_category);
+                $name_category = $name_category['name'];
+                if (!isset($result[$id_product])) {
+                    $result[$id_product] = [
+                        'id_product' => $product['id_product'],
+                        'brand' => $product['brand_name'],
+                        'name' => $product['name'],
+                        "categoria" => $name_category,
+                        'variations' => []
+                    ];
+                }
+
+                $path = $Media->getPathToFile($product);
+                $extension = $MediaService->getExtension($product['file_type']);
+                $product['image_path'] = $path . '.' . $extension;
+                $result[$id_product]['variations'][] = [
+                    'id_product_variant' => $product['id_product_variant'],
+                    'sku' => $product['sku'],
+                    'price' => $product['price'],
+                    'qtd_stock' => $product['qtd_stock'],
+                    'discount' => $product['discount'],
+                    'price_discount' => '0.00',
                     'image_path' => $product['image_path'] ?? null,
                     "is_default" => $product['is_default'] ?? null
                 ];
@@ -158,7 +275,7 @@ class ProductService
 
             $total = $Product->getTotalByCategory($params['id_category']);
 
-            if(!$total){
+            if (!$total) {
                 throw new Exception("Não foi possível pegar o total de produtos.");
             }
 
@@ -174,22 +291,20 @@ class ProductService
             $formattedResult = array_values($result);
 
             return ['message' => "Produtos Resgatados", 'content' => $formattedResult, 'page' => $pages];
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function getAllBrand(array $params)
     {
-        try{
+        return $this->execute(function () use ($params) {
             $Product = new Product($this->pdo);
             $Media = new Media($this->pdo);
             $Products = $Product->getAllBrand($params);
             $MediaService = new MediaService($this->pdo);
+            $ProductCategories = new ProductCategory($this->pdo);
+            $Category = new CategoryService($this->pdo);
 
-            if(!$Products){
+            if (!$Products) {
                 throw new Exception("Não há produtos cadastrados nessa marca");
             }
 
@@ -197,11 +312,16 @@ class ProductService
 
             foreach ($Products as $product) {
                 $id_product = $product['id_product'];
+                $id_category = $ProductCategories->getCategory($id_product);
+                $id_category = $id_category['id_category'];
+                $name_category = $Category->getCategory($id_category);
+                $name_category = $name_category['name'];
                 if (!isset($result[$id_product])) {
                     $result[$id_product] = [
                         'id_product' => $product['id_product'],
                         'brand' => $product['brand_name'],
                         'name' => $product['name'],
+                        "categoria" => $name_category,
                         'variations' => []
                     ];
                 }
@@ -215,6 +335,7 @@ class ProductService
                     'price' => $product['price'],
                     'qtd_stock' => $product['qtd_stock'],
                     'discount' => $product['discount'],
+                    'price_discount' => '0.00',
                     'image_path' => $product['image_path'] ?? null,
                     "is_default" => $product['is_default'] ?? null
                 ];
@@ -224,7 +345,7 @@ class ProductService
 
             $total = $Product->getTotalByBrand($params['id_brand']);
 
-            if(!$total){
+            if (!$total) {
                 throw new Exception("Não foi possível resgatar total de produtos por marca");
             }
 
@@ -242,16 +363,12 @@ class ProductService
                 'content' => $formattedResult,
                 "page" => $pages
             ];
-        }catch(PDOException $e){
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        }catch(Exception $e){
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function getProduct($id)
     {
-        try {
+        $this->execute(function () use ($id) {
             $Product = new Product($this->pdo);
             $Media = new Media($this->pdo);
             $MediaService = new MediaService($this->pdo);
@@ -263,19 +380,15 @@ class ProductService
 
             $path = $Media->getPathToFile($product);
             $extension = $MediaService->getExtension($product['file_type']);
-            $product['image_path'] = $path . '.' . $extension; 
-                
+            $product['image_path'] = $path . '.' . $extension;
+
             return ['message' => "Produto Resgatado", 'content' => $product];
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function getAllBy(array $params)
     {
-        try{
+        return $this->execute(function () use ($params) {
             $params['type_by'] = strtoupper($params['type_by']);
 
             $types = [
@@ -283,7 +396,7 @@ class ProductService
                 "BRAND"
             ];
 
-            if(!in_array($params['type_by'], $types)){
+            if (!in_array($params['type_by'], $types)) {
                 throw new Exception("Não foi encontrado um tipo válido");
             }
 
@@ -291,32 +404,27 @@ class ProductService
 
             $product = [];
 
-            switch($params['type_by']){
+            switch ($params['type_by']) {
                 case 'CATEGORY':
                     $paramsToBy['id_category'] = $params['id_by'];
                     $paramsToBy['page'] = $params['page'];
                     $product = $this->getAllCategory($paramsToBy);
-                break;
+                    break;
                 case "BRAND":
                     $paramsToBy['id_brand'] = $params['id_by'];
                     $paramsToBy['page'] = $params['page'];
 
                     $product = $this->getAllBrand($paramsToBy);
-                break;
+                    break;
             }
 
             return $product;
-
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function getProductAndVariations(array $params)
     {
-        try{
+        return $this->execute(function () use ($params) {
             $Product = new Product($this->pdo);
             $Media = new Media($this->pdo);
             $MediaService = new MediaService($this->pdo);
@@ -324,27 +432,159 @@ class ProductService
             $ProductVariation = $Product->getVariations($params['id_product']);
             foreach ($ProductVariation as $prod) {
                 $prod['pictures'] = $Product->getPicturesProduct($prod['id_product_variant']);
-                foreach($prod['pictures'] as &$picture){
+                $prod['price_discount'] = '0.00';
+                foreach ($prod['pictures'] as &$picture) {
                     $path = $Media->getPathToFile($picture);
                     $extension = $MediaService->getExtension($picture['file_type']);
-                    $picture['image_path'] = $path.'.'. $extension;
-                    unset($picture['id_media']);
-                    unset($picture['file_type']);
+                    $picture['image_path'] = $path . '.' . $extension;
                 }
                 $prod['value_variant'] = $Product->getValueVariant($prod['id_product_variant']);
                 $ProductResult['variations'][] = $prod;
             }
 
-            if(!$ProductResult){
+            if (!$ProductResult) {
                 throw new Exception("Não foi possível encontrar o produto");
             }
 
             return $ProductResult;
+        });
+    }
 
-        }catch(PDOException $e){
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        }catch(Exception $e){
-            return ['error' => $e->getMessage()];
-        }
+    public function insertQuantity(array $data)
+    {
+        return $this->execute(function () use ($data) {
+            $fields = Validator::validate([
+                "id" => $data['id'],
+                "quantity" => $data['quantity']
+            ]);
+
+            $Product = new Product($this->pdo);
+
+            if (!$Product->insertQuantity($fields)) {
+                throw new Exception("Não foi possível atualizar pedido");
+            }
+
+            return "Quantidade inserida com sucesso!";
+        });
+    }
+
+    public function getProductQuote(int $id_product)
+    {
+        return $this->execute(function () use ($id_product) {
+            $Product = new Product($this->pdo);
+
+            $result = $Product->getProductQuote($id_product);
+
+            if (!$result) {
+                throw new Exception("Não foi possível encontrar produto");
+            }
+
+            return $result;
+        });
+    }
+
+    public function editProduct(array $data)
+    {
+        return $this->execute(function () use ($data) {
+            $Product = new Product($this->pdo);
+
+            $fields = Validator::validate([
+                "id_category" => $data['id_category'] ?? '',
+            ]);
+
+            $productData = Validator::validate([
+                "name" => $data['products']['name'] ?? '',
+                "description" => $data['products']['description'] ?? '',
+                "id_brand" => $data['products']['id_brand'] ?? '',
+                "weight" => $data['products']['weight'] ?? '',
+                "length" => $data['products']['length'] ?? '',
+                "width" => $data['products']['width'] ?? '',
+                "height" => $data['products']['height'] ?? '',
+            ]);
+
+            $productData['variations'] = [];
+
+            foreach ($data['products']['variations'] as $variation) {
+                $validatedVariation = Validator::validate([
+                    "id_product_variant" => $variation['id_product_variant'] ?? '',
+                    "sku" => $variation['sku'] ?? '',
+                    "price" => $variation['price'] ?? '',
+                    "qtd_stock" => $variation['qtd_stock'] ?? '',
+                    "is_default" => $variation['is_default'] ?? '',
+                    "discount" => $variation['discount'] ?? '',
+                ]);
+
+                $validatedVariation['pictures'] = [];
+
+                foreach ($variation['pictures'] ?? [] as $picture) {
+                    $validatedPicture = Validator::validate([
+                        "id_media" => $picture['id_media'] ?? '',
+                        "position" => $picture['position'] ?? '',
+                        "is_main" => $picture['is_main'] ?? '',
+                    ]);
+
+                    $validatedVariation['pictures'][] = $validatedPicture;
+                }
+
+                $productData['variations'][] = $validatedVariation;
+            }
+
+            $fields['products'] = $productData;
+            $fields['id_product'] = $data['id_product'];
+
+            $product = $Product->editProduct($fields);
+
+            if (!$product) {
+                throw new Exception("Não foi possível editar o produto.");
+            }
+
+            $productVariation = $Product->editVariations($fields);
+
+            if (!$productVariation) {
+                throw new Exception("Não foi possível editar variação");
+            }
+
+            $categoryProduct = $Product->editCategoryProduct($fields);
+
+            if (!$categoryProduct) {
+                throw new Exception("Não foi possível atualizar categoria do produto");
+            }
+
+            $picturesProduct = $Product->editPicturesProduct($fields);
+
+            if (!$picturesProduct) {
+                throw new Exception("Não foi possível atualizar imagens");
+            }
+
+            return "Produto editado com sucesso.";
+        }, true);
+    }
+
+    public function searchProduct(string $search)
+    {
+        return $this->execute(function () use ($search) {
+            $Product = new Product($this->pdo);
+
+            $search = $search ? $search : 'moeda';
+
+            $productResult =  $Product->searchByName($search);
+
+            return $productResult;
+        });
+    }
+
+    public function delete(int $id_product){
+        return $this->execute(function() use ($id_product){
+            $Product = new Product($this->pdo);
+
+            $resultDel = $Product->deleteProduct($id_product);
+
+            if(!$resultDel){
+                throw new Exception("Não foi possível deletar o produto");
+            }
+
+            return $resultDel;
+        });
+        
     }
 }

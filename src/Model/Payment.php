@@ -9,8 +9,6 @@ class Payment extends BaseModel
 {    
     public function register(array $data)
     {
-        $pdo = $this->getPdo();
-
         $sql = "INSERT INTO payments (
                         id_order, 
                         id_transaction, 
@@ -32,7 +30,7 @@ class Payment extends BaseModel
                     :send_email
                 )";
             
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
         $stmt->bindParam(":id_order", $data['id_order'], PDO::PARAM_INT);
         $stmt->bindParam(":id_transaction", $data['id_transaction'], PDO::PARAM_STR);
@@ -46,5 +44,23 @@ class Payment extends BaseModel
         $stmt->execute();
 
         return $stmt->rowCount() > 0;
+    }
+
+    public function getReport()
+    {
+        $sql = "SELECT 
+                SUM(CASE WHEN status = 'PAID' THEN amount ELSE 0 END) AS total,
+                DATE_FORMAT(payment_date, '%Y-%m') AS month,
+                SUM(CASE WHEN status = 'PAID' THEN amount ELSE 0 END) AS monthly_total
+            FROM payments
+            WHERE status = 'PAID'
+            GROUP BY month
+            ORDER BY month ASC";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
     }
 }

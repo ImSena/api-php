@@ -2,30 +2,21 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Media;
+use App\Service\Base\BaseService;
 use App\Utils\Validator;
 use App\Utils\ValidatorFiles;
 use Exception;
-use PDO;
-use PDOException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
 require_once("./config.php");
 
-class MediaService
+class MediaService extends BaseService
 {
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
-
     public function getAllInFolder(array $data): array | string
     {
-        try {
-
+        return $this->execute(function () use ($data) {
             $Media = new Media($this->pdo);
 
             $fields = Validator::validate([
@@ -49,24 +40,32 @@ class MediaService
             }
 
             return $newFolder;
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
+
+    private function sanitizeFolderName(string $name): string
+    {
+        $name = strtolower($name);
+        $name = str_replace(' ', '_', $name);
+        if (!preg_match('/[a-z0-9_-]/i', $name)) {
+            throw new Exception("O nome da pasta deve conter ao menos um caractere válido (letra, número, underline ou hífen).");
+        }
+        return $name;
+    }
+
     public function createFolder(array $data): array | string
     {
-        $Media = new Media($this->pdo);
+        return $this->execute(function () use ($data) {
+            $Media = new Media($this->pdo);
 
-        try {
-            $this->pdo->beginTransaction();
             $path  = PATH . $Media->getFullFolderPath($data['parent_id']) . '/' . $data['folder_name'];
 
             $fields = Validator::validate([
-                "folder_name" => strtolower($data['folder_name']) ?? '',
+                "folder_name" => $data['folder_name'] ?? '',
                 "parent_id" => $data['parent_id'] ?? '',
             ]);
+
+            $fields['folder_name'] = $this->sanitizeFolderName($fields['folder_name']);
 
             $folderId = $Media->createFolder($fields, $this->pdo);
 
@@ -78,23 +77,13 @@ class MediaService
                 throw new Exception("Erro ao criar a pasta no servidor.");
             }
 
-            $this->pdo->commit();
-
             return "Pasta criada com sucesso!";
-        } catch (PDOException $e) {
-            $this->pdo->rollBack();
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            $this->pdo->rollBack();
-            return ['error' => $e->getMessage()];
-        }
+        }, true);
     }
     public function editFolder(array $data): array | string
     {
-        $Media = new Media($this->pdo);
-        try {
-
-            $this->pdo->beginTransaction();
+        return $this->execute(function () use ($data) {
+            $Media = new Media($this->pdo);
 
             $fields = Validator::validate([
                 "id_folder" => $data['id_folder'] ?? '',
@@ -120,23 +109,14 @@ class MediaService
                 throw new Exception("Erro ao renomear a pasta no servidor.");
             }
 
-            $this->pdo->commit();
             return "Pasta editada com sucesso!";
-        } catch (PDOException $e) {
-            $this->pdo->rollBack();
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            $this->pdo->rollBack();
-            return ['error' => $e->getMessage()];
-        }
+        }, true);
     }
     //terminar lógica para mudar id dos arquivos também
     public function moveFolder(array $data): array | string
     {
-        $Media = new Media($this->pdo);
-
-        try {
-            $this->pdo->beginTransaction();
+        return $this->execute(function () use ($data) {
+            $Media = new Media($this->pdo);
 
             $fields = Validator::validate([
                 "id_folder" => $data['id_folder'] ?? '',
@@ -166,15 +146,8 @@ class MediaService
 
             $this->moveAll($oldPath, $newPath);
 
-            $this->pdo->commit();
             return "Pasta movida com sucesso!";
-        } catch (PDOException $e) {
-            $this->pdo->rollBack();
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            $this->pdo->rollBack();
-            return ['error' => $e->getMessage()];
-        }
+        }, true);
     }
     private function moveAll(string $source, string $destination): void
     {
@@ -200,7 +173,7 @@ class MediaService
     }
     public function moveFolderToTrash(array $data): array | string
     {
-        try {
+        return $this->execute(function () use ($data) {
             $Media = new Media($this->pdo);
             $fields = Validator::validate([
                 "id_folder" => $data['id_folder'] ?? '',
@@ -219,16 +192,11 @@ class MediaService
             }
 
             return "Pasta movida para a lixeira com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
     public function restoreFolder(array $data): array | string
     {
-        try {
-
+        return $this->execute(function () use ($data) {
             $Media = new Media($this->pdo);
 
             $fields = Validator::validate([
@@ -248,18 +216,12 @@ class MediaService
             }
 
             return "Pasta restaurada com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
     public function deleteFolder(array $data): array | string
     {
-        $Media = new Media($this->pdo);
-
-        try {
-            $this->pdo->beginTransaction();
+        return $this->execute(function () use ($data) {
+            $Media = new Media($this->pdo);
 
             $fields = Validator::validate([
                 "id_folder" => $data['id_folder'] ?? '',
@@ -299,24 +261,14 @@ class MediaService
                 throw new Exception("Erro ao remover a pasta no servidor.");
             }
 
-            $this->pdo->commit();
-
             return "Pasta deletada com sucesso!";
-        } catch (PDOException $e) {
-            $this->pdo->rollback();
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            $this->pdo->rollback();
-            return ['error' => $e->getMessage()];
-        }
+        }, true);
     }
     // Files
     public function uploadFile(array $data, array $files): array | string
     {
-        $Media = new Media($this->pdo);
-        try {
-            $this->pdo->beginTransaction();
-
+        return $this->execute(function () use ($data, $files) {
+            $Media = new Media($this->pdo);
             $fields = Validator::validate([
                 "id_folder" => $data['id_folder'] ?? 1,
             ]);
@@ -369,15 +321,8 @@ class MediaService
                 }
             }
 
-            $this->pdo->commit();
             return "Arquivo criado com sucesso!";
-        } catch (PDOException $e) {
-            $this->pdo->rollBack();
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            $this->pdo->rollBack();
-            return ['error' => $e->getMessage()];
-        }
+        }, true);
     }
 
     private function generateUniqueFilename(string $directory, string $filename, array $existingFiles, string $extension): string
@@ -422,7 +367,7 @@ class MediaService
     }
     public function editFile(array $data): array | string
     {
-        try {
+        return $this->execute(function () use ($data) {
             $Media = new Media($this->pdo);
 
             $fields = Validator::validate([
@@ -461,11 +406,7 @@ class MediaService
             }
 
             return "Arquivo editado com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
     public function getExtension($file_type): string
     {
@@ -503,11 +444,8 @@ class MediaService
     }
     public function moveFile(array $data): array | string
     {
-        $Media = new Media($this->pdo);
-        try {
-
-            $this->pdo->beginTransaction();
-
+        return $this->execute(function () use ($data) {
+            $Media = new Media($this->pdo);
             $fields = Validator::validate([
                 "id_folder" => $data['id_folder'] ?? '',
                 "id_media" => $data['id_media'] ?? '',
@@ -533,20 +471,12 @@ class MediaService
                 throw new Exception("Erro ao mover o arquivo no servidor.");
             }
 
-            $this->pdo->commit();
             return "Arquivo movido com sucesso!";
-        } catch (PDOException $e) {
-            $this->pdo->rollBack();
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            $this->pdo->rollBack();
-            return ['error' => $e->getMessage()];
-        }
+        }, true);
     }
     public function moveFileToTrash(array $data): array | string
     {
-        try {
-
+        return $this->execute(function () use ($data) {
             $Media = new Media($this->pdo);
 
             $fields = Validator::validate([
@@ -560,16 +490,11 @@ class MediaService
             }
 
             return "Arquivo movido para a lixeira com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
     public function restoreFile(array $data): array | string
     {
-        try {
-
+        return $this->execute(function () use ($data) {
             $Media = new Media($this->pdo);
 
             $fields = Validator::validate([
@@ -583,18 +508,12 @@ class MediaService
             }
 
             return "Arquivo restaurado com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
     public function deleteFile(array $data): array | string
     {
-        $Media = new Media($this->pdo);
-
-        try {
-            $this->pdo->beginTransaction();
+        return $this->execute(function () use ($data) {
+            $Media = new Media($this->pdo);
 
             $fields = Validator::validate([
                 "id_media" => $data['id_media'] ?? '',
@@ -624,15 +543,7 @@ class MediaService
                 throw new Exception("Erro ao deletar o arquivo no servidor.");
             }
 
-            $this->pdo->commit();
-
             return "Arquivo deletado com sucesso!";
-        } catch (PDOException $e) {
-            $this->pdo->rollBack();
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            $this->pdo->rollBack();
-            return ['error' => $e->getMessage()];
-        }
+        }, true);
     }
 }

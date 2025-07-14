@@ -2,26 +2,180 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
-use App\Service\Stripe\StoreService;
+use App\Service\Base\BaseService;
+use App\Service\StoreService;
 use Exception;
-use PDO;
-use PDOException;
 use PHPMailer\PHPMailer\PHPMailer;
 
 require_once __DIR__ . '/../../config.php';
 
-class NotificationsService
+class NotificationsService extends BaseService
 {
-    private PDO $pdo;
+    public function notifyOrderCreated(array $orderData)
+    {
+        return $this->execute(function () use ($orderData) {
+            $emailStore = new EmailStoreService($this->pdo);
+            $emailAdmin = $emailStore->getEmailDefault();
 
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
+            if (isset($emailAdmin['error'])) {
+                throw new Exception("Não foi possível resgatar e-mail do lojista");
+            }
+
+            $emailAdmin = $emailAdmin['email'];
+
+            $send = $this->getNotifier()->sendOrderCreated($orderData, $orderData['email']);
+
+            if (!$send) {
+                throw new Exception("Não foi possível enviar e-mail para o usuário: " . $orderData['email']);
+            }
+
+            $send = $this->getNotifier()->sendOrderCreated($orderData, $emailAdmin, "ADMIN");
+
+            if (!$send) {
+                throw new Exception("Não foi possível enviar e-mail para o lojista");
+            }
+
+            return true;
+        });
+    }
+
+    public function notifyOrderPaySuccess(array $orderData)
+    {
+        return $this->execute(function () use ($orderData) {
+            $emailStore = new EmailStoreService($this->pdo);
+            $emailAdmin = $emailStore->getEmailDefault();
+
+            if (isset($emailAdmin['error'])) {
+                throw new Exception("Não foi possível resgatar o e-mail do lojista");
+            }
+
+            $emailAdmin = $emailAdmin['email'];
+
+            $send = $this->getNotifier()->sendPaymentConfirmed($orderData, $orderData['email']);
+
+            if (!$send) {
+                throw new Exception("Não foi possivel enviar e-mail para o usuário: " . $orderData['email']);
+            }
+
+            $send = $this->getNotifier()->sendPaymentConfirmed($orderData, $emailAdmin, "ADMIN");
+
+            if (!$send) {
+                throw new Exception("Não foi possível enviar o e-mail para o cliente");
+            }
+
+            return true;
+        });
+    }
+    public function notifyOrderPayFailed(array $orderData)
+    {
+        return $this->execute(function () use ($orderData) {
+            $emailStore = new EmailStoreService($this->pdo);
+            $emailAdmin = $emailStore->getEmailDefault();
+
+            if (isset($emailAdmin['error'])) {
+                throw new Exception("Não foi possível resgatar o e-mail do lojista");
+            }
+
+            $emailAdmin = $emailAdmin['email'];
+
+            $send = $this->getNotifier()->sendPaymentDenied($orderData, $orderData['email']);
+
+            if (!$send) {
+                throw new Exception("Não foi possivel enviar e-mail para o usuário: " . $orderData['email']);
+            }
+
+            $send = $this->getNotifier()->sendPaymentDenied($orderData, $emailAdmin, "ADMIN");
+
+            if (!$send) {
+                throw new Exception("Não foi possível enviar o e-mail para o cliente");
+            }
+
+            return true;
+        });
+    }
+
+    public function notifyOrderShipped(array $orderData, ?array $files = null)
+    {
+        return $this->execute(function () use ($orderData, $files) {
+            $emailStore = new EmailStoreService($this->pdo);
+            $emailAdmin = $emailStore->getEmailDefault();
+
+            if (isset($emailAdmin['error'])) {
+                throw new Exception("Não foi possível resgatar o e-mail do lojista");
+            }
+
+            $emailAdmin = $emailAdmin['email'];
+
+            $send = $this->getNotifier()->sendOrderShipped($orderData, $orderData['email'], "USER", $files);
+
+            if (!$send) {
+                throw new Exception("Não foi possivel enviar e-mail para o usuário: " . $orderData['email']);
+            }
+
+            $send = $this->getNotifier()->sendOrderShipped($orderData, $emailAdmin, "ADMIN", $files);
+
+            if (!$send) {
+                throw new Exception("Não foi possível enviar o e-mail para o cliente");
+            }
+
+            return true;
+        });
+    }
+
+    public function notifyOrderDelivered(array $orderData, ?array $files = null)
+    {
+        return $this->execute(function () use ($orderData, $files) {
+            $emailStore = new EmailStoreService($this->pdo);
+            $emailAdmin = $emailStore->getEmailDefault();
+
+            if (isset($emailAdmin['error'])) {
+                throw new Exception("Não foi possível resgatar o e-mail do lojista");
+            }
+
+            $emailAdmin = $emailAdmin['email'];
+
+            $send = $this->getNotifier()->sendOrderDeliverd($orderData, $orderData['email'], "USER", $files);
+
+            if (!$send) {
+                throw new Exception("Não foi possivel enviar e-mail para o usuário: " . $orderData['email']);
+            }
+
+            $send = $this->getNotifier()->sendOrderDeliverd($orderData, $emailAdmin, "ADMIN", $files);
+
+            if (!$send) {
+                throw new Exception("Não foi possível enviar o e-mail para o cliente");
+            }
+
+            return true;
+        });
+    }
+
+    public function sendNotificationStore($data)
+    {
+        return $this->execute(function() use ($data){
+            $emailStore = new EmailStoreService($this->pdo);
+            $emailAdmin = $emailStore->getEmailDefault();
+
+            if(isset($emailAdmin['error'])){
+                throw new Exception("Não foi possível resgatar o e-mail do lojista");
+            }
+
+            $emailAdmin = $emailAdmin['email'];
+
+            $send = $this->getNotifier()->sendStore($data, $emailAdmin);
+
+            if(!$send){
+                throw new Exception("Não foi possível enviar email de contato");
+            }
+
+            return true;
+
+        });
     }
 
     public function sendNotificationsClient(string $subject, string $email)
     {
-        try {
+        return $this->execute(function () use ($subject, $email) {
             $subjects = [
                 'PAYMENT_SUCCESS',
                 'PAYMENT_CANCELED',
@@ -56,15 +210,7 @@ class NotificationsService
             $mail->Body = $contentEmail['html'];
 
             return $mail->Send();
-        } catch (Exception $e) {
-            return [
-                'error' => $e->getMessage()
-            ];
-        } catch (PDOException $e) {
-            return [
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        }
+        });
     }
 
     private function getContentEmail($subject)
@@ -81,13 +227,6 @@ class NotificationsService
                 $title = "Ops, algo deu errado!";
                 $message = "Não conseguimos processar seu pagamento. Verifique seus dados ou tente novamente mais tarde.";
                 break;
-
-            case "SUBSCRIPTION_EXPIRED":
-                $subject_email = "Sua assinatura expirou";
-                $title = "Sua assinatura chegou ao fim";
-                $message = "Sua assinatura expirou. Para continuar aproveitando nossos serviços, renove agora mesmo.";
-                break;
-
             case "NEW_ORDER":
                 $subject_email = "Novo pedido recebido";
                 $title = "Você tem um novo pedido!";
@@ -134,8 +273,7 @@ class NotificationsService
 
     public function sendNotificationsAdmin(string $subject, array $info)
     {
-        try {
-
+        return $this->execute(function () use ($subject, $info) {
             $Admin = new AdminService($this->pdo);
             $Store = new StoreService($this->pdo);
 
@@ -162,7 +300,7 @@ class NotificationsService
             $mail->Username = USERNAME_MAIL;
             $mail->Password = PASSWORD_MAIL;
             $mail->CharSet = 'UTF-8';
-            $mail->From     = "no-reply@".$StoreResult['domain'];
+            $mail->From     = "no-reply@" . $StoreResult['domain'];
             $mail->FromName = "Escala Web";
             $mail->addAddress($AdminResult['email']);
             $mail->WordWrap = 50;
@@ -175,15 +313,7 @@ class NotificationsService
             $mail->Body = $contentEmail['html'];
 
             return $mail->Send();
-        } catch (Exception $e) {
-            return [
-                'error' => $e->getMessage()
-            ];
-        } catch (PDOException $e) {
-            return [
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        }
+        });
     }
 
     private function getContentEmailAdmin(string $subject, array $info)
@@ -200,13 +330,6 @@ class NotificationsService
                 $title = "Ops, algo deu errado!";
                 $message = "Não conseguimos processar seu pagamento. Verifique seus dados ou tente novamente mais tarde.";
                 break;
-
-            case "SUBSCRIPTION_EXPIRED":
-                $subject_email = "Sua assinatura expirou";
-                $title = "Sua assinatura chegou ao fim";
-                $message = "Sua assinatura expirou. Para continuar aproveitando nossos serviços, renove agora mesmo.";
-                break;
-
             case "NEW_ORDER":
                 $subject_email = "Novo pedido recebido";
                 $title = "Você tem um novo pedido!";

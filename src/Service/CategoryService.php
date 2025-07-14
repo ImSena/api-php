@@ -2,25 +2,18 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Model\Category;
+use App\Service\Base\BaseService;
 use App\Utils\Validator;
 use Exception;
-use PDO;
-use PDOException;
 
-class CategoryService
+class CategoryService extends BaseService
 {
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
 
     public function createCategory(array $data)
     {
-        try {
+
+        return $this->execute(function () use ($data) {
             $Category = new Category($this->pdo);
 
             $fields = Validator::validate([
@@ -48,34 +41,25 @@ class CategoryService
             }
 
             return "Categoria Cadastrada com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function getAllParent()
     {
-        try {
+        return $this->execute(function () {
             $Category = new Category($this->pdo);
             $category = $Category->getAllParent();
 
             return $category;
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
-    public function getAllCategories(): array
+    public function getAllCategories(string $rule): array
     {
-        try {
-
+        return $this->execute(function () use ($rule) {
             $Category = new Category($this->pdo);
-            $categoryParent = $Category->getAllParent();
-            $category = $Category->getAllCategories();
+            $categoryParent = $Category->getAllCategoriesHasProducts($rule == "COMMON", true);
+            $category = $Category->getAllCategoriesHasProducts($rule == "COMMON", false);
 
             $category = array_map(function ($cat) use ($categoryParent) {
                 $cat['parent_category'] = null;
@@ -103,16 +87,12 @@ class CategoryService
             }
 
             return $category;
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function update(array $data)
     {
-        try {
+        return $this->execute(function () use ($data) {
             $Category = new Category($this->pdo);
 
             $fields = Validator::validate([
@@ -138,16 +118,12 @@ class CategoryService
             $category = $Category->update($fields);
 
             return $category;
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function delete(array $data)
     {
-        try {
+        return $this->execute(function () use ($data) {
             $Category = new Category($this->pdo);
             $fields = Validator::validate([
                 "id_category" => $data['id_category'] ?? ''
@@ -160,28 +136,20 @@ class CategoryService
             }
 
             return "Categoria deletada com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
-    public function getCategory(int $id){
-        try{
-
+    public function getCategory(int $id)
+    {
+        return $this->execute(function () use ($id) {
             $Category = new Category($this->pdo);
             $result = $Category->getCategory($id);
 
-            if(!$result){
+            if (!$result) {
                 throw new Exception("Não foi possível resgatar categoria");
             }
 
             return $result;
-        }catch(PDOException $e){
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        }catch(Exception $e){
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 }

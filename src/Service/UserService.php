@@ -2,27 +2,22 @@
 
 namespace App\Service;
 
-use App\Helpers\DatabaseErrorHelpers;
 use App\Jwt\JwtAuth;
+use App\Model\Phone;
 use App\Model\TokenUser;
+use App\Service\Base\BaseService;
 use App\Utils\SendEmail;
 use App\Utils\Validator;
 use Exception;
 use App\Model\User;
 use DateTime;
-use PDO;
-use PDOException;
 
-class UserService{
-
-    private PDO $pdo;
-
-    public function __construct(PDO $pdo){
-        $this->pdo = $pdo;
-    }
+require_once __DIR__ . "/../../config.php";
+class UserService extends BaseService
+{
     public function create(array $data)
     {
-        try{
+        return $this->execute(function () use ($data) {
             $User = new User($this->pdo);
 
             $fields = Validator::validate([
@@ -35,14 +30,15 @@ class UserService{
             $fields['password'] = password_hash($fields['password'], PASSWORD_DEFAULT);
 
             $person = $data['person'];
-            if($fields['type'] == "LEGAL"){
+            if ($fields['type'] == "LEGAL") {
                 $fields['person'] = Validator::validateLegalPerson([
                     "cnpj" => $person['cnpj'] ?? '',
                     "corporate_name" => $person['corporate_name'] ?? '',
                     "trade_name" => $person['trade_name'] ?? '',
-                    "state_registration" => $person['state_registration'] ?? 'ISENTO'
                 ]);
-            }else{
+
+                $fields['person']["state_registration"] = isset($person['state_registration']) ? $person['state_registration'] : 'ISENTO';
+            } else {
                 $fields['person'] = Validator::validateNaturalPerson([
                     "cpf" => $person['cpf'] ?? '',
                     'dt_birth' => $person['dt_birth'] ?? '',
@@ -60,7 +56,7 @@ class UserService{
                 "zip_code" => $address['zip_code'] ?? ''
             ]);
 
-            if(isset($data['address']['complement'])){
+            if (isset($data['address']['complement'])) {
                 $fields["complement"] = $address['complement'];
             }
 
@@ -71,24 +67,25 @@ class UserService{
                 "number" => $phone['number'] ?? ''
             ]);
 
-            self::isUserExists($fields);
+            $result = $this->isUserExists($fields);
+
+            if(isset($result['error'])){
+                throw new Exception($result['error']);
+            }
 
             $user = $User->create($fields);
 
-            if(!$user){
+            if (!$user) {
                 throw new Exception("Não foi possível criar a conta. Tente novamente mais tarde");
             }
 
             return "Conta criada com sucesso!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
-    private function isUserExists(array $user){
-        try{
+    private function isUserExists(array $user)
+    {
+        return $this->execute(function () use ($user) {
             $User = new User($this->pdo);
 
             $fields = [];
@@ -97,37 +94,34 @@ class UserService{
 
             $userModel = $User->select($fields);
 
-            if($userModel){
+            if ($userModel) {
                 throw new Exception("Usuário já cadastrado! Realize seu login");
             }
 
-            switch($user['type']){
+            switch ($user['type']) {
                 case 'LEGAL':
                     $fields['login'] = $user['person']['cnpj'];
-                break;
+                    break;
                 case 'NATURAL':
                     $fields['login'] = $user['person']['cpf'];
-                break;
+                    break;
                 default:
                     throw new Exception("Não foi possível criar a conta, pois verificação de conta falhou. Tente novamente mais tarde");
             }
 
             $userModel = $User->select($fields);
 
-            if($userModel){
+            if ($userModel) {
                 throw new Exception("Usuário já cadastrado! Realize seu login");
             }
-        }catch(PDOException $e){
-            throw new Exception($e->getMessage());
-        }catch(Exception $e){
-            throw new Exception($e->getMessage());
-        }
+
+            return true;
+        });
     }
 
     public function login(array $data)
     {
-        try{
-
+        return $this->execute(function () use ($data) {
             $User = new User($this->pdo);
 
             $fields = Validator::validate([
@@ -136,39 +130,36 @@ class UserService{
                 "type" => $data['type'] ?? 'EMAIL'
             ]);
 
-            switch($fields['type'])
-            {
-                case "EMAIL": 
+            switch ($fields['type']) {
+                case "EMAIL":
                     $fields['login'] = Validator::validateEmail($fields['login']);
-                break;
+                    break;
                 case "CPF":
                     $fields['login'] = Validator::validateCPF($fields['login']);
-                break;
+                    break;
                 case "CNPJ":
                     $fields['login'] = Validator::validateCNPJ($fields['login']);
-                break;
+                    break;
             }
 
             $user = $User->select($fields);
 
-            if(!$user)
-            {
+            if (!$user) {
                 throw new Exception("Usuário ou senha incorretos.");
             }
 
-            if(!password_verify($fields['password'], $user['password']))
-            {
+            if (!password_verify($fields['password'], $user['password'])) {
                 throw new Exception("Usuário ou senha incorretos.");
             }
 
             $firstAccess = $user['status'] === "INACTIVE" ? true : false;
 
-            if($firstAccess){
+            if ($firstAccess) {
                 return [
                     "message" => $this->activeAccountLink($fields, true),
                     "firstAccess" => true
                 ];
-            }else{
+            } else {
                 $token = JwtAuth::renderToken($user['username'], $user['id_user'], 'user', $user['status'], '7 days');
                 return [
                     "message" => "login efetuado com sucesso!",
@@ -177,19 +168,12 @@ class UserService{
                     "token" => $token,
                 ];
             }
-
-
-        }catch(PDOException $e){
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        }catch(Exception $e){
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function activeAccountLink(array $data, bool $sendEmail = false)
     {
-        try {
-
+        return $this->execute(function () use ($data, $sendEmail) {
             $User = new User($this->pdo);
             $TokenUser = new TokenUser($this->pdo);
 
@@ -215,10 +199,8 @@ class UserService{
                     $dateNow = new DateTime('now');
                     $diff = $dateCreated->diff($dateNow);
 
-                    if ($diff->i >= 30 || $diff->h > 0 || $diff->days > 0) {
+                    if ($diff->i < 30 && $diff->h == 0 && $diff->days == 0) {
                         return "Por favor, valide sua conta para que possa usá-la";
-                    } else {
-                        return "Foi enviado um link de ativação para o seu email!";
                     }
                 }
             }
@@ -242,26 +224,22 @@ class UserService{
             $info_user = [
                 'name' => $user['username'],
                 'email' => $user['email'],
-                'token' => $token
+                'link' => URL_EMAIL . "active-account?token=".$token
             ];
-            $sendMail = SendEmail::sendMail($info_user, 'active');
+
+            $sendMail = $this->getNotifier()->sendActiveAccount($info_user);
 
             if (!$sendMail) {
                 throw new Exception("Não foi possível enviar o email de recuperação. Tente novamente mais tarde");
             }
 
             return "Foi enviado um link para ativar sua conta!";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function forgetPassword(array $data)
     {
-
-        try {
+        return $this->execute(function () use ($data) {
             $User = new User($this->pdo);
             $TokenUser = new TokenUser($this->pdo);
 
@@ -285,45 +263,35 @@ class UserService{
             $info_user = [
                 'name' => $user['username'],
                 'email' => $user['email'],
-                'token' => $token,
+                'link' => URL_EMAIL . "reset-password?token=".$token,
                 'type' => 'FORGET',
             ];
 
             $fields['token'] = $token;
 
             $TokenUser->inactiveAll($fields['id_user'], $fields['type']);
-
-            $token = $TokenUser->create($fields);
-
-            if (!$token) {
-                throw new Exception("Não foi possível gerar o link. Tente novamente mais tarde");
-            }
-
-            $sendMail = SendEmail::sendMail($info_user, 'forget');
+            
+            $sendMail = $this->getNotifier()->sendResetPassword($info_user);
 
             if (!$sendMail) {
                 throw new Exception("Não foi possível enviar o email de recuperação. Tente novamente mais tarde");
             }
 
             return "Foi enviado um link de recuperação para o email.";
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        });
     }
 
     public function getAllUsers($id)
     {
-        try {
+        return $this->execute(function () use ($id) {
             $User = new User($this->pdo);
 
             $user = $User->selectAll($id);
-    
+
             if (!$user) {
                 throw new Exception("Usuários não encontrados.");
             }
-    
+
             foreach ($user as $key => &$value) {
                 if ($value['person_type'] === 'Física') {
                     unset($value['corporate_name']);
@@ -334,49 +302,56 @@ class UserService{
                 }
             }
 
-            $totalUser = $User->getTotalUsers();
+            $totalUserActive = $User->getTotalUsers();
 
-            if(!$totalUser){
-                throw new Exception("Valor total não resgatado");
+            if ($totalUserActive === false) {
+                throw new Exception("Não foi possível resgatar usuários ativos");
             }
+
+            $totalUserInactive = $User->getTotalUsers(false);
+
+            if($totalUserInactive === false){
+                throw new Exception("Não foi possível resgatar usuários inativos.");
+            }
+
+            $totalUsers = intval($totalUserActive['total']) + intval($totalUserInactive['total']);
 
             $pages = [
                 "limit" => 25,
-                "total" => $totalUser['total']
+                "inactives" => $totalUserInactive['total'],
+                "actives" => $totalUserActive['total'],
+                "total" => $totalUsers
             ];
-    
-            return ['message'=> "Users resgatados", "content" => $user, "pages"=>$pages];
-        } catch (PDOException $e) {
-            return ['error' => DatabaseErrorHelpers::error($e)];
-        } catch (Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+
+            return ['message' => "Users resgatados", "content" => $user, "pages" => $pages];
+        });
     }
 
-    public function getById(int $id){
-        try{
+    public function getById(int $id)
+    {
+        return $this->execute(function () use ($id) {
             $user = new User($this->pdo);
             $PhoneService = new PhoneService($this->pdo);
             $User = $user->getById($id);
 
-            if(!$User){
+            if (!$User) {
                 throw new Exception("Não foi possível resgatar usuário");
             }
 
             $phoneService = $PhoneService->getAllByIdUser($id);
 
-            if($User['person_type'] == "Física"){
+            if ($User['person_type'] == "Física") {
                 unset($User['cnpj']);
                 unset($User['corporate_name']);
                 unset($User['trade_name']);
                 unset($User['state_registration']);
-            }else{
+            } else {
                 unset($User['cpf']);
                 unset($User['dt_birth']);
                 unset($User['gender']);
             }
 
-            foreach($phoneService['content'] as $phone){
+            foreach ($phoneService['content'] as $phone) {
                 unset($phone['id_user']);
                 $User['contact'][] = $phone;
             }
@@ -385,15 +360,80 @@ class UserService{
                 "message" => "Usuário resgatado com sucesso",
                 "content" => $User
             ];
-        }catch(PDOException $e){
-            return[
-                'error' => DatabaseErrorHelpers::error($e)
-            ];
-        }
-        catch(Exception $e){
-            return [
-                'error' => $e->getMessage()
-            ];
-        }
+        });
+    }
+
+    public function editUser(array $data)
+    {
+        return $this->execute(function() use ($data){
+            $fields = Validator::validate([
+                "username" => $data['username'] ?? '',
+                "type" => $data['type'] ?? '',
+                "person" => $data['person'] ?? '',
+                "contact" => $data['contact'] ?? '',
+                "id_user" => $data['id_user'] ?? ''
+            ]);
+            $person = $fields['person'];
+
+            if($fields['type'] == "NATURAL"){
+
+                $fields['person'] = $fields['person'] = Validator::validateNaturalPerson([
+                    "cpf" => $person['cpf'] ?? '',
+                    'dt_birth' => $person['dt_birth'] ?? '',
+                    "gender" => $person['gender'] ?? ''
+                ]);
+            }else if($fields['type'] == "LEGAL"){
+                $fields['person'] = Validator::validateLegalPerson([
+                    "cnpj" => $person['cnpj'] ?? '',
+                    "corporate_name" => $person['corporate_name'] ?? '',
+                    "trade_name" => $person['trade_name'] ?? '',
+                    "state_registration" => $person['state_registration'] ?? 'ISENTO'
+                ]);
+            }else{
+                throw new Exception("Tipo de user incorreto.");
+            }
+
+            $fields['contact'] = Validator::validate([
+                "id_phone" => $fields['contact']['id_phone'] ?? '',
+                "type" => $fields['contact']['type'] ?? '',
+                "number" => $fields['contact']['number'] ?? ''
+            ]);
+
+            $user = $this->getById($fields['id_user']);
+
+            if(isset($user['error'])){
+                throw new Exception("Não foi possível encontrar usuário.");
+            }
+
+            $user = $user['content'];
+
+            $type_user = $user['person_type'] == "Jurídica" ? "LEGAL" : "NATURAL";
+
+            if($type_user !== $fields['type'])
+            {
+                throw new Exception("É necessário que o tipo de usuário seja o mesmo cadastrado para que ocorra a edição.");
+            }
+
+            $fields['person']['id'] = $user['id_person'];
+
+            $User = new User($this->pdo);
+
+            $resultEdit = $User->updateUser($fields);
+
+            if(!$resultEdit){
+                throw new Exception("Não foi possível editar usuário.");
+            }
+
+            $phone = new Phone($this->pdo);
+
+            $resultPhone = $phone->edit($data);
+
+            if(!$resultPhone){
+                throw new Exception("Não foi possível editar telefone");
+            }
+
+            return "Usuário editado com sucesso.";
+
+        }, true);
     }
 }

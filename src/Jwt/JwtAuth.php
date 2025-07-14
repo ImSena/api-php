@@ -9,11 +9,26 @@ use Firebase\JWT\ExpiredException;
 use Firebase\JWT\SignatureInvalidException;
 use Firebase\JWT\BeforeValidException;
 
-define('SECRET_KEY', 'k!v9X3o5@zTmFc7cQ^wL5kE2bD8jZb0N');
+require_once __DIR__ . '/../../config.php';
 
 class JwtAuth
 {
     private static $secretKey = SECRET_KEY;
+
+    public static function renderSignatureShipping(string $shipping, string $expTime = '2 hours')
+    {
+        $expTimeInSeconds = self::parseExpiration($expTime);
+        $issuedAt = time();
+        $expirationTime = $issuedAt + $expTimeInSeconds;
+
+        $payload = [
+            'iat' => $issuedAt,
+            'exp' => $expirationTime,
+            'shipping' => $shipping
+        ];
+
+        return JWT::encode($payload, trim(self::$secretKey), 'HS256');
+    }
 
     public static function renderToken(string $name, $id, string $rule, string $status, string $expTime = '1 day'): string
     {

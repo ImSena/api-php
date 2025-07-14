@@ -2,77 +2,52 @@
 
 namespace App\Controllers\Admin;
 
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
+use App\Controllers\Base\BaseController;
 use App\Service\AccountAdminService;
 use App\Service\AdminService;
-use PDO;
 
-class AdminController
+class AdminController extends BaseController
 {
-    private PDO $pdo;
-
-    public function __construct(){
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-
-    public function registerSuper(Request $request, Response $response)
+    public function registerSuper()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $adminService = new AdminService($this->pdo);
         $adminService = $adminService->create($body, true);
 
         if(isset($adminService['error'])){
-            return $response::json([
-                'success' => false,
-                "message" => $adminService['error']
-            ], 400);
+            return $this->errorResponse($adminService['error']);
         }
 
-        $response::json([
-            'success' => true,
-            'message' => $adminService
-        ], 200);
+        return $this->successResponse($adminService);
     }
 
-    public function register(Request $request, Response $response)
+    public function register()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $adminService = new AdminService($this->pdo);
         $adminService = $adminService->create($body, false);
 
         if(isset($adminService['error'])){
-            return $response::json([
-                'success' => false,
-                "message" => $adminService['error']
-            ], 400);
+            return $this->errorResponse($adminService['error']);
         }
 
-
-        $response::json([
-            'success' => true,
-            'message' => $adminService
-        ], 200);
+        return $this->successResponse($adminService);
     }
 
-    public function login(Request $request, Response $response){
-        $body = $request::body();
+    public function login(){
+        $body = $this->request::body();
         $adminService = new AdminService($this->pdo);
         $adminService = $adminService->login($body);
 
 
         if(isset($adminService['error'])){
-            return $response::json([
-                'success' => false,
-                "message" => $adminService['error']
-            ], 400);
+            return $this->errorResponse($adminService['error']);
         }
 
         if(isset($adminService['firstAccess'])){
-            return $response::json([
+            return $this->response::json([
                 'success' => true,
                 'message' => $adminService['message'],
                 'firstAccess' => true,
@@ -80,7 +55,7 @@ class AdminController
             ], 200);
         }
 
-        $response::json([
+        return $this->response::json([
             'success' => true,
             'message' => $adminService['message'],
             'user' => $adminService['user'],
@@ -90,83 +65,71 @@ class AdminController
         ], 200);
     }
 
-    public function forgetAccess(Request $request, Response $response)
+    public function forgetAccess()
     {
-        $body = $request::body();
+        $body = $this->request::body();
         $adminService = new AdminService($this->pdo);
         $adminService = $adminService->forgetPassword($body);
 
         if(isset($adminService['error'])){
-            return $response::json([
-                'success' => false,
-                'message' => $adminService['error'],
-            ], 400);
+            return $this->errorResponse($adminService['error']);
         }
 
-        $response::json([
+        return $this->response::json([
             'success' => true,
             'message' => $adminService,
             "type" => "ADMIN"
         ], 200);
     }
 
-    public function resetPassword(Request $request, Response $response)
+    public function resetPassword()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $accountService = new AccountAdminService($this->pdo);
         $accountService = $accountService->resetPasswordAdmin($body);
 
         if(isset($accountService['error'])){
-            return $response::json([
-                'success' => false,
-                'message' => $accountService['error']
-            ], 400);
+            return $this->errorResponse($accountService['error']);
         }
 
-        $response::json([
+        $this->response::json([
             'success' => true,
             'message' => $accountService,
             "type" => "ADMIN"
         ], 200);
     }
 
-    public function sendActiveAdmin(Request $request, Response $response)
+    public function sendActiveAdmin()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $adminService = new AdminService($this->pdo);
         $adminService = $adminService->activeAccountLink($body);
 
         if(isset($adminService['error'])){
-            return $response::json([
-                'success' => false,
-                'message' => $adminService['error']
-            ], 400);
+            return $this->errorResponse($adminService);
         }
 
-        $response::json([
+        $this->response::json([
             'sucess' => true,
             'message' => $adminService,
             "type" => "ADMIN"
         ], 200);
     }
 
-    public function activeAccount(Request $request, Response $response)
+    public function activeAccount()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $adminAccount = new AccountAdminService($this->pdo);
         $adminAccount = $adminAccount->activeAccountAdmin($body);
 
         if(isset($adminAccount['error'])){
-            return $response::json([
-                'success' => false,
-                'message' => $adminAccount['error']
-            ], 400);
+            return $this->errorResponse($adminAccount['error']);
         }
 
-        $response::json([
+        $this->response::json([
             'success' => true,
             'message' => $adminAccount,
             "type" => "ADMIN"

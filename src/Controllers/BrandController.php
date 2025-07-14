@@ -2,62 +2,41 @@
 
 namespace App\Controllers;
 
-use App\Factory\ConnectionFactory;
-use App\Http\Request;
-use App\Http\Response;
+use App\Controllers\Base\BaseController;
 use App\Service\BrandService;
-use PDO;
 
-class BrandController
+class BrandController extends BaseController
 {
-    private PDO $pdo;
-
-    public function __construct(){
-        $this->pdo = ConnectionFactory::getConnection();
-    }
-
-    public function create(Request $request, Response $response)
+    public function create()
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $brand = new BrandService($this->pdo);
         $brand = $brand->create($body);
 
         if(isset($brand['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $brand['error']
-            ]);
+            return $this->errorResponse($brand['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $brand
-        ]);
+        return $this->successResponse($brand);
     }
 
-    public function getAll(Request $request, Response $response)
+    public function getAll()
     {
+        $rule = $this->request::getRule();
         $brand = new BrandService($this->pdo);
-        $brand = $brand->getAll();
+        $brand = $brand->getAll($rule);
 
         if(isset($brand['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $brand['error']
-            ]);
+            return $this->errorResponse($brand['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $brand['message'],
-            "content" => $brand['content']
-        ]);
+        return $this->successResponse($brand['message'], $brand['content']);
     }
 
-    public function update(Request $request, Response $response, $id)
+    public function update($id)
     {
-        $body = $request::body();
+        $body = $this->request::body();
 
         $id = intval($id[0]);
 
@@ -65,19 +44,13 @@ class BrandController
         $brand = $brand->update($body, $id);
 
         if(isset($brand['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $brand['error']
-            ]);
+            return $this->errorResponse($brand['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $brand,
-        ]);
+        return $this->successResponse($brand);
     }
 
-    public function delete(Request $request, Response $response, $id)
+    public function delete($id)
     {
         $id = intval($id[0]);
 
@@ -85,15 +58,9 @@ class BrandController
         $brand = $brand->delete( $id);
 
         if(isset($brand['error'])){
-            return $response::json([
-                "success" => false,
-                "message" => $brand['error']
-            ]);
+            return $this->errorResponse($brand['error']);
         }
 
-        $response::json([
-            "success" => true,
-            "message" => $brand
-        ]);
+        return $this->successResponse($brand);
     }
 }
